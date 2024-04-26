@@ -8,18 +8,18 @@ impl Plugin for MenuPlugin {
     app
       .add_systems(OnEnter(GameState::Menu), spawn_menu)
       .add_systems(OnExit(GameState::Menu), despawn_menu)
-      .add_systems(Update, button_actions);
+      .add_systems(Update, button_actions.run_if(in_state(GameState::Menu)));
   }
 }
 
 #[derive(Component)]
-enum MenuButtonAction {
+enum ButtonAction {
     Play,
     Quit,
 }
 
 #[derive(Component)]
-struct MenuComponent;
+struct MenuScreen;
 
 fn spawn_menu(
   mut commands: Commands,
@@ -37,7 +37,7 @@ fn spawn_menu(
       background_color: Color::GRAY.into(),
       ..default()
     },
-    MenuComponent,
+    MenuScreen,
     Name::new("Main Menu"),
   ))
     .with_children(|commands| {
@@ -60,7 +60,7 @@ fn spawn_menu(
           background_color: Color::CRIMSON.into(),
           ..default()
         },
-        MenuButtonAction::Play,
+        ButtonAction::Play,
       )).with_children(|commands| {
         commands.spawn(
           TextBundle::from_section(
@@ -77,7 +77,7 @@ fn spawn_menu(
           background_color: Color::CRIMSON.into(),
           ..default()
         },
-        MenuButtonAction::Quit,
+        ButtonAction::Quit,
       )).with_children(|commands| {
         commands.spawn(
           TextBundle::from_section(
@@ -91,13 +91,13 @@ fn spawn_menu(
 
 fn despawn_menu(
   mut commands: Commands,
-  menu: Query<Entity, With<MenuComponent>>,
+  menu: Query<Entity, With<MenuScreen>>,
 ) {
   commands.entity(menu.single()).despawn_recursive();
 }
 
 fn button_actions(
-  interaction_query: Query<(&Interaction, &MenuButtonAction), (Changed<Interaction>, With<Button>)>,
+  interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,
   mut app_exit_events: EventWriter<AppExit>,
 ) {
@@ -107,8 +107,8 @@ fn button_actions(
     }
 
     match button_action {
-      MenuButtonAction::Play => { game_state.set(GameState::Manage); }
-      MenuButtonAction::Quit => { app_exit_events.send(AppExit); }
+      ButtonAction::Play => { game_state.set(GameState::Manage); }
+      ButtonAction::Quit => { app_exit_events.send(AppExit); }
     }
   }
 }

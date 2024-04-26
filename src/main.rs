@@ -6,15 +6,17 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 mod states;
 mod menu;
 mod battle;
+mod manage;
 
 use crate::menu::plugin::MenuPlugin;
+use crate::manage::plugin::ManagePlugin;
 use crate::states::GameState;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_state::<GameState>()
-        .add_plugins(MenuPlugin)
+        .add_plugins((MenuPlugin, ManagePlugin))
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
         )
