@@ -1,11 +1,12 @@
 use bevy::input::keyboard::KeyCode;
 use bevy::prelude::*;
+use bevy::render::camera::ScalingMode;
 use bevy_xpbd_3d::math::PI;
 use bevy_xpbd_3d::prelude::{PhysicsPlugins, RigidBody, Collider, LinearVelocity, AngularVelocity, Friction};
 use bevy_xpbd_3d::resources::Gravity;
 use crate::states::GameState;
-use crate::camera::battle_camera::{ BattleCamera, spawn_battle_camera, despawn_battle_camera };
-use crate::constants::{ WIDTH, HEIGHT, WALL_SIZE, GRAVITY_ACCELERATION, DICE_SIZE };
+use crate::camera::battle_camera::{ BattleCamera, spawn_battle_camera, despawn_battle_camera, compute_fov };
+use crate::constants::{ WIDTH, HEIGHT, WALL_SIZE, GRAVITY_ACCELERATION, DICE_SIZE, DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE };
 use rand_distr::{Normal, Distribution};
 
 pub struct BattlePlugin;
@@ -15,8 +16,9 @@ impl Plugin for BattlePlugin {
     app
       .add_systems(OnEnter(GameState::Battle), (spawn_battle_camera, add_battle_scene))
       .add_systems(OnExit(GameState::Battle), (despawn_battle_camera, despawn_battle_scene))
-      .add_systems(Update, (debug_control, reset_dices).run_if(in_state(GameState::Battle)))
+      .add_systems(Update, (debug_control, reset_dices, swap_camera).run_if(in_state(GameState::Battle)))
       .add_plugins(PhysicsPlugins::default())
+      .init_resource::<CameraMode>()
       .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY_ACCELERATION));
   }
 }
@@ -214,20 +216,85 @@ fn random() -> f32 {
   return normal.sample(&mut rand::thread_rng());
 }
 
+#[derive(Component)]
+struct CameraSwapTimer {
+  pub timer: Timer,
+  pub to_isometric: bool,
+}
+
+fn swap_camera(
+  mut camera: Query<(&mut Projection, &mut Transform), With<BattleCamera>>,
+  mut timer: Query<(&mut CameraSwapTimer, Entity)>,
+  time: Res<Time>,
+  mut commands: Commands,
+) {
+  for (mut camera_swap_timer, entity) in &mut timer {
+    camera_swap_timer.timer.tick(time.delta());
+
+    let mut t = camera_swap_timer.timer.elapsed().as_nanos() as f32 / camera_swap_timer.timer.duration().as_nanos() as f32;
+    if !camera_swap_timer.to_isometric {
+      t = 1.0 - t;
+    }
+
+    // Exponential interpolation
+    let distance = DEFAULT_CAMERA_DISTANCE * (t * (MAX_CAMERA_DISTANCE / DEFAULT_CAMERA_DISTANCE).ln()).exp();
+
+    let (mut projection, mut transform) = camera.single_mut();
+
+    transform.translation.y = distance;
+    *projection = PerspectiveProjection {
+      fov: compute_fov(distance, HEIGHT),
+      ..default()
+    }.into();
+
+    if camera_swap_timer.timer.finished() {
+      if camera_swap_timer.to_isometric {
+        *projection = OrthographicProjection {
+          far: 2.0 * MAX_CAMERA_DISTANCE,
+          scaling_mode: ScalingMode::Fixed { width: WIDTH, height: HEIGHT },
+          ..default()
+        }.into();
+      }
+
+      commands.entity(entity).despawn();
+    }
+  }
+}
+
+#[derive(Resource, Clone, Copy, Default, PartialEq)]
+enum CameraMode {
+  Isometric,
+  #[default]
+  Perspective,
+}
+
 // For debug
 fn debug_control(
   mouse_buttons: Res<ButtonInput<MouseButton>>,
   keyboard_buttons: Res<ButtonInput<KeyCode>>,
-  mut dice_velocity_: Query<&mut LinearVelocity, With<Dice>>,
-  mut camera_: Query<&mut Transform, With<BattleCamera>>,
+  mut camera_: Query<(&mut Transform, &mut Projection), With<BattleCamera>>,
+  mut commands: Commands,
+  mut camera_mode_: ResMut<CameraMode>,
 ) {
+  let camera_mode = *camera_mode_;
   if mouse_buttons.just_pressed(MouseButton::Right) {
-    for mut dice_velocity in &mut dice_velocity_ {
-      dice_velocity.y += 100.0;
+    commands.spawn((
+      NodeBundle::default(),
+      CameraSwapTimer {
+        timer: Timer::from_seconds(0.5, TimerMode::Once),
+        to_isometric: match camera_mode {
+          CameraMode::Isometric => false,
+          CameraMode::Perspective => true,
+        },
+      },
+    ));
+    *camera_mode_ = match camera_mode {
+      CameraMode::Isometric => CameraMode::Perspective,
+      CameraMode::Perspective => CameraMode::Isometric,
     }
   }
 
-  let mut camera_transform = camera_.single_mut();
+  let (mut camera_transform, _) = camera_.single_mut();
   if keyboard_buttons.pressed(KeyCode::KeyW) {
     camera_transform.translation += Vec3::new(0.0, 0.0, 3.0);
   }

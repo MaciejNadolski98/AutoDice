@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::constants::DEFAULT_CAMERA_DISTANCE;
+
 #[derive(Component)]
 pub struct BattleCamera;
 
@@ -10,7 +12,7 @@ pub fn spawn_battle_camera(
     Camera3dBundle::from_square(
       Vec3::ZERO, 
       Vec3::Z, 
-      Vec3::new(0.0, 100.0, 0.0), 
+      Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0), 
       144.0,
     ),
     BattleCamera,
@@ -42,6 +44,6 @@ impl FromSquare for Camera3dBundle {
   }
 }
 
-fn compute_fov(distance: f32, square_size: f32) -> f32 {
+pub fn compute_fov(distance: f32, square_size: f32) -> f32 {
   return 2.0 * ((square_size/(2.0*distance)).atan());
 }
