@@ -1,13 +1,41 @@
 use bevy::input::keyboard::KeyCode;
 use bevy::prelude::*;
-use bevy::render::camera::ScalingMode;
+use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
+use bevy::render::{
+  camera::ScalingMode,
+  view::RenderLayers
+};
+use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_xpbd_3d::math::PI;
-use bevy_xpbd_3d::prelude::{PhysicsPlugins, RigidBody, Collider, LinearVelocity, AngularVelocity, Friction};
+use bevy_xpbd_3d::prelude::{
+  PhysicsPlugins, 
+  RigidBody, 
+  Collider, 
+  LinearVelocity, 
+  AngularVelocity, 
+  Friction
+};
 use bevy_xpbd_3d::resources::Gravity;
 use crate::states::GameState;
-use crate::camera::battle_camera::{ BattleCamera, spawn_battle_camera, despawn_battle_camera, compute_fov };
-use crate::constants::{ WIDTH, HEIGHT, WALL_SIZE, GRAVITY_ACCELERATION, DICE_SIZE, DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE };
-use rand_distr::{Normal, Distribution};
+use crate::camera::battle_camera::{
+  BattleCamera, 
+  spawn_battle_camera, 
+  despawn_battle_camera, 
+  compute_fov
+};
+use crate::constants::{ 
+  WIDTH, 
+  HEIGHT, 
+  WALL_SIZE, 
+  GRAVITY_ACCELERATION, 
+  DICE_SIZE, 
+  DEFAULT_CAMERA_DISTANCE, 
+  MAX_CAMERA_DISTANCE
+};
+use rand_distr::{
+  Normal, 
+  Distribution
+};
 
 pub struct BattlePlugin;
 
@@ -136,13 +164,45 @@ fn reset_dices(
   mouse_buttons: Res<ButtonInput<MouseButton>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
   mut meshes: ResMut<Assets<Mesh>>,
+  mut images: ResMut<Assets<Image>>,
 ) {
   if mouse_buttons.just_pressed(MouseButton::Left) {
     for dice_entity in & dices {
       commands.entity(dice_entity).despawn();
     }
 
-    let cube_mesh = meshes.add(Cuboid::default());
+    let cube_mesh = meshes.add(Cuboid::default().mesh().with_removed_attribute(Mesh::ATTRIBUTE_UV_0).with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, vec![
+      // Front
+      [0.0/6.0, 0.0],
+      [1.0/6.0, 0.0],
+      [1.0/6.0, 1.0],
+      [0.0/6.0, 1.0],
+      // Back
+      [1.0/6.0, 0.0],
+      [2.0/6.0, 0.0],
+      [2.0/6.0, 1.0],
+      [1.0/6.0, 1.0],
+      // Right
+      [2.0/6.0, 0.0],
+      [3.0/6.0, 0.0],
+      [3.0/6.0, 1.0],
+      [2.0/6.0, 1.0],
+      // Left
+      [3.0/6.0, 0.0],
+      [4.0/6.0, 0.0],
+      [4.0/6.0, 1.0],
+      [3.0/6.0, 1.0],
+      // Top
+      [4.0/6.0, 0.0],
+      [5.0/6.0, 0.0],
+      [5.0/6.0, 1.0],
+      [4.0/6.0, 1.0],
+      // Bottom
+      [5.0/6.0, 0.0],
+      [6.0/6.0, 0.0],
+      [6.0/6.0, 1.0],
+      [5.0/6.0, 1.0],
+    ]));
     let dice_positions_red = [
       Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0),
       Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0 + DICE_SIZE * 1.1),
@@ -156,13 +216,14 @@ fn reset_dices(
       ret.z *= -1.0;
       return ret;
     });
+    let image_handle = get_cube_face_image(&mut commands, images);
     // cubes
     for i in 0..5 {
       // blue
       commands.spawn((
         PbrBundle {
           mesh: cube_mesh.clone(),
-          material: materials.add(Color::BLUE),
+          material: materials.add(StandardMaterial { base_color_texture: Some(image_handle.clone()), ..default()}),
           transform: Transform::from_translation(dice_positions_blue[i])
             .with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
           ..default()
@@ -209,6 +270,52 @@ fn reset_dices(
       ));
     }
   }
+}
+
+fn get_cube_face_image(
+  commands: &mut Commands,
+  mut images: ResMut<Assets<Image>>,
+) -> Handle<Image> {
+  let cube_faces_layer = RenderLayers::layer(1);
+
+  let size = Extent3d {
+    width: 600,
+    height: 100,
+    ..default()
+  };
+
+  let mut image = Image {
+    texture_descriptor: TextureDescriptor {
+      label: None,
+      size,
+      dimension: TextureDimension::D2,
+      format: TextureFormat::Bgra8UnormSrgb,
+      mip_level_count: 1,
+      sample_count: 1,
+      usage: TextureUsages::TEXTURE_BINDING
+          | TextureUsages::COPY_DST
+          | TextureUsages::RENDER_ATTACHMENT,
+      view_formats: &[],
+    },
+    ..default()
+  };
+  image.resize(size);
+
+  let image_handle = images.add(image);
+
+  commands.spawn((
+    Camera2dBundle {
+      camera: Camera {
+        order: -1,
+        target: image_handle.clone().into(),
+        ..default()
+      },
+      ..default()
+    },
+    cube_faces_layer,
+  ));
+
+  return image_handle;
 }
 
 fn random() -> f32 {
@@ -275,22 +382,23 @@ fn debug_control(
   mut camera_: Query<(&mut Transform, &mut Projection), With<BattleCamera>>,
   mut commands: Commands,
   mut camera_mode_: ResMut<CameraMode>,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
   let camera_mode = *camera_mode_;
   if mouse_buttons.just_pressed(MouseButton::Right) {
-    commands.spawn((
-      NodeBundle::default(),
-      CameraSwapTimer {
-        timer: Timer::from_seconds(0.5, TimerMode::Once),
-        to_isometric: match camera_mode {
-          CameraMode::Isometric => false,
-          CameraMode::Perspective => true,
+    let cube_faces_layer = RenderLayers::layer(1);
+    let colors = vec![Color::RED, Color::GREEN, Color::BLUE, Color::WHITE, Color::GOLD, Color::GRAY];
+    for i in 0..5 {
+      commands.spawn((
+        MaterialMesh2dBundle {
+          mesh: Mesh2dHandle(meshes.add(Circle { radius: 50.0 })),
+          transform: Transform::from_xyz(-250.0 + 100.0 * (i as f32), 0.0, 0.0),
+          material: materials.add(colors[i]),
+          ..default()
         },
-      },
-    ));
-    *camera_mode_ = match camera_mode {
-      CameraMode::Isometric => CameraMode::Perspective,
-      CameraMode::Perspective => CameraMode::Isometric,
+        cube_faces_layer,
+      ));
     }
   }
 
