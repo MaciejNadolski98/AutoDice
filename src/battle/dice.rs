@@ -291,15 +291,17 @@ pub enum ActionType {
 fn update_dice_faces(
   mut commands: Commands,
   mut events: EventReader<DiceFaceChangedEvent>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<ColorMaterial>>,
   entities: Res<DiceFaces>,
+  asset_server: Res<AssetServer>
 ) {
   for face_update in events.read() {
-    let shape = match face_update.face.action_type {
-      ActionType::Attack => meshes.add(Circle { radius: 0.45*DICE_TEXTURE_SIZE }),
-      ActionType::Heal => meshes.add(Rectangle { half_size: Vec2::new(0.45*DICE_TEXTURE_SIZE, 0.45*DICE_TEXTURE_SIZE) }),
-      ActionType::Defend => meshes.add(Triangle2d { vertices: [Vec2::new(0.0, 0.45*DICE_TEXTURE_SIZE), Vec2::new(-0.45*DICE_TEXTURE_SIZE, -0.45*DICE_TEXTURE_SIZE), Vec2::new(0.45*DICE_TEXTURE_SIZE, -0.45*DICE_TEXTURE_SIZE)] }),
+    assert!(face_update.team_id <= 1);
+    assert!(face_update.dice_id < MAX_DICE_COUNT as u32);
+    assert!(face_update.face_id < 6);
+    let texture = match face_update.face.action_type {
+      ActionType::Attack => asset_server.load("sword.png"),
+      ActionType::Heal => asset_server.load("heal.png"),
+      ActionType::Defend => asset_server.load("shield.png"),
     };
     let face_entity = entities.get(face_update.team_id, face_update.dice_id, face_update.face_id);
     
@@ -307,10 +309,8 @@ fn update_dice_faces(
       .despawn_descendants()
       .with_children(|commands| {
         commands.spawn((
-          MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(shape),
-            material: materials.add(Color::RED),
-            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+          SpriteBundle {
+            texture: texture,
             ..default()
           },
           DICE_FACES_LAYER,
