@@ -1,21 +1,17 @@
 use bevy::input::keyboard::KeyCode;
 use bevy::prelude::*;
-use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 use bevy::render::{
   camera::ScalingMode,
   view::RenderLayers
 };
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use bevy_xpbd_3d::math::PI;
 use bevy_xpbd_3d::prelude::{
   PhysicsPlugins, 
   RigidBody, 
-  Collider, 
-  LinearVelocity, 
-  AngularVelocity, 
-  Friction
+  Collider, Friction,
 };
 use bevy_xpbd_3d::resources::Gravity;
+use rand::Rng;
 use crate::states::GameState;
 use crate::camera::battle_camera::{
   BattleCamera, 
@@ -27,34 +23,30 @@ use crate::constants::{
   WIDTH, 
   HEIGHT, 
   WALL_SIZE, 
-  GRAVITY_ACCELERATION, 
-  DICE_SIZE, 
+  GRAVITY_ACCELERATION,
   DEFAULT_CAMERA_DISTANCE, 
-  MAX_CAMERA_DISTANCE
+  MAX_CAMERA_DISTANCE, MAX_DICE_COUNT
 };
 use rand_distr::{
   Normal, 
   Distribution
 };
 
+use super::dice::{RespawnDicesEvent, DicePlugin, DiceFaceChangedEvent, FaceDescription, ActionType};
+
 pub struct BattlePlugin;
 
 impl Plugin for BattlePlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_plugins(DicePlugin)
       .add_systems(OnEnter(GameState::Battle), (spawn_battle_camera, add_battle_scene))
       .add_systems(OnExit(GameState::Battle), (despawn_battle_camera, despawn_battle_scene))
-      .add_systems(Update, (debug_control, reset_dices, swap_camera).run_if(in_state(GameState::Battle)))
+      .add_systems(Update, (debug_control, swap_camera).run_if(in_state(GameState::Battle)))
       .add_plugins(PhysicsPlugins::default())
       .init_resource::<CameraMode>()
       .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY_ACCELERATION));
   }
-}
-
-#[derive(Component)]
-enum Dice {
-  BLUE,
-  RED,
 }
 
 #[derive(Component)]
@@ -158,171 +150,6 @@ fn despawn_battle_scene(
   commands.entity(scene).despawn_recursive();
 }
 
-fn reset_dices(
-  dices: Query<Entity, With<Dice>>,
-  mut commands: Commands,
-  mouse_buttons: Res<ButtonInput<MouseButton>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut images: ResMut<Assets<Image>>,
-) {
-  if mouse_buttons.just_pressed(MouseButton::Left) {
-    for dice_entity in & dices {
-      commands.entity(dice_entity).despawn();
-    }
-
-    let cube_mesh = meshes.add(Cuboid::default().mesh().with_removed_attribute(Mesh::ATTRIBUTE_UV_0).with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, vec![
-      // Front
-      [0.0/6.0, 0.0],
-      [1.0/6.0, 0.0],
-      [1.0/6.0, 1.0],
-      [0.0/6.0, 1.0],
-      // Back
-      [1.0/6.0, 0.0],
-      [2.0/6.0, 0.0],
-      [2.0/6.0, 1.0],
-      [1.0/6.0, 1.0],
-      // Right
-      [2.0/6.0, 0.0],
-      [3.0/6.0, 0.0],
-      [3.0/6.0, 1.0],
-      [2.0/6.0, 1.0],
-      // Left
-      [3.0/6.0, 0.0],
-      [4.0/6.0, 0.0],
-      [4.0/6.0, 1.0],
-      [3.0/6.0, 1.0],
-      // Top
-      [4.0/6.0, 0.0],
-      [5.0/6.0, 0.0],
-      [5.0/6.0, 1.0],
-      [4.0/6.0, 1.0],
-      // Bottom
-      [5.0/6.0, 0.0],
-      [6.0/6.0, 0.0],
-      [6.0/6.0, 1.0],
-      [5.0/6.0, 1.0],
-    ]));
-    let dice_positions_red = [
-      Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0),
-      Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0 + DICE_SIZE * 1.1),
-      Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0 - DICE_SIZE * 1.1),
-      Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE * 2.2, HEIGHT / 4.0 + DICE_SIZE * 0.55),
-      Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE * 2.2, HEIGHT / 4.0 - DICE_SIZE * 0.55),
-    ];
-    let dice_positions_blue = dice_positions_red.clone().map(|vec| {
-      let mut ret = vec.clone();
-      ret.x *= -1.0;
-      ret.z *= -1.0;
-      return ret;
-    });
-    let image_handle = get_cube_face_image(&mut commands, images);
-    // cubes
-    for i in 0..5 {
-      // blue
-      commands.spawn((
-        PbrBundle {
-          mesh: cube_mesh.clone(),
-          material: materials.add(StandardMaterial { base_color_texture: Some(image_handle.clone()), ..default()}),
-          transform: Transform::from_translation(dice_positions_blue[i])
-            .with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
-          ..default()
-        },
-        RigidBody::Dynamic,
-        Friction::new(1.0),
-        LinearVelocity::from(Vec3::new(
-          1.0 * DICE_SIZE * (10.0 + random()), 
-          (0.5 * DICE_SIZE * (10.0 + random())).clamp(0.0, 100.0), 
-          10.0 * DICE_SIZE * random(),
-        )),
-        AngularVelocity::from(Vec3::new(
-          random() * 2.0 * PI,
-          random() * 2.0 * PI,
-          random() * 2.0 * PI,
-        )),
-        Collider::cuboid(1.0, 1.0, 1.0),
-        Dice::BLUE,
-      ));
-
-      // red
-      commands.spawn((
-        PbrBundle {
-          mesh: cube_mesh.clone(),
-          material: materials.add(Color::RED),
-          transform: Transform::from_translation(dice_positions_red[i])
-            .with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
-          ..default()
-        },
-        RigidBody::Dynamic,
-        Friction::new(1.0),
-        LinearVelocity::from(Vec3::new(
-          1.0 * DICE_SIZE * (-10.0 + random()),
-          (0.5 * DICE_SIZE * (10.0 + random())).clamp(0.0, 100.0), 
-          10.0 * DICE_SIZE * random(),
-        )),
-        AngularVelocity::from(Vec3::new(
-          random() * 2.0 * PI,
-          random() * 2.0 * PI,
-          random() * 2.0 * PI,
-        )),
-        Collider::cuboid(1.0, 1.0, 1.0),
-        Dice::RED,
-      ));
-    }
-  }
-}
-
-fn get_cube_face_image(
-  commands: &mut Commands,
-  mut images: ResMut<Assets<Image>>,
-) -> Handle<Image> {
-  let cube_faces_layer = RenderLayers::layer(1);
-
-  let size = Extent3d {
-    width: 600,
-    height: 100,
-    ..default()
-  };
-
-  let mut image = Image {
-    texture_descriptor: TextureDescriptor {
-      label: None,
-      size,
-      dimension: TextureDimension::D2,
-      format: TextureFormat::Bgra8UnormSrgb,
-      mip_level_count: 1,
-      sample_count: 1,
-      usage: TextureUsages::TEXTURE_BINDING
-          | TextureUsages::COPY_DST
-          | TextureUsages::RENDER_ATTACHMENT,
-      view_formats: &[],
-    },
-    ..default()
-  };
-  image.resize(size);
-
-  let image_handle = images.add(image);
-
-  commands.spawn((
-    Camera2dBundle {
-      camera: Camera {
-        order: -1,
-        target: image_handle.clone().into(),
-        ..default()
-      },
-      ..default()
-    },
-    cube_faces_layer,
-  ));
-
-  return image_handle;
-}
-
-fn random() -> f32 {
-  let normal = Normal::<f32>::new(0.0, 1.0).unwrap();
-  return normal.sample(&mut rand::thread_rng());
-}
-
 #[derive(Component)]
 struct CameraSwapTimer {
   pub timer: Timer,
@@ -378,41 +205,32 @@ enum CameraMode {
 // For debug
 fn debug_control(
   mouse_buttons: Res<ButtonInput<MouseButton>>,
-  keyboard_buttons: Res<ButtonInput<KeyCode>>,
-  mut camera_: Query<(&mut Transform, &mut Projection), With<BattleCamera>>,
-  mut commands: Commands,
-  mut camera_mode_: ResMut<CameraMode>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<ColorMaterial>>,
+  mut respawn_dices: EventWriter<RespawnDicesEvent>,
+  mut change_dice_face: EventWriter<DiceFaceChangedEvent>,
 ) {
-  let camera_mode = *camera_mode_;
   if mouse_buttons.just_pressed(MouseButton::Right) {
-    let cube_faces_layer = RenderLayers::layer(1);
-    let colors = vec![Color::RED, Color::GREEN, Color::BLUE, Color::WHITE, Color::GOLD, Color::GRAY];
-    for i in 0..5 {
-      commands.spawn((
-        MaterialMesh2dBundle {
-          mesh: Mesh2dHandle(meshes.add(Circle { radius: 50.0 })),
-          transform: Transform::from_xyz(-250.0 + 100.0 * (i as f32), 0.0, 0.0),
-          material: materials.add(colors[i]),
-          ..default()
-        },
-        cube_faces_layer,
-      ));
+    for team_id in [0, 1] {
+      for dice_id in 0..MAX_DICE_COUNT {
+        for face_id in 0..6 {
+          change_dice_face.send(DiceFaceChangedEvent {
+            team_id: team_id,
+            dice_id: dice_id as u32,
+            face_id: face_id,
+            face: FaceDescription {
+              action_type: match rand::thread_rng().gen_range(0..3) {
+                0 => ActionType::Attack,
+                1 => ActionType::Defend,
+                _ => ActionType::Heal,
+              },
+              pips_count: 0,
+            }
+          });
+        }
+      }
     }
   }
 
-  let (mut camera_transform, _) = camera_.single_mut();
-  if keyboard_buttons.pressed(KeyCode::KeyW) {
-    camera_transform.translation += Vec3::new(0.0, 0.0, 3.0);
-  }
-  if keyboard_buttons.pressed(KeyCode::KeyA) {
-    camera_transform.translation += Vec3::new(3.0, 0.0, 0.0);
-  }
-  if keyboard_buttons.pressed(KeyCode::KeyS) {
-    camera_transform.translation += Vec3::new(0.0, 0.0, -3.0);
-  }
-  if keyboard_buttons.pressed(KeyCode::KeyD) {
-    camera_transform.translation += Vec3::new(-3.0, 0.0, 0.0);
+  if mouse_buttons.just_pressed(MouseButton::Left) {
+    respawn_dices.send(RespawnDicesEvent {});
   }
 }
