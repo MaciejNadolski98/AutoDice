@@ -9,6 +9,7 @@ mod manage;
 mod camera;
 mod constants;
 
+use crate::camera::plugin::CameraPlugin;
 use crate::battle::plugin::BattlePlugin;
 use crate::menu::plugin::MenuPlugin;
 use crate::manage::plugin::ManagePlugin;
@@ -18,7 +19,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_state::<GameState>()
-        .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin))
+        .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin))
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
         )

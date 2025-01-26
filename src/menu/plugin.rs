@@ -1,14 +1,13 @@
 use bevy::{prelude::*, app::AppExit, ui::Interaction};
 use crate::states::GameState;
-use crate::camera::menu_camera::{spawn_menu_camera, despawn_menu_camera};
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(OnEnter(GameState::Menu), (spawn_menu, spawn_menu_camera))
-      .add_systems(OnExit(GameState::Menu), (despawn_menu, despawn_menu_camera))
+      .add_systems(OnEnter(GameState::Menu), spawn_menu)
+      .add_systems(OnExit(GameState::Menu), despawn_menu)
       .add_systems(Update, button_actions.run_if(in_state(GameState::Menu)));
   }
 }

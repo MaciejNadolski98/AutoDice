@@ -1,9 +1,7 @@
 use std::array;
 
 use bevy::prelude::*;
-use bevy::math::primitives::{ Circle, Rectangle, Triangle2d };
 use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_xpbd_3d::math::PI;
 use bevy_xpbd_3d::prelude::{RigidBody, Friction, AngularVelocity, LinearVelocity, Collider};
 use rand_distr::{Normal, Distribution};

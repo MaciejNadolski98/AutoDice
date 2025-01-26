@@ -1,10 +1,7 @@
-use bevy::input::keyboard::KeyCode;
 use bevy::prelude::*;
 use bevy::render::{
-  camera::ScalingMode,
-  view::RenderLayers
+  camera::ScalingMode
 };
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_xpbd_3d::prelude::{
   PhysicsPlugins, 
   RigidBody, 
@@ -13,23 +10,12 @@ use bevy_xpbd_3d::prelude::{
 use bevy_xpbd_3d::resources::Gravity;
 use rand::Rng;
 use crate::states::GameState;
-use crate::camera::battle_camera::{
-  BattleCamera, 
-  spawn_battle_camera, 
-  despawn_battle_camera, 
-  compute_fov
-};
 use crate::constants::{ 
   WIDTH, 
   HEIGHT, 
   WALL_SIZE, 
   GRAVITY_ACCELERATION,
-  DEFAULT_CAMERA_DISTANCE, 
-  MAX_CAMERA_DISTANCE, MAX_DICE_COUNT
-};
-use rand_distr::{
-  Normal, 
-  Distribution
+  MAX_DICE_COUNT
 };
 
 use super::dice::{RespawnDicesEvent, DicePlugin, DiceFaceChangedEvent, FaceDescription, ActionType};
@@ -40,11 +26,10 @@ impl Plugin for BattlePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugins(DicePlugin)
-      .add_systems(OnEnter(GameState::Battle), (spawn_battle_camera, add_battle_scene))
-      .add_systems(OnExit(GameState::Battle), (despawn_battle_camera, despawn_battle_scene))
-      .add_systems(Update, (debug_control, swap_camera).run_if(in_state(GameState::Battle)))
+      .add_systems(OnEnter(GameState::Battle), add_battle_scene)
+      .add_systems(OnExit(GameState::Battle), despawn_battle_scene)
+      .add_systems(Update, debug_control.run_if(in_state(GameState::Battle)))
       .add_plugins(PhysicsPlugins::default())
-      .init_resource::<CameraMode>()
       .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY_ACCELERATION));
   }
 }
@@ -148,58 +133,6 @@ fn despawn_battle_scene(
 ) {
   let scene = scene_.single();
   commands.entity(scene).despawn_recursive();
-}
-
-#[derive(Component)]
-struct CameraSwapTimer {
-  pub timer: Timer,
-  pub to_isometric: bool,
-}
-
-fn swap_camera(
-  mut camera: Query<(&mut Projection, &mut Transform), With<BattleCamera>>,
-  mut timer: Query<(&mut CameraSwapTimer, Entity)>,
-  time: Res<Time>,
-  mut commands: Commands,
-) {
-  for (mut camera_swap_timer, entity) in &mut timer {
-    camera_swap_timer.timer.tick(time.delta());
-
-    let mut t = camera_swap_timer.timer.elapsed().as_nanos() as f32 / camera_swap_timer.timer.duration().as_nanos() as f32;
-    if !camera_swap_timer.to_isometric {
-      t = 1.0 - t;
-    }
-
-    // Exponential interpolation
-    let distance = DEFAULT_CAMERA_DISTANCE * (t * (MAX_CAMERA_DISTANCE / DEFAULT_CAMERA_DISTANCE).ln()).exp();
-
-    let (mut projection, mut transform) = camera.single_mut();
-
-    transform.translation.y = distance;
-    *projection = PerspectiveProjection {
-      fov: compute_fov(distance, HEIGHT),
-      ..default()
-    }.into();
-
-    if camera_swap_timer.timer.finished() {
-      if camera_swap_timer.to_isometric {
-        *projection = OrthographicProjection {
-          far: 2.0 * MAX_CAMERA_DISTANCE,
-          scaling_mode: ScalingMode::Fixed { width: WIDTH, height: HEIGHT },
-          ..default()
-        }.into();
-      }
-
-      commands.entity(entity).despawn();
-    }
-  }
-}
-
-#[derive(Resource, Clone, Copy, Default, PartialEq)]
-enum CameraMode {
-  Isometric,
-  #[default]
-  Perspective,
 }
 
 // For debug

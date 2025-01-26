@@ -1,2 +1,3 @@
-pub mod battle_camera;
-pub mod menu_camera;
+pub mod plugin;
+mod battle_camera;
+mod menu_camera;

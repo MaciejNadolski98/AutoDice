@@ -1,13 +1,13 @@
 use bevy::prelude::*;
-use crate::{states::GameState, camera::menu_camera::{spawn_menu_camera, despawn_menu_camera}};
+use crate::{states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(OnEnter(GameState::Manage), (spawn_manage, spawn_menu_camera))
-      .add_systems(OnExit(GameState::Manage), (despawn_manage, despawn_menu_camera))
+      .add_systems(OnEnter(GameState::Manage), spawn_manage)
+      .add_systems(OnExit(GameState::Manage), despawn_manage)
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
   }
 }
