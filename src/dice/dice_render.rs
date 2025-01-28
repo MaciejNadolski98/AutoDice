@@ -84,7 +84,6 @@ fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f
   }
 }
 
-// TODDO make private
 #[derive(Default, Resource)]
 pub struct DiceFaceImage {
   pub image: Handle<Image>,
