@@ -1,14 +1,8 @@
 use bevy::prelude::*;
-use bevy::render::{
-  camera::ScalingMode
-};
-use bevy_xpbd_3d::prelude::{
-  PhysicsPlugins, 
-  RigidBody, 
-  Collider, Friction,
-};
+use bevy_xpbd_3d::prelude::*;
 use bevy_xpbd_3d::resources::Gravity;
 use rand::Rng;
+use crate::dice::{RespawnDicesEvent, DiceFaceChangedEvent, FaceDescription, ActionType};
 use crate::states::GameState;
 use crate::constants::{ 
   WIDTH, 
@@ -18,14 +12,11 @@ use crate::constants::{
   MAX_DICE_COUNT
 };
 
-use super::dice::{RespawnDicesEvent, DicePlugin, DiceFaceChangedEvent, FaceDescription, ActionType};
-
 pub struct BattlePlugin;
 
 impl Plugin for BattlePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugins(DicePlugin)
       .add_systems(OnEnter(GameState::Battle), add_battle_scene)
       .add_systems(OnExit(GameState::Battle), despawn_battle_scene)
       .add_systems(Update, debug_control.run_if(in_state(GameState::Battle)))

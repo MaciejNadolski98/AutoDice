@@ -7,10 +7,12 @@ mod menu;
 mod battle;
 mod manage;
 mod camera;
+mod dice;
 mod constants;
 
 use crate::camera::plugin::CameraPlugin;
 use crate::battle::plugin::BattlePlugin;
+use crate::dice::plugin::DicePlugin;
 use crate::menu::plugin::MenuPlugin;
 use crate::manage::plugin::ManagePlugin;
 use crate::states::GameState;
@@ -19,7 +21,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_state::<GameState>()
-        .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin))
+        .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin))
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
         )

@@ -1,48 +1,22 @@
-use std::array;
-
 use bevy::prelude::*;
-use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 use bevy_xpbd_3d::math::PI;
-use bevy_xpbd_3d::prelude::{RigidBody, Friction, AngularVelocity, LinearVelocity, Collider};
+use bevy_xpbd_3d::prelude::*;
 use rand_distr::{Normal, Distribution};
-use crate::constants::{MAX_DICE_COUNT, WIDTH, HEIGHT, DICE_FACES_LAYER, DICE_TEXTURE_SIZE};
 
-use crate::constants::DICE_SIZE;
+use crate::constants::{MAX_DICE_COUNT, WIDTH, DICE_SIZE, HEIGHT};
 
-pub struct DicePlugin;
+use super::dice_render::{
+  get_uv_vertex,
+  DiceFaceImage
+};
+use super::events::RespawnDicesEvent;
 
-impl Plugin for DicePlugin {
+pub struct DiceInstancePlugin;
+
+impl Plugin for DiceInstancePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_event::<DiceFaceChangedEvent>()
-      .add_event::<RespawnDicesEvent>()
-      .add_systems(Update, update_dice_faces)
-      .add_systems(Startup, (spawn_dice_camera, spawn_dice_faces))
       .add_systems(Update, (despawn_dices, spawn_dices).chain().run_if(on_event::<RespawnDicesEvent>()));
-  }
-}
-
-fn get_uv_dice_size() -> [f32; 2] {
-  [1.0 / 6.0, 1.0 / (2.0 * MAX_DICE_COUNT as f32)]
-}
-
-fn get_uv(team_id: u32, dice_id: u32, face_id: u32) -> [f32; 2] {
-  let [w, h] = get_uv_dice_size();
-  [
-    w * face_id as f32, 
-    h * (team_id + 2 * dice_id) as f32,
-  ]
-}
-
-fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f32; 2] {
-  let [x, y] = get_uv(team_id, dice_id, face_id);
-  let dice_size = get_uv_dice_size();
-  match vertex_id {
-    0 => [x, y],
-    1 => [x+dice_size[0], y],
-    2 => [x+dice_size[0], y+dice_size[1]],
-    3 => [x, y+dice_size[1]],
-    _ => panic!("Invali vertex_id value"),
   }
 }
 
@@ -50,54 +24,6 @@ fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f
 enum Dice {
   Blue = 0,
   Red = 1,
-}
-
-#[derive(Default, Resource)]
-struct DiceFaceImage {
-  pub image: Handle<Image>,
-}
-
-fn spawn_dice_camera(
-  mut commands: Commands,
-  mut images: ResMut<Assets<Image>>,
-) {
-  let size = Extent3d {
-    width: 6u32 * (DICE_TEXTURE_SIZE as u32),
-    height: 2u32 * (MAX_DICE_COUNT as u32) * (DICE_TEXTURE_SIZE as u32),
-    ..default()
-  };
-
-  let mut image = Image {
-    texture_descriptor: TextureDescriptor {
-      label: None,
-      size,
-      dimension: TextureDimension::D2,
-      format: TextureFormat::Bgra8UnormSrgb,
-      mip_level_count: 1,
-      sample_count: 1,
-      usage: TextureUsages::TEXTURE_BINDING
-          | TextureUsages::COPY_DST
-          | TextureUsages::RENDER_ATTACHMENT,
-      view_formats: &[],
-    },
-    ..default()
-  };
-  image.resize(size);
-
-  let image_handle = images.add(image);
-
-  commands.spawn((
-    Camera2dBundle {
-      camera: Camera {
-        order: -1,
-        target: image_handle.clone().into(),
-        ..default()
-      },
-      ..default()
-    },
-    DICE_FACES_LAYER,
-  ));
-  commands.insert_resource(DiceFaceImage { image: image_handle });
 }
 
 fn spawn_dices(
@@ -217,103 +143,6 @@ fn despawn_dices(
   info!("Despawning dices");
   for entity in &entities {
     commands.entity(entity).despawn();
-  }
-}
-
-#[derive(Event)]
-pub struct DiceFaceChangedEvent {
-  pub team_id: u32,
-  pub dice_id: u32,
-  pub face_id: u32,
-  pub face: FaceDescription,
-}
-
-#[derive(Event)]
-pub struct RespawnDicesEvent;
-
-#[derive(Resource)]
-struct DiceFaces {
-  pub array: [
-    [
-      [Entity; 6];
-      MAX_DICE_COUNT
-    ];
-    2
-  ],
-}
-
-fn spawn_dice_faces(
-  mut commands: Commands,
-) {
-  let array = [0, 1].map(|team_id| {
-    let ret: [_; MAX_DICE_COUNT] = array::from_fn(|dice_id| {
-      let ret: [_; 6] = array::from_fn(|face_id| {
-        let [x, y] = get_uv(team_id, dice_id as u32, face_id as u32);
-        let [width, height] = [6.0 * DICE_TEXTURE_SIZE, 2.0 * DICE_TEXTURE_SIZE * (MAX_DICE_COUNT as f32)];
-        let [abs_x, abs_y] = [x * width + 0.5 * DICE_TEXTURE_SIZE, y * height + 0.5 * DICE_TEXTURE_SIZE];
-        let [center_x, center_y] = [abs_x - width / 2.0, height / 2.0 - abs_y];
-        commands.spawn((
-          SpatialBundle {
-            transform: Transform::from_xyz(center_x, center_y, 0.0),
-            visibility: Visibility::Visible,
-            ..default()
-          },
-          DICE_FACES_LAYER,
-        )).id()
-      });
-      ret
-    });
-    ret
-  });
-
-  commands.insert_resource(DiceFaces { array });
-}
-
-impl DiceFaces {
-  fn get(&self, team_id: u32, dice_id: u32, face_id: u32) -> Entity {
-    self.array[team_id as usize][dice_id as usize][face_id as usize]
-  }
-}
-
-pub struct FaceDescription {
-  pub action_type: ActionType,
-  pub pips_count: u32,
-}
-
-pub enum ActionType {
-  Attack,
-  Heal,
-  Defend,
-}
-
-fn update_dice_faces(
-  mut commands: Commands,
-  mut events: EventReader<DiceFaceChangedEvent>,
-  entities: Res<DiceFaces>,
-  asset_server: Res<AssetServer>
-) {
-  for face_update in events.read() {
-    assert!(face_update.team_id <= 1);
-    assert!(face_update.dice_id < MAX_DICE_COUNT as u32);
-    assert!(face_update.face_id < 6);
-    let texture = match face_update.face.action_type {
-      ActionType::Attack => asset_server.load("sword.png"),
-      ActionType::Heal => asset_server.load("heal.png"),
-      ActionType::Defend => asset_server.load("shield.png"),
-    };
-    let face_entity = entities.get(face_update.team_id, face_update.dice_id, face_update.face_id);
-    
-    commands.entity(face_entity)
-      .despawn_descendants()
-      .with_children(|commands| {
-        commands.spawn((
-          SpriteBundle {
-            texture: texture,
-            ..default()
-          },
-          DICE_FACES_LAYER,
-        ));
-      });
   }
 }
 
