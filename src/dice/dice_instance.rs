@@ -6,7 +6,7 @@ use rand_distr::{Normal, Distribution};
 use crate::constants::{MAX_DICE_COUNT, WIDTH, DICE_SIZE, HEIGHT};
 
 use super::dice_render::{
-  get_uv_vertex,
+  build_dices,
   DiceFaceImage
 };
 use super::events::RespawnDicesEvent;
@@ -27,48 +27,14 @@ enum Dice {
 }
 
 fn spawn_dices(
-  mut meshes: ResMut<Assets<Mesh>>,
+  meshes: ResMut<Assets<Mesh>>,
   mut commands: Commands,
   mut materials: ResMut<Assets<StandardMaterial>>,
   dice_face_image: Res<DiceFaceImage>
 ) {
   info!("Spawning dices");
   
-  let dice_meshes = [0, 1].map(|team_id| {
-    (0..MAX_DICE_COUNT).map(|dice_id| {
-      meshes.add(Cuboid::default().mesh().with_removed_attribute(Mesh::ATTRIBUTE_UV_0).with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, vec![
-        // Front
-        get_uv_vertex(team_id, dice_id as u32, 0, 0),
-        get_uv_vertex(team_id, dice_id as u32, 0, 1),
-        get_uv_vertex(team_id, dice_id as u32, 0, 2),
-        get_uv_vertex(team_id, dice_id as u32, 0, 3),
-        // Back
-        get_uv_vertex(team_id, dice_id as u32, 1, 0),
-        get_uv_vertex(team_id, dice_id as u32, 1, 1),
-        get_uv_vertex(team_id, dice_id as u32, 1, 2),
-        get_uv_vertex(team_id, dice_id as u32, 1, 3),
-        // Right
-        get_uv_vertex(team_id, dice_id as u32, 2, 0),
-        get_uv_vertex(team_id, dice_id as u32, 2, 1),
-        get_uv_vertex(team_id, dice_id as u32, 2, 2),
-        get_uv_vertex(team_id, dice_id as u32, 2, 3),
-        // Left
-        get_uv_vertex(team_id, dice_id as u32, 3, 0),
-        get_uv_vertex(team_id, dice_id as u32, 3, 1),
-        get_uv_vertex(team_id, dice_id as u32, 3, 2),
-        get_uv_vertex(team_id, dice_id as u32, 3, 3),
-        // Top
-        get_uv_vertex(team_id, dice_id as u32, 4, 0),
-        get_uv_vertex(team_id, dice_id as u32, 4, 1),
-        get_uv_vertex(team_id, dice_id as u32, 4, 2),
-        get_uv_vertex(team_id, dice_id as u32, 4, 3),
-        // Bottom
-        get_uv_vertex(team_id, dice_id as u32, 5, 0),
-        get_uv_vertex(team_id, dice_id as u32, 5, 1),
-        get_uv_vertex(team_id, dice_id as u32, 5, 2),
-        get_uv_vertex(team_id, dice_id as u32, 5, 3),
-      ]))
-  }).collect::<Vec<_>>()});
+  let dice_meshes = build_dices(meshes);
   let dice_positions_red = [
     Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0),
     Vec3::new((-WIDTH + DICE_SIZE) / 2.0, DICE_SIZE, HEIGHT / 4.0 + DICE_SIZE * 1.1),

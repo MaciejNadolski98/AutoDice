@@ -1,6 +1,15 @@
 use bevy::prelude::*;
 
-use super::dice_render::FaceDescription;
+pub struct FaceDescription {
+  pub action_type: ActionType,
+  pub pips_count: u32,
+}
+
+pub enum ActionType {
+  Attack,
+  Heal,
+  Defend,
+}
 
 pub struct DiceEventsPlugin;
 
@@ -11,6 +20,7 @@ impl Plugin for DiceEventsPlugin {
       .add_event::<RespawnDicesEvent>();
   }
 }
+
 
 #[derive(Event)]
 pub struct DiceFaceChangedEvent {

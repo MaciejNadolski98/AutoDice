@@ -3,7 +3,7 @@ use std::array;
 use bevy::{prelude::*, render::render_resource::Extent3d};
 use bevy::render::render_resource::{TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 
-use super::events::DiceFaceChangedEvent;
+use super::events::{DiceFaceChangedEvent, ActionType};
 use crate::constants::{MAX_DICE_COUNT, DICE_TEXTURE_SIZE, DICE_FACES_LAYER};
 
 pub struct DiceRenderPlugin;
@@ -31,17 +31,6 @@ impl FaceMatrix {
   fn get(&self, team_id: u32, dice_id: u32, face_id: u32) -> Entity {
     self.array[team_id as usize][dice_id as usize][face_id as usize]
   }
-}
-
-pub struct FaceDescription {
-  pub action_type: ActionType,
-  pub pips_count: u32,
-}
-
-pub enum ActionType {
-  Attack,
-  Heal,
-  Defend,
 }
 
 fn spawn_dice_faces(
@@ -83,8 +72,7 @@ fn get_uv(team_id: u32, dice_id: u32, face_id: u32) -> [f32; 2] {
   ]
 }
 
-// TODO make private
-pub fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f32; 2] {
+fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f32; 2] {
   let [x, y] = get_uv(team_id, dice_id, face_id);
   let dice_size = get_uv_dice_size();
   match vertex_id {
@@ -174,4 +162,44 @@ fn update_dice_faces(
         ));
       });
   }
+}
+
+pub fn build_dices(
+  mut meshes: ResMut<Assets<Mesh>>
+) -> [std::vec::Vec<bevy::prelude::Handle<bevy::prelude::Mesh>>; 2] {
+  [0, 1].map(|team_id| {
+    (0..MAX_DICE_COUNT).map(|dice_id| {
+      meshes.add(Cuboid::default().mesh().with_removed_attribute(Mesh::ATTRIBUTE_UV_0).with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, vec![
+        // Front
+        get_uv_vertex(team_id, dice_id as u32, 0, 0),
+        get_uv_vertex(team_id, dice_id as u32, 0, 1),
+        get_uv_vertex(team_id, dice_id as u32, 0, 2),
+        get_uv_vertex(team_id, dice_id as u32, 0, 3),
+        // Back
+        get_uv_vertex(team_id, dice_id as u32, 1, 0),
+        get_uv_vertex(team_id, dice_id as u32, 1, 1),
+        get_uv_vertex(team_id, dice_id as u32, 1, 2),
+        get_uv_vertex(team_id, dice_id as u32, 1, 3),
+        // Right
+        get_uv_vertex(team_id, dice_id as u32, 2, 0),
+        get_uv_vertex(team_id, dice_id as u32, 2, 1),
+        get_uv_vertex(team_id, dice_id as u32, 2, 2),
+        get_uv_vertex(team_id, dice_id as u32, 2, 3),
+        // Left
+        get_uv_vertex(team_id, dice_id as u32, 3, 0),
+        get_uv_vertex(team_id, dice_id as u32, 3, 1),
+        get_uv_vertex(team_id, dice_id as u32, 3, 2),
+        get_uv_vertex(team_id, dice_id as u32, 3, 3),
+        // Top
+        get_uv_vertex(team_id, dice_id as u32, 4, 0),
+        get_uv_vertex(team_id, dice_id as u32, 4, 1),
+        get_uv_vertex(team_id, dice_id as u32, 4, 2),
+        get_uv_vertex(team_id, dice_id as u32, 4, 3),
+        // Bottom
+        get_uv_vertex(team_id, dice_id as u32, 5, 0),
+        get_uv_vertex(team_id, dice_id as u32, 5, 1),
+        get_uv_vertex(team_id, dice_id as u32, 5, 2),
+        get_uv_vertex(team_id, dice_id as u32, 5, 3),
+      ]))
+  }).collect::<Vec<_>>()})
 }
