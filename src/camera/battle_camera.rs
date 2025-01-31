@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[derive(Component)]
-pub struct BattleCamera;
+struct BattleCamera;
 
 #[derive(Event)]
 pub struct SwapBattleCamera;
@@ -24,7 +24,7 @@ impl Plugin for BattleCameraPlugin {
   }
 }
 
-pub fn spawn_battle_camera(
+fn spawn_battle_camera(
   mut commands: Commands,
 ) {
   commands.spawn((
@@ -38,7 +38,7 @@ pub fn spawn_battle_camera(
   ));
 }
 
-pub fn despawn_battle_camera(
+fn despawn_battle_camera(
   mut commands: Commands,
   camera_: Query<Entity, With<BattleCamera>>,
 ) {
@@ -63,7 +63,7 @@ impl FromSquare for Camera3dBundle {
   }
 }
 
-pub fn compute_fov(distance: f32, square_size: f32) -> f32 {
+fn compute_fov(distance: f32, square_size: f32) -> f32 {
   return 2.0 * ((square_size/(2.0*distance)).atan());
 }
 
