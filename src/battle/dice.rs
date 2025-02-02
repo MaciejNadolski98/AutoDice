@@ -284,6 +284,7 @@ pub enum ActionType {
   Attack,
   Heal,
   Defend,
+  Fire,
 }
 
 fn update_dice_faces(
@@ -300,6 +301,7 @@ fn update_dice_faces(
       ActionType::Attack => asset_server.load("sword.png"),
       ActionType::Heal => asset_server.load("heal.png"),
       ActionType::Defend => asset_server.load("shield.png"),
+      ActionType::Fire => asset_server.load("fire.png"),
     };
     let face_entity = entities.get(face_update.team_id, face_update.dice_id, face_update.face_id);
     
