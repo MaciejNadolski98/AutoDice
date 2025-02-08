@@ -141,10 +141,11 @@ fn debug_control(
             dice_id: dice_id as u32,
             face_id: face_id,
             face: FaceDescription {
-              action_type: match rand::thread_rng().gen_range(0..3) {
+              action_type: match rand::thread_rng().gen_range(0..4) {
                 0 => ActionType::Attack,
                 1 => ActionType::Defend,
-                _ => ActionType::Heal,
+                2 => ActionType::Heal,
+                _ => ActionType::Fire,
               },
               pips_count: 0,
             }
