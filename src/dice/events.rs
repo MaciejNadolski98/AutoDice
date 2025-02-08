@@ -9,6 +9,7 @@ pub enum ActionType {
   Attack,
   Heal,
   Defend,
+  Fire,
 }
 
 pub struct DiceEventsPlugin;
