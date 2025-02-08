@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::camera::ScalingMode};
 use crate::states::GameState;
 
 #[derive(Component)]
-pub struct MenuCamera;
+struct MenuCamera;
 
 pub struct MenuCameraPlugin;
 
@@ -16,7 +16,7 @@ impl Plugin for MenuCameraPlugin {
   }
 }
 
-pub fn spawn_menu_camera(
+fn spawn_menu_camera(
   mut commands: Commands,
 ) {
   let mut camera = Camera2dBundle::default();
@@ -40,7 +40,7 @@ pub fn spawn_menu_camera(
   ));
 }
 
-pub fn despawn_menu_camera(
+fn despawn_menu_camera(
   mut commands: Commands,
   camera_: Query<Entity, With<MenuCamera>>,
 ) {
