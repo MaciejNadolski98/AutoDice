@@ -18,7 +18,6 @@ impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
     .add_event::<DiceFaceChangedEvent>()
-    .add_event::<DiceStationaryEvent>()
     .add_event::<RespawnDicesEvent>();
   }
 }
