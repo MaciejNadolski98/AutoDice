@@ -131,6 +131,7 @@ fn debug_control(
   mouse_buttons: Res<ButtonInput<MouseButton>>,
   mut respawn_dices: EventWriter<RespawnDicesEvent>,
   mut change_dice_face: EventWriter<DiceFaceChangedEvent>,
+  mut game_state: ResMut<NextState<GameState>>,
 ) {
   if mouse_buttons.just_pressed(MouseButton::Right) {
     for team_id in [0, 1] {

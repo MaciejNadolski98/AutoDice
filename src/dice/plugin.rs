@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use super::{
+  dice_collector::DiceCollectorPlugin,
   dice_instance::DiceInstancePlugin,
   dice_render::DiceRenderPlugin,
   dice_template::DiceTemplatePlugin,
@@ -16,7 +17,8 @@ impl Plugin for DicePlugin {
         DiceInstancePlugin,
         DiceRenderPlugin,
         DiceTemplatePlugin,
-        DiceEventsPlugin
+        DiceEventsPlugin,
+        DiceCollectorPlugin
       ));
   }
 }

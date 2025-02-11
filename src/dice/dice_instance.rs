@@ -21,7 +21,7 @@ impl Plugin for DiceInstancePlugin {
 }
 
 #[derive(Component)]
-enum Dice {
+pub(crate) enum Dice {
   Blue = 0,
   Red = 1,
 }

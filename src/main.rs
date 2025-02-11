@@ -21,6 +21,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_state::<GameState>()
+        // .add_sub_state::<BattleStage>()
         .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin))
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
