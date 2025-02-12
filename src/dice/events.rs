@@ -34,5 +34,3 @@ pub struct DiceFaceChangedEvent {
 #[derive(Event)]
 pub struct RespawnDicesEvent;
 
-#[derive(Event)]
-pub struct DiceStationaryEvent;

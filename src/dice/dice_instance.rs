@@ -20,7 +20,7 @@ impl Plugin for DiceInstancePlugin {
   }
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq)]
 pub(crate) enum Dice {
   Blue = 0,
   Red = 1,

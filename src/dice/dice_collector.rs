@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_xpbd_3d::prelude::*;
-use crate::states::GameState;
+use crate::{constants::DICE_SIZE, states::GameState};
 
 
 use super::{dice_instance::Dice, RespawnDicesEvent};
@@ -67,11 +67,12 @@ fn set_throwing(mut dice_collector: ResMut<DiceCollector>){
   dice_collector.stationary_transforms.clear();
   dice_collector.target_transforms.clear();
 }
-
+// TODO: Split into into simpler functions
 fn animate(
   mut dice_collector: ResMut<DiceCollector>,
-  mut query: Query<(&Dice, &mut Transform, &mut LinearVelocity, &mut AngularVelocity)>,
-  time: Res<Time>,){
+  mut query: Query<(&Dice, &mut Transform, &mut LinearVelocity, &mut AngularVelocity, &mut RigidBody)>,
+  time: Res<Time>,
+  mut commands: Commands){
     if dice_collector.stage == BattleStage::Throwing{
       dice_collector.min_throw_timer.tick(time.delta());
       dice_collector.max_throw_timer.tick(time.delta());
@@ -91,22 +92,31 @@ fn animate(
       dice_collector.stationary_timer.tick(time.delta());
 
       if dice_collector.stationary_transforms.len() == 0{
-        for (d, t, lv, av) in &query{
+        for (i, (d, t, lv, av, _)) in query.iter().enumerate() {
           info!("{:?}", Mat3::from_quat(t.rotation));
           dice_collector.stationary_transforms.push(t.clone());
           let m = get_discrete_dice_orientation(*t);
           let mut target_transform = t.clone();
           target_transform.rotation = Quat::from_mat3(&m);
+          let mut z = DICE_SIZE as f32;
+          if d == &Dice::Blue{
+            z = -z;
+          }
+          target_transform.translation = Vec3::new((i as f32 - 5.0) * DICE_SIZE * 2.0, DICE_SIZE / 2.0, z);
           dice_collector.target_transforms.push(target_transform);
         }
       }
 
-      for (i, (_, mut transform, mut linear_velocity, mut angular_velocity)) in query.iter_mut().enumerate() {
-        transform.translation = dice_collector.stationary_transforms[i].translation.clone();
-        // for some reason resetting rotation causes some weird behavior (some dice do a 90 or 180 degrees spin across 1 or 2 frames)
-        // transform.rotation = dice_collector.stationary_transforms[i].rotation.clone();
-        linear_velocity.0 = Vec3::ZERO;
-        angular_velocity.0 = Vec3::ZERO;
+
+      // for (i, (_, mut transform, mut linear_velocity, mut angular_velocity, _)) in query.iter_mut().enumerate() {
+      //   transform.translation = dice_collector.stationary_transforms[i].translation.clone();
+      //   // for some reason resetting rotation causes some weird behavior (some dice do a 90 or 180 degrees spin across 1 or 2 frames)
+      //   // transform.rotation = dice_collector.stationary_transforms[i].rotation.clone();
+      //   linear_velocity.0 = Vec3::ZERO;
+      //   angular_velocity.0 = Vec3::ZERO;
+      // }
+      for (i, (_, _, _, _, mut rb)) in query.iter_mut().enumerate() {
+        *rb = RigidBody::Static;
       }
 
       if dice_collector.stationary_timer.finished(){
@@ -125,7 +135,7 @@ fn animate(
       }
       else{
         let t = dice_collector.collecting_timer.elapsed().as_secs_f32()/dice_collector.collecting_timer.duration().as_secs_f32();
-        for (i, (_, mut transform, mut linear_velocity, mut angular_velocity)) in query.iter_mut().enumerate() {
+        for (i, (_, mut transform, mut linear_velocity, mut angular_velocity, _)) in query.iter_mut().enumerate() {
           transform.translation = dice_collector.stationary_transforms[i].translation.lerp(dice_collector.target_transforms[i].translation, t);
           transform.rotation = dice_collector.stationary_transforms[i].rotation.slerp(dice_collector.target_transforms[i].rotation, t);
           linear_velocity.0 = Vec3::ZERO;
@@ -141,12 +151,15 @@ fn animate(
         dice_collector.presenting_timer.reset();
       }
       else{
-        for (i, (_, mut transform, mut linear_velocity, mut angular_velocity)) in query.iter_mut().enumerate() {
-          transform.translation = dice_collector.target_transforms[i].translation.clone();
-          // for some reason resetting rotation causes some weird behavior (some dice do a 90 or 180 degrees spin across 1 or 2 frames)
-          // transform.rotation = dice_collector.stationary_transforms[i].rotation.clone();
-          linear_velocity.0 = Vec3::ZERO;
-          angular_velocity.0 = Vec3::ZERO;
+        // for (i, (_, mut transform, mut linear_velocity, mut angular_velocity)) in query.iter_mut().enumerate() {
+        //   transform.translation = dice_collector.target_transforms[i].translation.clone();
+        //   // for some reason resetting rotation causes some weird behavior (some dice do a 90 or 180 degrees spin across 1 or 2 frames)
+        //   // transform.rotation = dice_collector.stationary_transforms[i].rotation.clone();
+        //   linear_velocity.0 = Vec3::ZERO;
+        //   angular_velocity.0 = Vec3::ZERO;
+        // }
+        for (i, (_, _, _, _, mut rb)) in query.iter_mut().enumerate() {
+          *rb = RigidBody::Static;
         }
       }
 
@@ -162,12 +175,12 @@ fn animate(
   }
 
 fn is_dice_stationary(
-  query: Query<(&Dice, &mut Transform, &mut LinearVelocity, &mut AngularVelocity)>
+  query: Query<(&Dice, &mut Transform, &mut LinearVelocity, &mut AngularVelocity, &mut RigidBody)>
 ) -> bool {
   if query.iter().count() == 0 {
     return false;
   }
-  for (_, _, velocity, _) in &query {
+  for (_, _, velocity, _, _) in &query {
     if velocity.length() > 0.5 {
       return false;
     }
