@@ -12,6 +12,7 @@ use crate::constants::{
   MAX_DICE_COUNT
 };
 
+use super::dice_collector::DiceCollectorPlugin;
 pub struct BattlePlugin;
 
 impl Plugin for BattlePlugin {
@@ -20,7 +21,8 @@ impl Plugin for BattlePlugin {
       .add_systems(OnEnter(GameState::Battle), add_battle_scene)
       .add_systems(OnExit(GameState::Battle), despawn_battle_scene)
       .add_systems(Update, debug_control.run_if(in_state(GameState::Battle)))
-      .add_plugins(PhysicsPlugins::default())
+      .add_plugins((PhysicsPlugins::default(),
+      DiceCollectorPlugin))
       .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY_ACCELERATION));
   }
 }
@@ -131,7 +133,6 @@ fn debug_control(
   mouse_buttons: Res<ButtonInput<MouseButton>>,
   mut respawn_dices: EventWriter<RespawnDicesEvent>,
   mut change_dice_face: EventWriter<DiceFaceChangedEvent>,
-  mut game_state: ResMut<NextState<GameState>>,
 ) {
   if mouse_buttons.just_pressed(MouseButton::Right) {
     for team_id in [0, 1] {

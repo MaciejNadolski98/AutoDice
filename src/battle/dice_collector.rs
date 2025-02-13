@@ -1,9 +1,9 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy_xpbd_3d::prelude::*;
-use crate::{constants::DICE_SIZE, states::GameState};
+use crate::{constants::DICE_SIZE, dice::RespawnDicesEvent, states::GameState, dice::dice_instance::Dice};
 
-
-use super::{dice_instance::Dice, RespawnDicesEvent};
 
 #[derive(PartialEq)]
 enum BattleStage {
@@ -47,6 +47,50 @@ impl Default for DiceCollector {
     }
   }
 }
+impl DiceCollector {
+  fn tick(&mut self, delta: Duration) {
+    self.min_throw_timer.tick(delta);
+    self.max_throw_timer.tick(delta);
+    self.stationary_timer.tick(delta);
+    self.collecting_timer.tick(delta);
+    self.presenting_timer.tick(delta);
+  }
+  fn set_inactive(&mut self) {
+    self.stage = BattleStage::Inactive;
+  }
+
+  fn set_pending(&mut self) {
+    self.stage = BattleStage::Pending;
+  }
+
+  fn set_throwing(&mut self) {
+    self.stage = BattleStage::Throwing;
+    info!("Throwing state");
+    self.min_throw_timer.reset();
+    self.max_throw_timer.reset();
+    self.stationary_transforms.clear();
+    self.target_transforms.clear();
+  }
+
+  fn set_stationary(&mut self) {
+    self.stage = BattleStage::Stationary;
+    self.stationary_timer.reset();
+  }
+
+  fn set_collecting(&mut self) {
+    self.stage = BattleStage::Collecting;
+    self.collecting_timer.reset();
+  }
+
+  fn set_presenting(&mut self) {
+    self.stage = BattleStage::Presenting;
+    self.presenting_timer.reset();
+  }
+
+  fn set_executing(&mut self) {
+    self.stage = BattleStage::Executing;
+  }
+}
 
 pub struct DiceCollectorPlugin;
 
@@ -59,13 +103,9 @@ impl Plugin for DiceCollectorPlugin {
   }
 }
 
+
 fn set_throwing(mut dice_collector: ResMut<DiceCollector>){
-  dice_collector.stage = BattleStage::Throwing;
-  info!("Throwing state");
-  dice_collector.min_throw_timer.reset();
-  dice_collector.max_throw_timer.reset();
-  dice_collector.stationary_transforms.clear();
-  dice_collector.target_transforms.clear();
+  dice_collector.set_throwing();
 }
 // TODO: Split into into simpler functions
 fn animate(
@@ -73,26 +113,25 @@ fn animate(
   mut query: Query<(&Dice, &mut Transform, &mut LinearVelocity, &mut AngularVelocity, &mut RigidBody)>,
   time: Res<Time>,
   mut commands: Commands){
+    dice_collector.tick(time.delta());
     if dice_collector.stage == BattleStage::Throwing{
-      dice_collector.min_throw_timer.tick(time.delta());
-      dice_collector.max_throw_timer.tick(time.delta());
-      if dice_collector.min_throw_timer.finished() && is_dice_stationary(query){
+      // dice_collector.min_throw_timer.tick(time.delta());
+      // dice_collector.max_throw_timer.tick(time.delta());
+      if dice_collector.min_throw_timer.finished() && are_dices_stationary(query){
         info!("Stationary state");
-        dice_collector.stage = BattleStage::Stationary;
-        dice_collector.stationary_timer.reset();
+        dice_collector.set_stationary();
 
       }
       if dice_collector.max_throw_timer.finished(){
         info!("Max throw state time elapsed, stopping dices");
-        dice_collector.stage = BattleStage::Stationary;
-        dice_collector.stationary_timer.reset();
+        dice_collector.set_stationary();
       }
     }
     else if dice_collector.stage == BattleStage::Stationary{
-      dice_collector.stationary_timer.tick(time.delta());
+      // dice_collector.stationary_timer.tick(time.delta());
 
       if dice_collector.stationary_transforms.len() == 0{
-        for (i, (d, t, lv, av, _)) in query.iter().enumerate() {
+        for (i, (d, t, _, _, mut rb)) in query.iter_mut().enumerate() {
           info!("{:?}", Mat3::from_quat(t.rotation));
           dice_collector.stationary_transforms.push(t.clone());
           let m = get_discrete_dice_orientation(*t);
@@ -104,63 +143,39 @@ fn animate(
           }
           target_transform.translation = Vec3::new((i as f32 - 5.0) * DICE_SIZE * 2.0, DICE_SIZE / 2.0, z);
           dice_collector.target_transforms.push(target_transform);
+          *rb = RigidBody::Static;          
         }
-      }
-
-
-      // for (i, (_, mut transform, mut linear_velocity, mut angular_velocity, _)) in query.iter_mut().enumerate() {
-      //   transform.translation = dice_collector.stationary_transforms[i].translation.clone();
-      //   // for some reason resetting rotation causes some weird behavior (some dice do a 90 or 180 degrees spin across 1 or 2 frames)
-      //   // transform.rotation = dice_collector.stationary_transforms[i].rotation.clone();
-      //   linear_velocity.0 = Vec3::ZERO;
-      //   angular_velocity.0 = Vec3::ZERO;
-      // }
-      for (i, (_, _, _, _, mut rb)) in query.iter_mut().enumerate() {
-        *rb = RigidBody::Static;
       }
 
       if dice_collector.stationary_timer.finished(){
         info!("Collecting state");
-        dice_collector.stage = BattleStage::Collecting;
-        dice_collector.collecting_timer.reset();
-
+        dice_collector.set_collecting();
       }
     }
     else if dice_collector.stage == BattleStage::Collecting{
-      dice_collector.collecting_timer.tick(time.delta());
+      // dice_collector.collecting_timer.tick(time.delta());
       if dice_collector.collecting_timer.finished(){
-        info!("Executing state");
-        dice_collector.stage = BattleStage::Presenting;
-        dice_collector.presenting_timer.reset();
+        info!("Presenting state");
+        dice_collector.set_presenting();
       }
       else{
         let t = dice_collector.collecting_timer.elapsed().as_secs_f32()/dice_collector.collecting_timer.duration().as_secs_f32();
-        for (i, (_, mut transform, mut linear_velocity, mut angular_velocity, _)) in query.iter_mut().enumerate() {
+        for (i, (_, mut transform, _, _, _)) in query.iter_mut().enumerate() {
           transform.translation = dice_collector.stationary_transforms[i].translation.lerp(dice_collector.target_transforms[i].translation, t);
           transform.rotation = dice_collector.stationary_transforms[i].rotation.slerp(dice_collector.target_transforms[i].rotation, t);
-          linear_velocity.0 = Vec3::ZERO;
-          angular_velocity.0 = Vec3::ZERO;
+          // linear_velocity.0 = Vec3::ZERO;
+          // angular_velocity.0 = Vec3::ZERO;
         }
       }
     }
     else if dice_collector.stage == BattleStage::Presenting{
-      dice_collector.presenting_timer.tick(time.delta());
+      // dice_collector.presenting_timer.tick(time.delta());
       if dice_collector.collecting_timer.finished(){
         info!("Executing state");
-        dice_collector.stage = BattleStage::Executing;
-        dice_collector.presenting_timer.reset();
+        dice_collector.set_executing();
       }
       else{
-        // for (i, (_, mut transform, mut linear_velocity, mut angular_velocity)) in query.iter_mut().enumerate() {
-        //   transform.translation = dice_collector.target_transforms[i].translation.clone();
-        //   // for some reason resetting rotation causes some weird behavior (some dice do a 90 or 180 degrees spin across 1 or 2 frames)
-        //   // transform.rotation = dice_collector.stationary_transforms[i].rotation.clone();
-        //   linear_velocity.0 = Vec3::ZERO;
-        //   angular_velocity.0 = Vec3::ZERO;
-        // }
-        for (i, (_, _, _, _, mut rb)) in query.iter_mut().enumerate() {
-          *rb = RigidBody::Static;
-        }
+        
       }
 
       
@@ -174,12 +189,9 @@ fn animate(
     }
   }
 
-fn is_dice_stationary(
+fn are_dices_stationary(
   query: Query<(&Dice, &mut Transform, &mut LinearVelocity, &mut AngularVelocity, &mut RigidBody)>
 ) -> bool {
-  if query.iter().count() == 0 {
-    return false;
-  }
   for (_, _, velocity, _, _) in &query {
     if velocity.length() > 0.5 {
       return false;
