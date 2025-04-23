@@ -28,14 +28,15 @@ fn spawn_battle_camera(
   mut commands: Commands,
 ) {
   commands.spawn((
-    Camera3dBundle::from_square(
-      Vec3::ZERO, 
-      Vec3::Z, 
-      Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0), 
-      144.0,
-    ),
+    Camera3d::default(),
+    Transform::from_translation(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0)).looking_at(Vec3::ZERO, Vec3::Z),
+    Projection::Perspective(PerspectiveProjection {
+      fov: compute_fov(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0).distance(Vec3::ZERO), 144.0),
+      ..default()
+    }),
     BattleCamera,
   ));
+  info!("computed fov: {}", compute_fov(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0).distance(Vec3::ZERO), 144.0));
 }
 
 fn despawn_battle_camera(
@@ -44,23 +45,6 @@ fn despawn_battle_camera(
 ) {
   let camera = camera_.single();
   commands.entity(camera).despawn();
-}
-
-trait FromSquare {
-  fn from_square(looking_at: Vec3, up: Vec3, looking_from: Vec3, square_size: f32) -> Self;
-}
-
-impl FromSquare for Camera3dBundle {
-  fn from_square(looking_at: Vec3, up: Vec3, looking_from: Vec3, square_size: f32) -> Self {
-    return Camera3dBundle {
-      transform: Transform::from_translation(looking_from).looking_at(looking_at, up),
-      projection: PerspectiveProjection {
-        fov: compute_fov(looking_from.distance(looking_at), square_size),
-        ..default()
-      }.into(),
-      ..default()
-    };
-  }
 }
 
 fn compute_fov(distance: f32, square_size: f32) -> f32 {
@@ -103,7 +87,7 @@ fn swap_camera(
         *projection = OrthographicProjection {
           far: 2.0 * MAX_CAMERA_DISTANCE,
           scaling_mode: ScalingMode::Fixed { width: WIDTH, height: HEIGHT },
-          ..default()
+          ..OrthographicProjection::default_3d()
         }.into();
       }
 

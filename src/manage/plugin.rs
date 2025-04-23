@@ -26,72 +26,66 @@ fn spawn_manage(
 ) {
   info!("In Manage state");
   commands.spawn((
-    NodeBundle {
-      style: Style { 
-        width: Val::Percent(100.0), 
-        height: Val::Percent(100.0),
-        flex_direction: FlexDirection::Column,
-        justify_content: JustifyContent::End,
-        ..default() 
-      },
-      background_color: Color::GRAY.into(),
-      ..default()
+    Node { 
+      width: Val::Percent(100.0), 
+      height: Val::Percent(100.0),
+      flex_direction: FlexDirection::Column,
+      justify_content: JustifyContent::End,
+      ..default() 
     },
+    BackgroundColor(Color::srgb(0.5, 0.5, 0.5)),
     ManageScreen,
     Name::new("Manage"),
   )).with_children(|commands| {
     // Bottom menu
     commands.spawn((
-      NodeBundle {
-        style: Style { 
-          width: Val::Percent(100.0), 
-          height: Val::Percent(20.0), 
-          flex_direction: FlexDirection::Row,
-          justify_content: JustifyContent::SpaceBetween,
-          align_items: AlignItems::Center,
-          ..default() 
-        },
-        background_color: Color::DARK_GRAY.into(),
-        ..default()
+      Node { 
+        width: Val::Percent(100.0), 
+        height: Val::Percent(20.0), 
+        flex_direction: FlexDirection::Row,
+        justify_content: JustifyContent::SpaceBetween,
+        align_items: AlignItems::Center,
+        ..default() 
       },
+      BackgroundColor(Color::srgb(0.25, 0.25, 0.25)),
     )).with_children(|commands| {
       commands.spawn((
-        ButtonBundle {
-          style: Style { 
-            width: Val::Percent(10.0), 
-            height: Val::Percent(60.0), 
-            left: Val::Px(50.0),
-            justify_content: JustifyContent::Center, 
-            align_items: AlignItems::Center, 
-            ..default() 
-          },
-          background_color: Color::RED.into(),
-          ..default()
+        Button,
+        Node { 
+          width: Val::Percent(10.0), 
+          height: Val::Percent(60.0), 
+          left: Val::Px(50.0),
+          justify_content: JustifyContent::Center, 
+          align_items: AlignItems::Center, 
+          ..default() 
         },
+        BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
         ButtonAction::BackToMenu,
       )).with_children(|commands| {
         commands.spawn((
-          TextBundle::from_section("Go Back", TextStyle { font_size: 30.0, color: Color::BLACK.into(), ..default() } ),
+          Text("Go Back".to_string()),
+          TextFont { font_size: 30.0, ..default() },
+          TextColor(Color::srgb(0.0, 0.0, 0.0)),
         ));
       });
 
       commands.spawn((
-        ButtonBundle {
-          style: Style { 
-            width: Val::Percent(10.0), 
-            height: Val::Percent(60.0),
-            right: Val::Px(50.0),
-            justify_content: JustifyContent::Center, 
-            align_items: AlignItems::Center, 
-            ..default() 
-          },
-          background_color: Color::RED.into(),
-          ..default()
+        Button,
+        Node { 
+          width: Val::Percent(10.0), 
+          height: Val::Percent(60.0),
+          right: Val::Px(50.0),
+          justify_content: JustifyContent::Center, 
+          align_items: AlignItems::Center, 
+          ..default() 
         },
+        BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
         ButtonAction::Battle,
       )).with_children(|commands| {
         commands.spawn((
-          TextBundle::from_section("Battle!", TextStyle { font_size: 30.0, color: Color::BLACK.into(), ..default() } ),
+          Text("Battle!".to_string()),
+          TextFont { font_size: 30.0, ..default() },
+          TextColor(Color::srgb(0.0, 0.0, 0.0)),
         ));
       });
     });

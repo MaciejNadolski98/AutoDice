@@ -44,11 +44,8 @@ fn spawn_dice_faces(
         let [abs_x, abs_y] = [x * width + 0.5 * DICE_TEXTURE_SIZE, y * height + 0.5 * DICE_TEXTURE_SIZE];
         let [center_x, center_y] = [abs_x - width / 2.0, height / 2.0 - abs_y];
         commands.spawn((
-          SpatialBundle {
-            transform: Transform::from_xyz(center_x, center_y, 0.0),
-            visibility: Visibility::Visible,
-            ..default()
-          },
+          Transform::from_xyz(center_x, center_y, 0.0),
+          Visibility::Visible,
           DICE_FACES_LAYER,
         )).id()
       });
@@ -119,12 +116,10 @@ fn spawn_dice_camera(
   let image_handle = images.add(image);
 
   commands.spawn((
-    Camera2dBundle {
-      camera: Camera {
-        order: -1,
-        target: image_handle.clone().into(),
-        ..default()
-      },
+    Camera2d,
+    Camera {
+      order: -1,
+      target: image_handle.clone().into(),
       ..default()
     },
     DICE_FACES_LAYER,
@@ -154,10 +149,7 @@ fn update_dice_faces(
       .despawn_descendants()
       .with_children(|commands| {
         commands.spawn((
-          SpriteBundle {
-            texture: texture,
-            ..default()
-          },
+          Sprite::from_image(texture),
           DICE_FACES_LAYER,
         ));
       });
@@ -169,7 +161,7 @@ pub fn build_dices(
 ) -> [std::vec::Vec<bevy::prelude::Handle<bevy::prelude::Mesh>>; 2] {
   [0, 1].map(|team_id| {
     (0..MAX_DICE_COUNT).map(|dice_id| {
-      meshes.add(Cuboid::default().mesh().with_removed_attribute(Mesh::ATTRIBUTE_UV_0).with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, vec![
+      meshes.add(Cuboid::default().mesh().build().with_removed_attribute(Mesh::ATTRIBUTE_UV_0).with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, vec![
         // Front
         get_uv_vertex(team_id, dice_id as u32, 0, 0),
         get_uv_vertex(team_id, dice_id as u32, 0, 1),

@@ -19,22 +19,14 @@ impl Plugin for MenuCameraPlugin {
 fn spawn_menu_camera(
   mut commands: Commands,
 ) {
-  let mut camera = Camera2dBundle::default();
-
-  camera.projection.scaling_mode = ScalingMode::AutoMin {
-      min_width: 256.0,
-      min_height: 144.0,
-  };
   commands.spawn((
-    Camera2dBundle {
-      projection: OrthographicProjection {
-        scaling_mode: ScalingMode::AutoMin {
-          min_width: 256.0,
-          min_height: 144.0,
-        },
-        ..default()
+    Camera2d,
+    OrthographicProjection {
+      scaling_mode: ScalingMode::AutoMin {
+        min_width: 256.0,
+        min_height: 144.0,
       },
-      ..default()
+      ..OrthographicProjection::default_2d()
     },
     MenuCamera,
   ));
