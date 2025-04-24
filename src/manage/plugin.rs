@@ -24,8 +24,8 @@ enum ButtonAction {
 fn spawn_manage(
   mut commands: Commands,
 ) {
-  info!("In Manage state");
   commands.spawn((
+    Name::new("Manage"),
     Node { 
       width: Val::Percent(100.0), 
       height: Val::Percent(100.0),
@@ -35,10 +35,9 @@ fn spawn_manage(
     },
     BackgroundColor(Color::srgb(0.5, 0.5, 0.5)),
     ManageScreen,
-    Name::new("Manage"),
   )).with_children(|commands| {
-    // Bottom menu
     commands.spawn((
+      Name::new("Bottom menu"),
       Node { 
         width: Val::Percent(100.0), 
         height: Val::Percent(20.0), 
@@ -50,6 +49,7 @@ fn spawn_manage(
       BackgroundColor(Color::srgb(0.25, 0.25, 0.25)),
     )).with_children(|commands| {
       commands.spawn((
+        Name::new("Back to menu button"),
         Button,
         Node { 
           width: Val::Percent(10.0), 
@@ -70,6 +70,7 @@ fn spawn_manage(
       });
 
       commands.spawn((
+        Name::new("Battle button"),
         Button,
         Node { 
           width: Val::Percent(10.0), 
