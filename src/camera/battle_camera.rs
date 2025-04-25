@@ -37,7 +37,6 @@ fn spawn_battle_camera(
     }),
     BattleCamera,
   ));
-  info!("computed fov: {}", compute_fov(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0).distance(Vec3::ZERO), 144.0));
 }
 
 fn despawn_battle_camera(
