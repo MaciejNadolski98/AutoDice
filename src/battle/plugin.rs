@@ -32,11 +32,11 @@ fn add_battle_scene(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-  commands.spawn((Name::new("Battle Scene"), Visibility::default(), Transform::default(), BattleComponent)).with_children(|commands| {
+  commands.spawn((Visibility::default(), Transform::default(), BattleComponent)).with_children(|commands| {
     let cube_mesh = meshes.add(Cuboid::default());
 
+    // base
     commands.spawn((
-      Name::new("Base"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgb(0.0, 1.0, 0.0))),
       Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(256.0, 0.01, 144.0)),
@@ -44,54 +44,48 @@ fn add_battle_scene(
       Friction::new(0.9),
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
-
+    // middle wall
     commands.spawn((
-      Name::new("Middle wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
       Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(WIDTH, WALL_SIZE, 1.0)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
-
+    // north wall
     commands.spawn((
-      Name::new("North wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
       Transform::from_xyz(0.0, 0.0, HEIGHT / 2.0).with_scale(Vec3::new(WIDTH, WALL_SIZE, 0.01)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
-    
+    // south wall
     commands.spawn((
-      Name::new("South wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
       Transform::from_xyz(0.0, 0.0, -HEIGHT / 2.0).with_scale(Vec3::new(WIDTH, WALL_SIZE, 0.01)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
-    
+    // east wall
     commands.spawn((
-      Name::new("East wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
       Transform::from_xyz(WIDTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(0.01, WALL_SIZE, HEIGHT)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
-    
+    // west wall
     commands.spawn((
-      Name::new("West wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
       Transform::from_xyz(-WIDTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(0.01, WALL_SIZE, HEIGHT)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
-    
+    // light
     commands.spawn((
-      Name::new("Light source"),
       DirectionalLight {
         illuminance: light_consts::lux::OVERCAST_DAY,
         shadows_enabled: true,

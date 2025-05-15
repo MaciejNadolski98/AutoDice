@@ -44,7 +44,6 @@ fn spawn_dice_faces(
         let [abs_x, abs_y] = [x * width + 0.5 * DICE_TEXTURE_SIZE, y * height + 0.5 * DICE_TEXTURE_SIZE];
         let [center_x, center_y] = [abs_x - width / 2.0, height / 2.0 - abs_y];
         commands.spawn((
-          Name::new("Dice face"),
           Transform::from_xyz(center_x, center_y, 0.0),
           Visibility::Visible,
           DICE_FACES_LAYER,
@@ -117,7 +116,6 @@ fn spawn_dice_camera(
   let image_handle = images.add(image);
 
   commands.spawn((
-    Name::new("Dice texture camera"),
     Camera2d,
     Camera {
       order: -1,
@@ -151,7 +149,6 @@ fn update_dice_faces(
       .despawn_descendants()
       .with_children(|commands| {
         commands.spawn((
-          Name::new("Face image"),
           Sprite::from_image(texture),
           DICE_FACES_LAYER,
         ));

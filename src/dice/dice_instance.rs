@@ -48,10 +48,10 @@ fn spawn_dices(
     ret.z *= -1.0;
     return ret;
   });
-
+  // dices
   for i in 0..MAX_DICE_COUNT {
+    // blue
     commands.spawn((
-      Name::new(format!("Blue dice {}", i+1)),
       Mesh3d(dice_meshes[0][i].clone()),
       MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
       Transform::from_translation(dice_positions_blue[i]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
@@ -71,8 +71,8 @@ fn spawn_dices(
       Dice::Blue,
     ));
 
+    // red
     commands.spawn((
-      Name::new(format!("Red dice {}", i+1)),
       Mesh3d(dice_meshes[1][i].clone()),
       MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
       Transform::from_translation(dice_positions_red[i]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),

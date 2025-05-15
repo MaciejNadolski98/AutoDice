@@ -28,7 +28,6 @@ fn spawn_battle_camera(
   mut commands: Commands,
 ) {
   commands.spawn((
-    Name::new("Battle camera"),
     Camera3d::default(),
     Transform::from_translation(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0)).looking_at(Vec3::ZERO, Vec3::Z),
     Projection::Perspective(PerspectiveProjection {
