@@ -56,11 +56,10 @@ fn spawn_dices(
       MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
       Transform::from_translation(dice_positions_blue[i]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
       RigidBody::Dynamic,
-      Friction::new(1.0),
       LinearVelocity::from(Vec3::new(
-        1.0 * DICE_SIZE * (10.0 + random()),
-        (0.5 * DICE_SIZE * (10.0 + random())).clamp(0.0, 100.0), 
-        10.0 * DICE_SIZE * random(),
+        10.0 * DICE_SIZE * (100.0 + random()),
+        0.5 * DICE_SIZE * (10.0 + random()),
+        5.0 * DICE_SIZE * random(),
       )),
       AngularVelocity::from(Vec3::new(
         random() * 2.0 * PI,
@@ -77,11 +76,10 @@ fn spawn_dices(
       MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
       Transform::from_translation(dice_positions_red[i]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
       RigidBody::Dynamic,
-      Friction::new(1.0),
       LinearVelocity::from(Vec3::new(
-        1.0 * DICE_SIZE * (-10.0 + random()),
-        (0.5 * DICE_SIZE * (10.0 + random())).clamp(0.0, 100.0), 
-        10.0 * DICE_SIZE * random(),
+        -10.0 * DICE_SIZE * (100.0 + random()),
+        0.5 * DICE_SIZE * (10.0 + random()),
+        5.0 * DICE_SIZE * random(),
       )),
       AngularVelocity::from(Vec3::new(
         random() * 2.0 * PI,

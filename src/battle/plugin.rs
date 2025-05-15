@@ -41,7 +41,6 @@ fn add_battle_scene(
       MeshMaterial3d(materials.add(Color::srgb(0.0, 1.0, 0.0))),
       Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(256.0, 0.01, 144.0)),
       RigidBody::Static,
-      Friction::new(0.9),
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
 
@@ -112,11 +111,11 @@ fn despawn_battle_scene(
 
 // For debug
 fn debug_control(
-  mouse_buttons: Res<ButtonInput<MouseButton>>,
+  keys: Res<ButtonInput<KeyCode>>,
   mut respawn_dices: EventWriter<RespawnDicesEvent>,
   mut change_dice_face: EventWriter<DiceFaceChangedEvent>,
 ) {
-  if mouse_buttons.just_pressed(MouseButton::Right) {
+  if keys.just_pressed(KeyCode::KeyQ) {
     for team_id in [0, 1] {
       for dice_id in 0..MAX_DICE_COUNT {
         for face_id in 0..6 {
@@ -139,7 +138,7 @@ fn debug_control(
     }
   }
 
-  if mouse_buttons.just_pressed(MouseButton::Left) {
+  if keys.just_pressed(KeyCode::KeyW) {
     respawn_dices.send(RespawnDicesEvent {});
   }
 }

@@ -9,7 +9,7 @@ pub const WALL_SIZE: f32 = 10_000.0;
 pub const DICE_SIZE: f32 = 10.0;
 pub const DICE_TEXTURE_SIZE: f32 = 32.0;
 
-pub const DEFAULT_CAMERA_DISTANCE: f32 = 100.0;
+pub const DEFAULT_CAMERA_DISTANCE: f32 = 200.0;
 pub const MAX_CAMERA_DISTANCE: f32 = 10_000.0;
 
 // Dice are assumed to be around the size of 1 centimeter
