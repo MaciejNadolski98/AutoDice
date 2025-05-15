@@ -25,66 +25,55 @@ fn spawn_menu(
   mut commands: Commands,
 ) {
   commands.spawn((
-    NodeBundle {
-      style: Style { 
-        width: Val::Percent(100.0), 
-        height: Val::Percent(100.0), 
-        align_items: AlignItems::Center,
-        flex_direction: FlexDirection::Column,
-        justify_content: JustifyContent::SpaceAround,
-        ..default() 
-      },
-      background_color: Color::GRAY.into(),
-      ..default()
+    Node { 
+      width: Val::Percent(100.0), 
+      height: Val::Percent(100.0), 
+      align_items: AlignItems::Center,
+      flex_direction: FlexDirection::Column,
+      justify_content: JustifyContent::SpaceAround,
+      ..default() 
     },
+    BackgroundColor(Color::srgb(0.5, 0.5, 0.5)),
     MenuScreen,
     Name::new("Main Menu"),
   ))
     .with_children(|commands| {
       // Main menu text
-      commands.spawn(
-        TextBundle::from_section(
-          "AutoChess game thingy",
-          TextStyle {
-              font_size: 80.0,
-              color: Color::BLACK.into(),
-              ..default()
-          },
-        )
-      );
+      commands.spawn((
+        Text("AutoChess game thingy".to_string()),
+        TextFont {
+            font_size: 80.0,
+            ..default()
+        },
+        TextColor(Color::srgb(0.0, 0.0, 0.0)),
+    ));
 
       // Play button
       commands.spawn((
-        ButtonBundle {
-          style: Style { align_items: AlignItems::Center, justify_content: JustifyContent::Center, width: Val::Percent(10.0), height: Val::Percent(10.0), ..default() },
-          background_color: Color::CRIMSON.into(),
-          ..default()
-        },
+        Button,
+        Node { align_items: AlignItems::Center, justify_content: JustifyContent::Center, width: Val::Percent(10.0), height: Val::Percent(10.0), ..default() },
+        BackgroundColor(Color::srgb(0.5, 0.0, 0.0)),
         ButtonAction::Play,
       )).with_children(|commands| {
-        commands.spawn(
-          TextBundle::from_section(
-            "Play",
-            TextStyle { font_size: 50.0, color: Color::BLACK.into(), ..default() },
-          )
-        );
+        commands.spawn((
+          Text("Play".to_string()),
+          TextFont { font_size: 50.0, ..default() },
+          TextColor(Color::srgb(0.0, 0.0, 0.0)),
+        ));
       });
 
       // Quit button
       commands.spawn((
-        ButtonBundle {
-          style: Style { align_items: AlignItems::Center, justify_content: JustifyContent::Center, width: Val::Percent(10.0), height: Val::Percent(10.0), ..default() },
-          background_color: Color::CRIMSON.into(),
-          ..default()
-        },
+        Button,
+        Node { align_items: AlignItems::Center, justify_content: JustifyContent::Center, width: Val::Percent(10.0), height: Val::Percent(10.0), ..default() },
+        BackgroundColor(Color::srgb(0.5, 0.0, 0.0)),
         ButtonAction::Quit,
       )).with_children(|commands| {
-        commands.spawn(
-          TextBundle::from_section(
-            "Quit",
-            TextStyle { font_size: 50.0, color: Color::BLACK.into(), ..default() },
-          )
-        );
+        commands.spawn((
+          Text("Quit".to_string()),
+          TextFont { font_size: 50.0, ..default() },
+          TextColor(Color::srgb(0.0, 0.0, 0.0)),
+        ));
       });
     });
 }
@@ -108,7 +97,7 @@ fn button_actions(
 
     match button_action {
       ButtonAction::Play => { game_state.set(GameState::Manage); }
-      ButtonAction::Quit => { app_exit_events.send(AppExit); }
+      ButtonAction::Quit => { app_exit_events.send(AppExit::Success); }
     }
   }
 }

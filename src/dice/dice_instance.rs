@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use bevy_xpbd_3d::math::PI;
-use bevy_xpbd_3d::prelude::*;
+use avian3d::math::PI;
+use avian3d::prelude::*;
 use rand_distr::{Normal, Distribution};
 
 use crate::constants::{MAX_DICE_COUNT, WIDTH, DICE_SIZE, HEIGHT};
@@ -16,7 +16,7 @@ pub struct DiceInstancePlugin;
 impl Plugin for DiceInstancePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Update, (despawn_dices, spawn_dices).chain().run_if(on_event::<RespawnDicesEvent>()));
+      .add_systems(Update, (despawn_dices, spawn_dices).chain().run_if(on_event::<RespawnDicesEvent>));
   }
 }
 
@@ -52,13 +52,9 @@ fn spawn_dices(
   for i in 0..MAX_DICE_COUNT {
     // blue
     commands.spawn((
-      PbrBundle {
-        mesh: dice_meshes[0][i].clone(),
-        material: materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()}),
-        transform: Transform::from_translation(dice_positions_blue[i])
-          .with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
-        ..default()
-      },
+      Mesh3d(dice_meshes[0][i].clone()),
+      MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
+      Transform::from_translation(dice_positions_blue[i]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
       RigidBody::Dynamic,
       Friction::new(1.0),
       LinearVelocity::from(Vec3::new(
@@ -77,13 +73,9 @@ fn spawn_dices(
 
     // red
     commands.spawn((
-      PbrBundle {
-        mesh: dice_meshes[1][i].clone(),
-        material: materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()}),
-        transform: Transform::from_translation(dice_positions_red[i])
-          .with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
-        ..default()
-      },
+      Mesh3d(dice_meshes[1][i].clone()),
+      MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
+      Transform::from_translation(dice_positions_red[i]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
       RigidBody::Dynamic,
       Friction::new(1.0),
       LinearVelocity::from(Vec3::new(
