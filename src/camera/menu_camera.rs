@@ -20,6 +20,7 @@ fn spawn_menu_camera(
   mut commands: Commands,
 ) {
   commands.spawn((
+    Name::new("Menu camera"),
     Camera2d,
     OrthographicProjection {
       scaling_mode: ScalingMode::AutoMin {
