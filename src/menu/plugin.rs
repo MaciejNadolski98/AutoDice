@@ -25,7 +25,6 @@ fn spawn_menu(
   mut commands: Commands,
 ) {
   commands.spawn((
-    Name::new("Main Menu"),
     Node { 
       width: Val::Percent(100.0), 
       height: Val::Percent(100.0), 
@@ -36,10 +35,11 @@ fn spawn_menu(
     },
     BackgroundColor(Color::srgb(0.5, 0.5, 0.5)),
     MenuScreen,
+    Name::new("Main Menu"),
   ))
     .with_children(|commands| {
+      // Main menu text
       commands.spawn((
-        Name::new("Main menu title"),
         Text("AutoChess game thingy".to_string()),
         TextFont {
             font_size: 80.0,
@@ -48,8 +48,8 @@ fn spawn_menu(
         TextColor(Color::srgb(0.0, 0.0, 0.0)),
     ));
 
+      // Play button
       commands.spawn((
-        Name::new("Play button"),
         Button,
         Node { align_items: AlignItems::Center, justify_content: JustifyContent::Center, width: Val::Percent(10.0), height: Val::Percent(10.0), ..default() },
         BackgroundColor(Color::srgb(0.5, 0.0, 0.0)),
@@ -62,8 +62,8 @@ fn spawn_menu(
         ));
       });
 
+      // Quit button
       commands.spawn((
-        Name::new("Quit button"),
         Button,
         Node { align_items: AlignItems::Center, justify_content: JustifyContent::Center, width: Val::Percent(10.0), height: Val::Percent(10.0), ..default() },
         BackgroundColor(Color::srgb(0.5, 0.0, 0.0)),
