@@ -1,7 +1,9 @@
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::input::common_conditions::input_just_pressed;
+use bevy::prelude::*;
+use bevy::animation::{animated_field, AnimationTarget, AnimationTargetId, RepeatAnimation};
 
 use crate::{
-  constants::{DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE, WIDTH, HEIGHT}, 
+  constants::{DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE, HEIGHT}, 
   states::GameState
 };
 
@@ -19,24 +21,15 @@ impl Plugin for BattleCameraPlugin {
       .add_event::<SwapBattleCamera>()
       .add_systems(OnEnter(GameState::Battle), spawn_battle_camera)
       .add_systems(OnExit(GameState::Battle), despawn_battle_camera)
-      .add_systems(Update, swap_camera.run_if(in_state(GameState::Battle)))
-      .init_resource::<CameraMode>();
+      .add_systems(Update, update_camera_state.run_if(in_state(GameState::Battle)))
+      .add_systems(Update, swap_camera.run_if(input_just_pressed(KeyCode::KeyE)))
+      .init_resource::<LocalResources>();
   }
 }
 
-fn spawn_battle_camera(
-  mut commands: Commands,
-) {
-  commands.spawn((
-    Name::new("Battle camera"),
-    Camera3d::default(),
-    Transform::from_translation(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0)).looking_at(Vec3::ZERO, Vec3::Z),
-    Projection::Perspective(PerspectiveProjection {
-      fov: compute_fov(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0).distance(Vec3::ZERO), 144.0),
-      ..default()
-    }),
-    BattleCamera,
-  ));
+#[derive(Resource, Default)]
+struct LocalResources {
+  animation_index: AnimationNodeIndex,
 }
 
 fn despawn_battle_camera(
@@ -51,54 +44,93 @@ fn compute_fov(distance: f32, square_size: f32) -> f32 {
   return 2.0 * ((square_size/(2.0*distance)).atan());
 }
 
-#[derive(Component)]
-struct CameraSwapTimer {
-  pub timer: Timer,
-  pub to_isometric: bool,
+#[derive(Component, Reflect, Copy, Clone)]
+struct CameraState {
+  is_perspective: bool,
+  distance: f32,
+  fov: f32,
 }
 
-fn swap_camera(
-  mut camera: Query<(&mut Projection, &mut Transform), With<BattleCamera>>,
-  mut timer: Query<(&mut CameraSwapTimer, Entity)>,
-  time: Res<Time>,
-  mut commands: Commands,
-) {
-  for (mut camera_swap_timer, entity) in &mut timer {
-    camera_swap_timer.timer.tick(time.delta());
-
-    let mut t = camera_swap_timer.timer.elapsed().as_nanos() as f32 / camera_swap_timer.timer.duration().as_nanos() as f32;
-    if !camera_swap_timer.to_isometric {
-      t = 1.0 - t;
-    }
-
-    // Exponential interpolation
-    let distance = DEFAULT_CAMERA_DISTANCE * (t * (MAX_CAMERA_DISTANCE / DEFAULT_CAMERA_DISTANCE).ln()).exp();
-
-    let (mut projection, mut transform) = camera.single_mut();
-
-    transform.translation.y = distance;
-    *projection = PerspectiveProjection {
-      fov: compute_fov(distance, HEIGHT),
-      ..default()
-    }.into();
-
-    if camera_swap_timer.timer.finished() {
-      if camera_swap_timer.to_isometric {
-        *projection = OrthographicProjection {
-          far: 2.0 * MAX_CAMERA_DISTANCE,
-          scaling_mode: ScalingMode::Fixed { width: WIDTH, height: HEIGHT },
-          ..OrthographicProjection::default_3d()
-        }.into();
-      }
-
-      commands.entity(entity).despawn();
+impl Default for CameraState {
+  fn default() -> Self {
+    Self {
+      is_perspective: false,
+      distance: DEFAULT_CAMERA_DISTANCE,
+      fov: compute_fov(DEFAULT_CAMERA_DISTANCE, HEIGHT),
     }
   }
 }
 
-#[derive(Resource, Clone, Copy, Default, PartialEq)]
-enum CameraMode {
-  Isometric,
-  #[default]
-  Perspective,
+fn swap_camera(
+  mut animation_player: Query<&mut AnimationPlayer, With<BattleCamera>>,
+  resources: Res<LocalResources>,
+) {
+  let mut player = animation_player.single_mut();
+  player.adjust_speeds(-1.0);
+  let animation = player.animation_mut(resources.animation_index).unwrap();
+  if animation.is_finished() {
+    animation.set_repeat(RepeatAnimation::Count(animation.completions() + 1));
+  }
+}
+
+fn update_camera_state(
+  mut battle_camera: Query<(&mut Projection, &mut Transform, &CameraState), With<BattleCamera>>,
+) {
+  let (mut projection, mut transform, camera_state) = battle_camera.single_mut();
+  *projection = Projection::Perspective(PerspectiveProjection { fov: camera_state.fov, ..default()});
+  transform.translation.y = camera_state.distance;
+}
+
+fn spawn_battle_camera(
+  mut animations: ResMut<Assets<AnimationClip>>,
+  mut graphs: ResMut<Assets<AnimationGraph>>,
+  mut resources: ResMut<LocalResources>,
+  mut commands: Commands,
+) {
+  let distance_curve = FunctionCurve::new(Interval::UNIT, |t| { DEFAULT_CAMERA_DISTANCE * (t * (MAX_CAMERA_DISTANCE / DEFAULT_CAMERA_DISTANCE).ln()).exp()});
+  let fov_curve = distance_curve.clone().map(|distance| { compute_fov(distance, HEIGHT) });
+
+  let battle_camera = Name::new("BattleCamera");
+  let mut animation = AnimationClip::default();
+  let target_id = AnimationTargetId::from_name(&battle_camera);
+  animation.add_curve_to_target(
+    target_id,
+    AnimatableCurve::new(
+      animated_field!(CameraState::distance),
+      distance_curve,
+    )
+  );
+  animation.add_curve_to_target(
+    target_id,
+    AnimatableCurve::new(
+      animated_field!(CameraState::fov),
+      fov_curve,
+    )
+  );
+
+  let (graph, animation_index) = AnimationGraph::from_clip(animations.add(animation));
+  resources.animation_index = animation_index;
+  let mut player = AnimationPlayer::default();
+  player.play(animation_index);
+  player.adjust_speeds(-1.0);
+
+  let camera_entity = commands.spawn((
+    battle_camera,
+    Camera3d::default(),
+    Transform::from_translation(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0)).looking_at(Vec3::ZERO, Vec3::Z),
+    Projection::Perspective(PerspectiveProjection {
+      fov: compute_fov(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0).distance(Vec3::ZERO), 144.0),
+      ..default()
+    }),
+    CameraState::default(),
+    AnimationGraphHandle(graphs.add(graph)),
+    player,
+    BattleCamera,
+  )).id();
+  commands
+    .entity(camera_entity)
+    .insert(AnimationTarget {
+      id: target_id,
+      player: camera_entity,
+    });
 }
