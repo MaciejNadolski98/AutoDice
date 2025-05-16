@@ -4,6 +4,7 @@ use bevy::{prelude::*, render::render_resource::Extent3d};
 use bevy::render::render_resource::{TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 
 use super::events::{DiceFaceChangedEvent, ActionType};
+use super::DiceID;
 use crate::constants::{MAX_DICE_COUNT, DICE_TEXTURE_SIZE, DICE_FACES_LAYER};
 
 pub struct DiceRenderPlugin;
@@ -28,8 +29,8 @@ struct FaceMatrix {
 }
 
 impl FaceMatrix {
-  fn get(&self, team_id: u32, dice_id: u32, face_id: u32) -> Entity {
-    self.array[team_id as usize][dice_id as usize][face_id as usize]
+  fn get(&self, dice_id: DiceID, face_id: usize) -> Entity {
+    self.array[dice_id.team_id][dice_id.dice_id][face_id]
   }
 }
 
@@ -136,16 +137,17 @@ fn update_dice_faces(
   asset_server: Res<AssetServer>
 ) {
   for face_update in events.read() {
-    assert!(face_update.team_id <= 1);
-    assert!(face_update.dice_id < MAX_DICE_COUNT as u32);
+    assert!(face_update.dice_id.team_id <= 1);
+    assert!(face_update.dice_id.dice_id < MAX_DICE_COUNT);
     assert!(face_update.face_id < 6);
     let texture = match face_update.face.action_type {
       ActionType::Attack => asset_server.load("sword.png"),
       ActionType::Heal => asset_server.load("heal.png"),
       ActionType::Defend => asset_server.load("shield.png"),
       ActionType::Fire => asset_server.load("fire.png"),
+      _ => panic!("Invalid action type"),
     };
-    let face_entity = entities.get(face_update.team_id, face_update.dice_id, face_update.face_id);
+    let face_entity = entities.get(face_update.dice_id, face_update.face_id);
     
     commands.entity(face_entity)
       .despawn_descendants()
