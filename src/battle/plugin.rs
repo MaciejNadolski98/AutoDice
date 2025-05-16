@@ -1,14 +1,10 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
-use rand::Rng;
-use crate::dice::{TossDicesEvent, DiceFaceChangedEvent, FaceDescription, ActionType};
+use crate::camera::BattleCamera;
+use crate::dice::TossDicesEvent;
 use crate::states::GameState;
 use crate::constants::{ 
-  WIDTH, 
-  HEIGHT, 
-  WALL_SIZE, 
-  GRAVITY_ACCELERATION,
-  MAX_DICE_COUNT
+  DICE_SIZE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH
 };
 
 pub struct BattlePlugin;
@@ -113,8 +109,57 @@ fn despawn_battle_scene(
 fn debug_control(
   keys: Res<ButtonInput<KeyCode>>,
   mut toss_dices: EventWriter<TossDicesEvent>,
+  mut battle_camera: Query<&mut Transform, With<BattleCamera>>,
 ) {
-  if keys.just_pressed(KeyCode::KeyW) {
+  if keys.just_pressed(KeyCode::KeyQ) {
     toss_dices.send(TossDicesEvent {});
+  }
+
+  if keys.pressed(KeyCode::ArrowUp) {
+    battle_camera.single_mut().rotate_local_x(0.1);
+  }
+
+  if keys.pressed(KeyCode::ArrowDown) {
+    battle_camera.single_mut().rotate_local_x(-0.1);
+  }
+
+  if keys.pressed(KeyCode::ArrowRight) {
+    battle_camera.single_mut().rotate_local_y(-0.1);
+  }
+
+  if keys.pressed(KeyCode::ArrowLeft) {
+    battle_camera.single_mut().rotate_local_y(0.1);
+  }
+
+  if keys.pressed(KeyCode::KeyW) {
+    let mut transform = battle_camera.single_mut();
+    let rotation = transform.rotation;
+    let translation = transform.translation;
+    let up = rotation.mul_vec3(Vec3::new(0.0, 1.0, 0.0));
+    transform.translation = translation.move_towards(translation + up, 0.1 * DICE_SIZE);
+  }
+
+  if keys.pressed(KeyCode::KeyS) {
+    let mut transform = battle_camera.single_mut();
+    let rotation = transform.rotation;
+    let translation = transform.translation;
+    let up = rotation.mul_vec3(Vec3::new(0.0, 1.0, 0.0));
+    transform.translation = translation.move_towards(translation + up, -0.1 * DICE_SIZE);
+  }
+
+  if keys.pressed(KeyCode::KeyD) {
+    let mut transform = battle_camera.single_mut();
+    let rotation = transform.rotation;
+    let translation = transform.translation;
+    let right = rotation.mul_vec3(Vec3::new(1.0, 0.0, 0.0));
+    transform.translation = translation.move_towards(translation + right, 0.1 * DICE_SIZE);
+  }
+
+  if keys.pressed(KeyCode::KeyA) {
+    let mut transform = battle_camera.single_mut();
+    let rotation = transform.rotation;
+    let translation = transform.translation;
+    let right = rotation.mul_vec3(Vec3::new(1.0, 0.0, 0.0));
+    transform.translation = translation.move_towards(translation + right, -0.1 * DICE_SIZE);
   }
 }
