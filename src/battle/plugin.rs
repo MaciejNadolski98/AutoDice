@@ -162,4 +162,20 @@ fn debug_control(
     let right = rotation.mul_vec3(Vec3::new(1.0, 0.0, 0.0));
     transform.translation = translation.move_towards(translation + right, -0.1 * DICE_SIZE);
   }
+
+  if keys.pressed(KeyCode::KeyX) {
+    let mut transform = battle_camera.single_mut();
+    let rotation = transform.rotation;
+    let translation = transform.translation;
+    let forward = rotation.mul_vec3(Vec3::new(0.0, 0.0, 1.0));
+    transform.translation = translation.move_towards(translation + forward, 0.1 * DICE_SIZE);
+  }
+
+  if keys.pressed(KeyCode::KeyZ) {
+    let mut transform = battle_camera.single_mut();
+    let rotation = transform.rotation;
+    let translation = transform.translation;
+    let forward = rotation.mul_vec3(Vec3::new(0.0, 0.0, 1.0));
+    transform.translation = translation.move_towards(translation + forward, -0.1 * DICE_SIZE);
+  }
 }
