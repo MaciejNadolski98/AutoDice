@@ -40,7 +40,7 @@ fn add_battle_scene(
       Name::new("Base"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(256.0, 0.01, 144.0)),
+      Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(WIDTH, 0.01, HEIGHT)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));

@@ -24,7 +24,8 @@ impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_event::<DiceFaceChangedEvent>()
-      .add_event::<TossDicesEvent>();
+      .add_event::<TossDicesEvent>()
+      .add_event::<DiceSpawnEvent>();
   }
 }
 
@@ -38,3 +39,6 @@ pub struct DiceFaceChangedEvent {
 
 #[derive(Event)]
 pub struct TossDicesEvent;
+
+#[derive(Event)]
+pub struct DiceSpawnEvent;

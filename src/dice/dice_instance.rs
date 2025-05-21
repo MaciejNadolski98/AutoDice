@@ -3,6 +3,7 @@ use avian3d::prelude::*;
 use rand_distr::{Normal, Distribution};
 
 use crate::constants::{MAX_DICE_COUNT, WIDTH, DICE_SIZE, HEIGHT};
+use crate::dice::events::DiceSpawnEvent;
 use crate::manage::plugin::DiceData;
 use crate::states::GameState;
 
@@ -32,7 +33,7 @@ pub struct DiceID {
 }
 
 #[derive(Component, Default)]
-struct Dice {
+pub struct Dice {
   id: DiceID,
   max_hp: u32,
   current_hp: u32,
@@ -53,6 +54,26 @@ impl Dice {
       dice_face_changed.send(dice.set_face(i, template.faces[i]));
     }
     dice
+  }
+
+  pub fn id(&self) -> DiceID {
+    self.id
+  }
+
+  pub fn max_hp(&self) -> u32 {
+    self.max_hp
+  }
+
+  pub fn current_hp(&self) -> u32 {
+    self.current_hp
+  }
+
+  pub fn face(&self, face_id: usize) -> FaceDescription {
+    self.current_faces[face_id]
+  }
+
+  pub fn faces(&self) -> &[FaceDescription; 6] {
+    &self.current_faces
   }
 
   pub fn set_id(&mut self, id: DiceID) {
@@ -80,6 +101,7 @@ fn spawn_dices(
   mut materials: ResMut<Assets<StandardMaterial>>,
   dice_face_image: Res<DiceFaceImage>,
   mut dice_face_changed: EventWriter<DiceFaceChangedEvent>,
+  mut dice_spawn_event: EventWriter<DiceSpawnEvent>,
 ) {
   info!("Spawning dices");
   assert!(dice_data.team1.len() <= MAX_DICE_COUNT);
@@ -108,6 +130,7 @@ fn spawn_dices(
       Dice::build(&mut dice_face_changed, dice_data.team1[i].clone(), DiceID { team_id: 1, dice_id: i }),
     ));
   }
+  dice_spawn_event.send(DiceSpawnEvent);
 }
 
 fn toss_dices(
