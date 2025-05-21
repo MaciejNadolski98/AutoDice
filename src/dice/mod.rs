@@ -8,4 +8,4 @@ mod health_bar;
 
 pub use events::{DiceFaceChangedEvent, TossDicesEvent, ActionType, FaceDescription};
 pub use dice_template::DiceTemplate;
-pub use dice_instance::DiceID;
+pub use dice_instance::{DiceID, Dice};

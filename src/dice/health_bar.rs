@@ -80,12 +80,14 @@ fn update_health_bar_position(
 }
 
 fn update_health_bar_indicator(
-  // mut health_bars: Query<(&RelatedEntity, &mut Node), With<HealthIndicator>>,
-  // dices: Query<&Dice>,
+  mut health_bars: Query<(&RelatedEntity, &mut Sprite, &mut Transform), With<HealthIndicator>>,
+  dices: Query<&Dice>,
 ) {
-  // for (related, mut style) in health_bars.iter_mut() {
-  //   if let Ok(dice) = dices.get(related.related_entity) {
-  //     style.width = Val::Percent((dice.current_hp() as f32 / dice.max_hp() as f32) * 100.0);
-  //   }
-  // }
+  for (related, mut sprite, mut transform) in health_bars.iter_mut() {
+    if let Ok(dice) = dices.get(related.related_entity) {
+      let width = (dice.current_hp() as f32 / dice.max_hp() as f32) * HEALTH_BAR_WIDTH;
+      sprite.custom_size = Some(Vec2::new(width, HEALTH_BAR_HEIGHT));
+      transform.translation.x = -(HEALTH_BAR_WIDTH - width) / 2.0;
+    }
+  }
 }

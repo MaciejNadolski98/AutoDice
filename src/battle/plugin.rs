@@ -6,6 +6,7 @@ use crate::states::GameState;
 use crate::constants::{ 
   DICE_SIZE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH
 };
+use crate::dice::Dice;
 
 pub struct BattlePlugin;
 
@@ -117,6 +118,7 @@ fn debug_control(
   keys: Res<ButtonInput<KeyCode>>,
   mut toss_dices: EventWriter<TossDicesEvent>,
   mut battle_camera: Query<&mut Transform, With<BattleCamera>>,
+  mut dices: Query<&mut Dice>,
 ) {
   if keys.just_pressed(KeyCode::KeyQ) {
     toss_dices.send(TossDicesEvent {});
@@ -184,5 +186,33 @@ fn debug_control(
     let translation = transform.translation;
     let forward = rotation.mul_vec3(Vec3::new(0.0, 0.0, 1.0));
     transform.translation = translation.move_towards(translation + forward, -0.1 * DICE_SIZE);
+  }
+
+  let mut digits_pressed = vec![];
+  if keys.just_pressed(KeyCode::Digit1) {
+    digits_pressed.push(1);
+  }
+  if keys.just_pressed(KeyCode::Digit2) {
+    digits_pressed.push(2);
+  }
+  if keys.just_pressed(KeyCode::Digit3) {
+    digits_pressed.push(3);
+  }
+  if keys.just_pressed(KeyCode::Digit4) {
+    digits_pressed.push(4);
+  }
+  if keys.just_pressed(KeyCode::Digit5) {
+    digits_pressed.push(5);
+  }
+
+  for digit in digits_pressed {
+    for mut dice in dices.iter_mut() {
+      if dice.id().team_id == 0 && dice.id().dice_id == digit {
+        let current_hp = dice.current_hp();
+        if current_hp > 0 {
+          dice.set_current_hp(current_hp - 1);
+        }
+      }
+    }
   }
 }
