@@ -5,4 +5,6 @@ mod dice_render;
 mod dice_template;
 mod events;
 
-pub use events::{DiceFaceChangedEvent, RespawnDicesEvent, ActionType, FaceDescription};
+pub use events::{DiceFaceChangedEvent, TossDicesEvent, ActionType, FaceDescription};
+pub use dice_template::DiceTemplate;
+pub use dice_instance::DiceID;

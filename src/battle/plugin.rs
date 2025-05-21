@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use rand::Rng;
-use crate::dice::{RespawnDicesEvent, DiceFaceChangedEvent, FaceDescription, ActionType};
+use crate::dice::{TossDicesEvent, DiceFaceChangedEvent, FaceDescription, ActionType};
 use crate::states::GameState;
 use crate::constants::{ 
   WIDTH, 
@@ -112,33 +112,9 @@ fn despawn_battle_scene(
 // For debug
 fn debug_control(
   keys: Res<ButtonInput<KeyCode>>,
-  mut respawn_dices: EventWriter<RespawnDicesEvent>,
-  mut change_dice_face: EventWriter<DiceFaceChangedEvent>,
+  mut toss_dices: EventWriter<TossDicesEvent>,
 ) {
-  if keys.just_pressed(KeyCode::KeyQ) {
-    for team_id in [0, 1] {
-      for dice_id in 0..MAX_DICE_COUNT {
-        for face_id in 0..6 {
-          change_dice_face.send(DiceFaceChangedEvent {
-            team_id: team_id,
-            dice_id: dice_id as u32,
-            face_id: face_id,
-            face: FaceDescription {
-              action_type: match rand::thread_rng().gen_range(0..4) {
-                0 => ActionType::Attack,
-                1 => ActionType::Defend,
-                2 => ActionType::Heal,
-                _ => ActionType::Fire,
-              },
-              pips_count: 0,
-            }
-          });
-        }
-      }
-    }
-  }
-
   if keys.just_pressed(KeyCode::KeyW) {
-    respawn_dices.send(RespawnDicesEvent {});
+    toss_dices.send(TossDicesEvent {});
   }
 }

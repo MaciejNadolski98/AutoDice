@@ -1,11 +1,12 @@
 use bevy::prelude::*;
-use crate::{states::GameState};
+use crate::{constants::MAX_DICE_COUNT, dice::DiceTemplate, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
+      .init_resource::<DiceData>()
       .add_systems(OnEnter(GameState::Manage), spawn_manage)
       .add_systems(OnExit(GameState::Manage), despawn_manage)
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
@@ -100,9 +101,16 @@ fn despawn_manage(
   commands.entity(screen.single()).despawn_recursive();
 }
 
+#[derive(Resource, Default)]
+pub struct DiceData {
+  pub team1: Vec<DiceTemplate>,
+  pub team2: Vec<DiceTemplate>,
+}
+
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,
+  mut dice_data: ResMut<DiceData>,
 ) {
   for (interaction, button_action) in &interaction_query {
     if *interaction != Interaction::Pressed {
@@ -114,8 +122,11 @@ fn button_actions(
         game_state.set(GameState::Menu);
       }
       ButtonAction::Battle => {
+        *dice_data = DiceData {
+          team1: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
+          team2: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
+        };
         game_state.set(GameState::Battle);
-        // initialize battle data
       }
     }
   }
