@@ -83,7 +83,7 @@ fn update_camera_state(
 ) {
   let (mut projection, mut transform, camera_state) = battle_camera.single_mut();
   *projection = Projection::Perspective(PerspectiveProjection { fov: camera_state.fov, ..default()});
-  transform.translation.y = camera_state.distance;
+  transform.translation.z = camera_state.distance;
 }
 
 fn spawn_battle_camera(
@@ -126,9 +126,9 @@ fn spawn_battle_camera(
       order: 0,
       ..default()
     },
-    Transform::from_translation(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0)).looking_at(Vec3::ZERO, Vec3::Z),
+    Transform::from_translation(Vec3::new(0.0, 0.0, DEFAULT_CAMERA_DISTANCE)).looking_at(Vec3::ZERO, Vec3::Y),
     Projection::Perspective(PerspectiveProjection {
-      fov: compute_fov(Vec3::new(0.0, DEFAULT_CAMERA_DISTANCE, 0.0).distance(Vec3::ZERO), HEIGHT),
+      fov: compute_fov(Vec3::new(0.0, 0.0, DEFAULT_CAMERA_DISTANCE).distance(Vec3::ZERO), HEIGHT),
       ..default()
     }),
     CameraState::default(),
@@ -154,7 +154,7 @@ fn spawn_battle_overlay_camera(
       order: 1,
       ..default()
     },
-    Transform::from_translation(Vec3::new(0.0, 100.0, 0.0)).looking_at(Vec3::ZERO, Vec3::Z),
+    Transform::from_translation(Vec3::new(0.0, 0.0, 100.0)).looking_at(Vec3::ZERO, Vec3::Y),
     BATTLE_OVERLAY_LAYER,
     OrthographicProjection {
       scaling_mode: ScalingMode::FixedVertical { viewport_height: HEIGHT },

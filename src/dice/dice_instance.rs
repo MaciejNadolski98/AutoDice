@@ -137,16 +137,16 @@ fn toss_dices(
   mut dices: Query<(&mut Transform, &mut LinearVelocity, &mut AngularVelocity, &Dice)>
 ) {
   let dice_positions_team_1 = [
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, DICE_SIZE * 1.5, HEIGHT / 4.0),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, DICE_SIZE * 1.5, HEIGHT / 4.0 + DICE_SIZE * 3.0),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, DICE_SIZE * 1.5, HEIGHT / 4.0 - DICE_SIZE * 3.0),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, DICE_SIZE * 1.5, HEIGHT / 4.0 + DICE_SIZE * 1.5),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, DICE_SIZE * 1.5, HEIGHT / 4.0 - DICE_SIZE * 1.5),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 + DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 - DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 + DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 - DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
   ];
   let dice_positions_team_2 = dice_positions_team_1.clone().map(|vec| {
     let mut ret = vec.clone();
     ret.x *= -1.0;
-    ret.z *= -1.0;
+    ret.y *= -1.0;
     return ret;
   });
 
@@ -155,15 +155,15 @@ fn toss_dices(
       *transform = Transform::from_translation(dice_positions_team_1[dice.id.dice_id as usize]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE));
       *linear_velocity = LinearVelocity::from(Vec3::new(
         random(30.0 * DICE_SIZE, 10.0 * DICE_SIZE),
-        random(10.0 * DICE_SIZE, 10.0 * DICE_SIZE),
         random(0.0, 5.0 * DICE_SIZE),
+        random(10.0 * DICE_SIZE, 10.0 * DICE_SIZE),
       ));
     } else {
       *transform = Transform::from_translation(dice_positions_team_2[dice.id.dice_id as usize]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE));
       *linear_velocity = LinearVelocity::from(Vec3::new(
         random(-30.0 * DICE_SIZE, 10.0 * DICE_SIZE),
-        random(10.0 * DICE_SIZE, 10.0 * DICE_SIZE),
         random(0.0, 5.0 * DICE_SIZE),
+        random(10.0 * DICE_SIZE, 10.0 * DICE_SIZE),
       ));
     }
     *angular_velocity = AngularVelocity::from(Vec3::new(

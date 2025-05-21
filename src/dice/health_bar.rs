@@ -35,7 +35,6 @@ fn spawn_health_bars(
       .spawn((
         Name::new("Health bar"),
         Sprite::from_color(Color::srgb(0.5, 0.5, 0.5), Vec2::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)),
-        Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::Y, Vec3::Z),
         BATTLE_OVERLAY_LAYER,
         RelatedEntity {
           related_entity: dice_entity,
@@ -71,11 +70,11 @@ fn update_health_bar_position(
   mut health_bars: Query<(&RelatedEntity, &mut Transform), With<HealthBar>>,
   dice_transforms: Query<&Transform, (With<Dice>, Without<HealthBar>)>,
 ) {
-  let offset_z = DICE_SIZE;
+  let offset_y = DICE_SIZE;
 
   for (related, mut bar_transform) in health_bars.iter_mut() {
     if let Ok(dice_transform) = dice_transforms.get(related.related_entity) {
-      bar_transform.translation = dice_transform.translation - Vec3::new(0.0, 0.0, offset_z);
+      bar_transform.translation = dice_transform.translation - Vec3::new(0.0, offset_y, 0.0);
     }
   }
 }

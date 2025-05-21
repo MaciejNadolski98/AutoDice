@@ -16,7 +16,7 @@ impl Plugin for BattlePlugin {
       .add_systems(OnExit(GameState::Battle), despawn_battle_scene)
       .add_systems(Update, debug_control.run_if(in_state(GameState::Battle)))
       .add_plugins(PhysicsPlugins::default())
-      .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY_ACCELERATION));
+      .insert_resource(Gravity(Vec3::NEG_Z * GRAVITY_ACCELERATION));
   }
 }
 
@@ -30,9 +30,11 @@ fn add_battle_scene(
   asset_server: Res<AssetServer>,
 ) {
   commands.spawn((Name::new("Battle Scene"), Visibility::default(), Transform::default(), BattleComponent)).with_children(|commands| {
-    commands.spawn(SceneRoot(asset_server.load(
-        GltfAssetLabel::Scene(0).from_asset("autodicetable.gltf"),
-    )));
+    commands.spawn((SceneRoot(asset_server.load(
+      GltfAssetLabel::Scene(0).from_asset("autodicetable.gltf"),
+      )),
+      Transform::from_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+    ));
 
     let cube_mesh = meshes.add(Cuboid::default());
 
@@ -40,7 +42,7 @@ fn add_battle_scene(
       Name::new("Base"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(WIDTH, 0.01, HEIGHT)),
+      Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(WIDTH, HEIGHT, 0.01)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
@@ -49,7 +51,7 @@ fn add_battle_scene(
       Name::new("Middle wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(WIDTH, WALL_SIZE, 1.0)),
+      Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(WIDTH, 1.0, WALL_SIZE)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
@@ -58,7 +60,7 @@ fn add_battle_scene(
       Name::new("North wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(0.0, 0.0, HEIGHT / 2.0).with_scale(Vec3::new(WIDTH, WALL_SIZE, 0.01)),
+      Transform::from_xyz(0.0, HEIGHT / 2.0, 0.0).with_scale(Vec3::new(WIDTH, 0.01, WALL_SIZE)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
@@ -67,7 +69,7 @@ fn add_battle_scene(
       Name::new("South wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(0.0, 0.0, -HEIGHT / 2.0).with_scale(Vec3::new(WIDTH, WALL_SIZE, 0.01)),
+      Transform::from_xyz(0.0, -HEIGHT / 2.0, 0.0).with_scale(Vec3::new(WIDTH, 0.01, WALL_SIZE)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
@@ -76,7 +78,7 @@ fn add_battle_scene(
       Name::new("East wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(WIDTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(0.01, WALL_SIZE, HEIGHT)),
+      Transform::from_xyz(WIDTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(0.01, HEIGHT, WALL_SIZE)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
@@ -85,7 +87,7 @@ fn add_battle_scene(
       Name::new("West wall"),
       Mesh3d(cube_mesh.clone()),
       MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
-      Transform::from_xyz(-WIDTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(0.01, WALL_SIZE, HEIGHT)),
+      Transform::from_xyz(-WIDTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(0.01, HEIGHT, WALL_SIZE)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
     ));
@@ -97,7 +99,7 @@ fn add_battle_scene(
         shadows_enabled: true,
         ..default()
       },
-      Transform::from_xyz(0.0, 100.0, 0.0).looking_at(Vec3::ZERO, Vec3::Z),
+      Transform::from_xyz(0.0, 0.0, 100.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
   });
 }
