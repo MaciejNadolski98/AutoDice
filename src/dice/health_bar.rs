@@ -4,7 +4,6 @@ use super::events::DiceSpawnEvent;
 use super::dice_instance::Dice;
 
 use crate::{constants::{BATTLE_OVERLAY_LAYER, DICE_SIZE, HEALTH_BAR_HEIGHT, HEALTH_BAR_WIDTH}, states::GameState};
-use bevy::prelude::Color;
 
 pub struct HealthBarPlugin;
 
