@@ -4,6 +4,7 @@ use super::events::DiceSpawnEvent;
 use super::dice_instance::Dice;
 
 use crate::{constants::{BATTLE_OVERLAY_LAYER, DICE_SIZE, HEALTH_BAR_HEIGHT, HEALTH_BAR_WIDTH}, states::GameState};
+use bevy::prelude::Color;
 
 pub struct HealthBarPlugin;
 
@@ -83,6 +84,26 @@ fn update_health_bar_indicator(
   mut health_bars: Query<(&RelatedEntity, &mut Sprite, &mut Transform), With<HealthIndicator>>,
   dices: Query<&Dice>,
 ) {
+  fn health_color(percentage: f32) -> Color {
+    // Green to yellow to red
+    if percentage > 0.5 {
+      // Green to yellow
+      let t = (percentage - 0.5) * 2.0;
+      Color::srgb(1.0 - t, 1.0, 0.0)
+    } else {
+      // Yellow to red
+      let t = percentage * 2.0;
+      Color::srgb(1.0, t, 0.0)
+    }
+  }
+
+  for (related, mut sprite, _) in health_bars.iter_mut() {
+    if let Ok(dice) = dices.get(related.related_entity) {
+      let percentage = dice.current_hp() as f32 / dice.max_hp() as f32;
+      sprite.color = health_color(percentage);
+    }
+  }
+
   for (related, mut sprite, mut transform) in health_bars.iter_mut() {
     if let Ok(dice) = dices.get(related.related_entity) {
       let width = (dice.current_hp() as f32 / dice.max_hp() as f32) * HEALTH_BAR_WIDTH;
