@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[derive(Component)]
-struct BattleCamera;
+pub struct BattleCamera;
 
 #[derive(Event)]
 pub struct SwapBattleCamera;
