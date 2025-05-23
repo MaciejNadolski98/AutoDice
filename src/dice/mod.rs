@@ -7,6 +7,6 @@ mod events;
 mod health_bar;
 mod roll;
 
-pub use events::{DiceFaceChangedEvent, TossDicesEvent, ActionType, FaceDescription};
+pub use events::{ChangeDiceFace, TossDices, ActionType, FaceDescription};
 pub use dice_template::DiceTemplate;
 pub use dice_instance::{DiceID, Dice};

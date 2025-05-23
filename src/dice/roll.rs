@@ -4,7 +4,7 @@ use rand_distr::{Distribution, Normal};
 
 use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
 
-use super::{events::{DicesStoppedEvent, RollResultEvent}, Dice, DiceID, TossDicesEvent};
+use super::{events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
 
 pub struct RollPlugin;
 
@@ -15,9 +15,9 @@ impl Plugin for RollPlugin {
   fn build(&self, app: &mut App) {
     app
       .init_resource::<DicesRolling>()
-      .add_systems(Update, roll_dices.run_if(on_event::<TossDicesEvent>))
+      .add_systems(Update, roll_dices.run_if(on_event::<TossDices>))
       .add_systems(Update, check_if_dices_stopped.run_if(resource_equals::<DicesRolling>(DicesRolling(true))))
-      .add_systems(Update, check_roll_results.run_if(on_event::<DicesStoppedEvent>));
+      .add_systems(Update, check_roll_results.run_if(on_event::<DicesStopped>));
   }
 }
 
@@ -67,7 +67,7 @@ fn roll_dices(
 fn check_if_dices_stopped(
   dices: Query<(&LinearVelocity, &AngularVelocity), With<Dice>>,
   mut dices_rolling: ResMut<DicesRolling>,
-  mut event_writer: EventWriter<DicesStoppedEvent>
+  mut event_writer: EventWriter<DicesStopped>
 ) {
   for (linear_velocity, angular_velocity) in &dices {
     if linear_velocity.0.length() > LINEAR_VELOCITY_EPSILON || angular_velocity.0.length() > ANGULAR_VELOCITY_EPSILON {
@@ -75,12 +75,12 @@ fn check_if_dices_stopped(
     }
   }
   dices_rolling.0 = false;
-  event_writer.send(DicesStoppedEvent);
+  event_writer.send(DicesStopped);
 }
 
 fn check_roll_results(
   mut dices: Query<(&Transform, &Dice)>,
-  mut event_writer: EventWriter<RollResultEvent>
+  mut event_writer: EventWriter<RollResult>
 ) {
   let mut results = Vec::new();
   for (transform, dice) in &mut dices {
@@ -90,7 +90,7 @@ fn check_roll_results(
     }
     results.push((dice.id(), face_id));
   }
-  event_writer.send(RollResultEvent(results));
+  event_writer.send(RollResult(results));
 }
 
 fn get_face_id(rotation: Quat) -> usize {

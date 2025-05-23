@@ -29,30 +29,30 @@ pub struct DiceEventsPlugin;
 impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_event::<DiceFaceChangedEvent>()
-      .add_event::<TossDicesEvent>()
-      .add_event::<DiceSpawnEvent>()
-      .add_event::<DicesStoppedEvent>()
-      .add_event::<RollResultEvent>();
+      .add_event::<ChangeDiceFace>()
+      .add_event::<TossDices>()
+      .add_event::<SpawnDices>()
+      .add_event::<DicesStopped>()
+      .add_event::<RollResult>();
   }
 }
 
 
 #[derive(Event)]
-pub struct DiceFaceChangedEvent {
+pub struct ChangeDiceFace {
   pub dice_id: DiceID,
   pub face_id: usize,
   pub face: FaceDescription,
 }
 
 #[derive(Event)]
-pub struct TossDicesEvent;
+pub struct TossDices;
 
 #[derive(Event)]
-pub struct DiceSpawnEvent;
+pub struct SpawnDices;
 
 #[derive(Event)]
-pub struct DicesStoppedEvent;
+pub struct DicesStopped;
 
 #[derive(Event)]
-pub struct RollResultEvent(pub Vec<(DiceID, usize)>);
+pub struct RollResult(pub Vec<(DiceID, usize)>);

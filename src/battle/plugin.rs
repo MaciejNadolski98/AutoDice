@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::camera::BattleCamera;
-use crate::dice::TossDicesEvent;
+use crate::dice::TossDices;
 use crate::states::GameState;
 use crate::constants::{ 
   DICE_SIZE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH
@@ -116,12 +116,12 @@ fn despawn_battle_scene(
 // For debug
 fn debug_control(
   keys: Res<ButtonInput<KeyCode>>,
-  mut toss_dices: EventWriter<TossDicesEvent>,
+  mut toss_dices: EventWriter<TossDices>,
   mut battle_camera: Query<&mut Transform, With<BattleCamera>>,
   mut dices: Query<&mut Dice>,
 ) {
   if keys.just_pressed(KeyCode::KeyQ) {
-    toss_dices.send(TossDicesEvent {});
+    toss_dices.send(TossDices {});
   }
 
   if keys.pressed(KeyCode::ArrowUp) {

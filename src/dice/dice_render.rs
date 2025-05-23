@@ -3,7 +3,7 @@ use std::array;
 use bevy::{prelude::*, render::render_resource::Extent3d};
 use bevy::render::render_resource::{TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 
-use super::events::{DiceFaceChangedEvent, ActionType};
+use super::events::{ChangeDiceFace, ActionType};
 use super::DiceID;
 use crate::constants::{MAX_DICE_COUNT, DICE_TEXTURE_SIZE, DICE_FACES_LAYER};
 
@@ -132,7 +132,7 @@ fn spawn_dice_camera(
 
 fn update_dice_faces(
   mut commands: Commands,
-  mut events: EventReader<DiceFaceChangedEvent>,
+  mut events: EventReader<ChangeDiceFace>,
   entities: Res<FaceMatrix>,
   asset_server: Res<AssetServer>
 ) {

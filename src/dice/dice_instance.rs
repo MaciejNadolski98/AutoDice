@@ -3,7 +3,7 @@ use avian3d::prelude::*;
 use rand_distr::{Normal, Distribution};
 
 use crate::constants::MAX_DICE_COUNT;
-use crate::dice::events::DiceSpawnEvent;
+use crate::dice::events::SpawnDices;
 use crate::manage::plugin::DiceData;
 use crate::states::GameState;
 
@@ -12,7 +12,7 @@ use super::dice_render::{
   DiceFaceImage
 };
 use super::dice_template::DiceTemplate;
-use super::{DiceFaceChangedEvent, FaceDescription};
+use super::{ChangeDiceFace, FaceDescription};
 
 pub struct DiceInstancePlugin;
 
@@ -40,7 +40,7 @@ pub struct Dice {
 
 impl Dice {
   pub fn build(
-    dice_face_changed: &mut EventWriter<DiceFaceChangedEvent>,
+    dice_face_changed: &mut EventWriter<ChangeDiceFace>,
     template: DiceTemplate, 
     dice_id: DiceID,
   ) -> Self {
@@ -86,9 +86,9 @@ impl Dice {
     self.current_hp = current_hp;
   }
 
-  pub fn set_face(&mut self, face_id: usize, face: FaceDescription) -> DiceFaceChangedEvent {
+  pub fn set_face(&mut self, face_id: usize, face: FaceDescription) -> ChangeDiceFace {
     self.current_faces[face_id] = face;
-    DiceFaceChangedEvent { dice_id: self.id, face_id: face_id, face: face }
+    ChangeDiceFace { dice_id: self.id, face_id: face_id, face: face }
   }
 }
 
@@ -98,8 +98,8 @@ fn spawn_dices(
   mut commands: Commands,
   mut materials: ResMut<Assets<StandardMaterial>>,
   dice_face_image: Res<DiceFaceImage>,
-  mut dice_face_changed: EventWriter<DiceFaceChangedEvent>,
-  mut dice_spawn_event: EventWriter<DiceSpawnEvent>,
+  mut dice_face_changed: EventWriter<ChangeDiceFace>,
+  mut dice_spawn_event: EventWriter<SpawnDices>,
 ) {
   info!("Spawning dices");
   assert!(dice_data.team1.len() <= MAX_DICE_COUNT);
@@ -128,7 +128,7 @@ fn spawn_dices(
       Dice::build(&mut dice_face_changed, dice_data.team2[i].clone(), DiceID { team_id: 1, dice_id: i }),
     ));
   }
-  dice_spawn_event.send(DiceSpawnEvent);
+  dice_spawn_event.send(SpawnDices);
 }
 
 fn despawn_dices(
