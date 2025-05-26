@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use rand_distr::{Distribution, Normal};
 
-use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
+use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
 
 use super::{events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
 
@@ -96,16 +96,8 @@ fn check_roll_results(
 fn get_face_id(rotation: Quat) -> usize {
   let mut face_id = 0;
   let mut max_dot = -1.0;
-  let face_normals = [
-    Vec3::new(0.0, 0.0, 1.0),
-    Vec3::new(0.0, 0.0, -1.0),
-    Vec3::new(1.0, 0.0, 0.0),
-    Vec3::new(-1.0, 0.0, 0.0),
-    Vec3::new(0.0, 1.0, 0.0),
-    Vec3::new(0.0, -1.0, 0.0),
-  ];
   for i in 0..6 {
-    let dot = rotation.mul_vec3(face_normals[i]).dot(Vec3::new(0.0, 0.0, 1.0));
+    let dot = rotation.mul_vec3(FACE_NORMALS[i]).dot(Vec3::new(0.0, 0.0, 1.0));
     if dot > max_dot {
       max_dot = dot;
       face_id = i;

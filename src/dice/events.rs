@@ -33,7 +33,13 @@ impl Plugin for DiceEventsPlugin {
       .add_event::<TossDices>()
       .add_event::<SpawnDices>()
       .add_event::<DicesStopped>()
-      .add_event::<RollResult>();
+      .add_event::<RollResult>()
+      .add_event::<MoveDice>()
+      .add_event::<MoveDiceToMiddle>()
+      .add_event::<MoveDiceToRow>()
+      .add_event::<ShakeDice>()
+      .add_event::<OrientDice>()
+      .add_event::<MovementFinished>();
   }
 }
 
@@ -56,3 +62,32 @@ pub struct DicesStopped;
 
 #[derive(Event)]
 pub struct RollResult(pub Vec<(DiceID, usize)>);
+
+#[derive(Event)]
+pub struct MoveDice {
+  pub dice_id: DiceID,
+  pub target_position: Vec3,
+}
+
+#[derive(Event)]
+pub struct MoveDiceToMiddle {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct MoveDiceToRow {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct ShakeDice {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct OrientDice {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct MovementFinished;
