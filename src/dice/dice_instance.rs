@@ -106,7 +106,6 @@ fn spawn_dices(
   mut dice_spawn_event: EventWriter<SpawnDices>,
   mut dice_entity_map: ResMut<DiceEntityMap>,
 ) {
-  info!("Spawning dices");
   assert!(dice_data.team1.len() <= MAX_DICE_COUNT);
   assert!(dice_data.team2.len() <= MAX_DICE_COUNT);
   
@@ -145,7 +144,6 @@ fn despawn_dices(
   entities: Query<Entity, With<Dice>>,
   mut dice_entity_map: ResMut<DiceEntityMap>
 ) {
-  info!("Despawning dices");
   for entity in &entities {
     commands.entity(entity).despawn();
   }

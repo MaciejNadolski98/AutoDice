@@ -25,7 +25,6 @@ fn roll_dices(
   mut dices: Query<(&mut Transform, &mut LinearVelocity, &mut AngularVelocity, &Dice)>,
   mut dices_rolling: ResMut<DicesRolling>,
 ) {
-  info!("Rolling dices");
   dices_rolling.0 = true;
   let dice_positions_team_1 = [
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0, DICE_SIZE * 1.5,),
@@ -75,7 +74,6 @@ fn check_if_dices_stopped(
       return;
     }
   }
-  info!("Dices stopped rolling");
   dices_rolling.0 = false;
   event_writer.send(DicesStopped);
 }
@@ -87,9 +85,6 @@ fn check_roll_results(
   let mut results = Vec::new();
   for (transform, dice) in &mut dices {
     let face_id = get_face_id(transform.rotation);
-    if dice.id() == (DiceID { team_id: 0, dice_id: 0 }) {
-      info!("Dice result: {}", face_id+1);
-    }
     results.push((dice.id(), face_id));
   }
   event_writer.send(RollResult(results));

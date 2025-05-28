@@ -42,7 +42,6 @@ fn handle_move_events(
   entity_map: Res<DiceEntityMap>,
 ) {
   for move_dice in move_dice_reader.read() {
-    info!("Handling move dice event for dice_id: {:?}", move_dice.dice_id);
     if let Some(dice_entity) = entity_map.0.get(&move_dice.dice_id) {
       let (_, transform, _) = dices.get(*dice_entity).unwrap();
       let transform_to = if let Ok(transform_to) = transforms_to.get(*dice_entity) {
@@ -60,7 +59,6 @@ fn handle_move_events(
           angular_speed: ANGULAR_SPEED,
         }
       };
-      info!("Moving dice {:?} to transform {:?}", move_dice.dice_id, transform_to);
       commands.entity(*dice_entity).insert(transform_to);
     }
   }     
@@ -71,7 +69,6 @@ fn handle_move_to_middle_events(
   mut move_dice_writer: EventWriter<MoveDice>,
 ) {
   for move_dice_to_middle in move_dice_to_middle_reader.read() {
-    info!("Handling move dice to middle event for dice_id: {:?}", move_dice_to_middle.dice_id);
     let target_y = if move_dice_to_middle.dice_id.team_id == 0 { HEIGHT / 5.0 } else { -HEIGHT / 5.0 };
     let target_position = Vec3::new(0.0, target_y, DICE_SIZE / 2.0);
     move_dice_writer.send(MoveDice {
@@ -104,7 +101,6 @@ fn handle_orient_dice_events(
   entity_map: Res<DiceEntityMap>,
 ) {
   for orient_dice in orient_dice_reader.read() {
-    info!("Handling orient dice event for dice_id: {:?}", orient_dice.dice_id);
     if let Some(dice_entity) = entity_map.0.get(&orient_dice.dice_id) {
       let (_, transform, _) = dices.get(*dice_entity).unwrap();
       let target_rotation = compute_target_rotation(transform.rotation);
@@ -123,7 +119,6 @@ fn handle_orient_dice_events(
           angular_speed: ANGULAR_SPEED,
         }
       };
-      info!("Moving dice {:?} to transform {:?}", orient_dice.dice_id, transform_to);
       commands.entity(*dice_entity).insert(transform_to);
     }
   }
@@ -175,7 +170,6 @@ fn move_entities(
 
     if translation_completed && rotation_completed {
       finished_movements += 1;
-      info!("Entity {:?} has completed its movement", entity);
       commands.entity(entity).remove::<TransformTo>();
     }
   }
@@ -189,7 +183,6 @@ fn remove_physics(
   mut commands: Commands,
   entities: Query<Entity, With<Dice>>,
 ) {
-  info!("Removing physics from dice entities");
   for entity in &entities {
     commands.entity(entity).insert(RigidBodyDisabled);
   }
@@ -199,7 +192,6 @@ pub fn add_physics(
   mut commands: Commands,
   entities: Query<Entity, With<Dice>>,
 ) {
-  info!("Adding physics to dice entities");
   for entity in &entities {
     commands.entity(entity).remove::<RigidBodyDisabled>();
   }
