@@ -1,3 +1,4 @@
+use avian3d::math::PI;
 use bevy::{math::Vec3, render::view::RenderLayers};
 
 
@@ -30,7 +31,7 @@ pub const LINEAR_VELOCITY_EPSILON: f32 = 1.0;
 pub const ANGULAR_VELOCITY_EPSILON: f32 = 1.0;
 
 pub const LINEAR_SPEED: f32 = DICE_SIZE * 10.0;
-pub const ANGULAR_SPEED: f32 = 1.0;
+pub const ANGULAR_SPEED: f32 = 2.0 * (2.0 * PI);
 
 pub const FACE_NORMALS: [Vec3; 6] = [
     Vec3::Z,

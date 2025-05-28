@@ -1,24 +1,32 @@
+use avian3d::math::PI;
+use avian3d::prelude::{RigidBody, RigidBodyDisabled};
 use bevy::prelude::*;
-use bevy_inspector_egui::inspector_options::Target;
 
-use crate::constants::{ANGULAR_SPEED, DICE_SIZE, HEIGHT, LINEAR_SPEED};
+use crate::constants::{ANGULAR_SPEED, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_SPEED};
 use crate::states::GameState;
 
 use super::dice_instance::DiceEntityMap;
 use super::Dice;
-use super::events::{MoveDice, MoveDiceToMiddle, MoveDiceToRow, MovementFinished, OrientDice, ShakeDice};
+use super::events::{TossDices, DicesStopped, MoveDice, MoveDiceToMiddle, MoveDiceToRow, MovementFinished, OrientDice, ShakeDice};
+use super::roll::get_face_id;
 
 pub struct AnimationPlugin;
 
 impl Plugin for AnimationPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Update, handle_move_events.run_if(in_state(GameState::Battle)))
-      .add_systems(Update, move_entities.run_if(in_state(GameState::Battle)));
+      .add_systems(Update, (
+        handle_move_to_middle_events,
+        handle_move_to_row_events,
+        handle_move_events,
+        handle_orient_dice_events,
+        move_entities,
+      ).chain().run_if(in_state(GameState::Battle)))
+      .add_systems(Update, remove_physics.run_if(on_event::<DicesStopped>));
   }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct TransformTo {
   pub target: Transform,
   pub linear_speed: f32,
@@ -27,87 +35,102 @@ pub struct TransformTo {
 
 fn handle_move_events(
   mut commands: Commands,
-  mut dices: Query<(Entity, &Transform, &Dice)>,
+  dices: Query<(Entity, &Transform, &Dice)>,
+  transforms_to: Query<&TransformTo>,
   mut move_dice_reader: EventReader<MoveDice>,
-  mut move_dice_to_middle_reader: EventReader<MoveDiceToMiddle>,
-  mut move_dice_to_row_reader: EventReader<MoveDiceToRow>,
-  mut shake_dice_reader: EventReader<ShakeDice>,
-  mut orient_dice_reader: EventReader<OrientDice>,
-  mut transform_to_query: Query<&mut TransformTo>,
   entity_map: Res<DiceEntityMap>,
 ) {
-  let mut add_animation = |dice_entity: Entity, function: &dyn Fn(&TransformTo) -> TransformTo| {
-    if let Ok(mut transform_to) = transform_to_query.get_mut(dice_entity) {
-      *transform_to = function(&*transform_to);
-    } else {
-      let (_, transform, _) = dices.get(dice_entity).unwrap();
-      commands.entity(dice_entity).insert(function(&TransformTo {
-        target: *transform,
-        linear_speed: LINEAR_SPEED,
-        angular_speed: ANGULAR_SPEED,
-      }));
-    }
-  };
   for move_dice in move_dice_reader.read() {
+    info!("Handling move dice event for dice_id: {:?}", move_dice.dice_id);
     if let Some(dice_entity) = entity_map.0.get(&move_dice.dice_id) {
-      add_animation(*dice_entity, &|transform_to: &TransformTo| {
+      let (_, transform, _) = dices.get(*dice_entity).unwrap();
+      let transform_to = if let Ok(transform_to) = transforms_to.get(*dice_entity) {
         TransformTo {
-          target: Transform::from_translation(transform_to.target.translation)
+          target: Transform::from_translation(move_dice.target_position)
             .with_rotation(transform_to.target.rotation),
           linear_speed: LINEAR_SPEED,
           angular_speed: transform_to.angular_speed,
         }
-      });
-    }
-  }
-
-  for move_dice_to_middle in move_dice_to_middle_reader.read() {
-    if let Some(dice_entity) = entity_map.0.get(&move_dice_to_middle.dice_id) {
-      add_animation(*dice_entity, &|transform_to: &TransformTo| {
-        let y = if move_dice_to_middle.dice_id.team_id == 0 { HEIGHT / 4.0 } else { -HEIGHT / 4.0 };
+      } else {
         TransformTo {
-          target: Transform::from_translation(Vec3::new(0.0, y, DICE_SIZE / 2.0))
-            .with_rotation(transform_to.target.rotation),
-          linear_speed: LINEAR_SPEED,
-          angular_speed: transform_to.angular_speed,
-        }
-      });
-    }
-  }
-
-  for move_dice_to_row in move_dice_to_row_reader.read() {
-    if let Some(dice_entity) = entity_map.0.get(&move_dice_to_row.dice_id) {
-      add_animation(*dice_entity, &|transform_to: &TransformTo| {
-        let y = if move_dice_to_row.dice_id.team_id == 0 { HEIGHT * 2.0 / 5.0 } else { -HEIGHT * 2.0 / 5.0 };
-        let x = 0.0; // TODO: Calculate x based on the index within row
-        TransformTo {
-          target: Transform::from_translation(Vec3::new(x, y, DICE_SIZE / 2.0))
-            .with_rotation(transform_to.target.rotation),
-          linear_speed: LINEAR_SPEED,
-          angular_speed: transform_to.angular_speed,
-        }
-      });
-    }
-  }
-
-  for shake_dice in shake_dice_reader.read() {
-    // TODO: Implement shake logic
-  }
-
-  for orient_dice in orient_dice_reader.read() {
-    if let Some(dice_entity) = entity_map.0.get(&orient_dice.dice_id) {
-      add_animation(*dice_entity, &|transform_to: &TransformTo| {
-        let (rotation_x, rotation_y, _) = transform_to.target.rotation.to_euler(EulerRot::XYZ);
-        let target_transform = Transform::from_translation(transform_to.target.translation)
-          .with_rotation(Quat::from_euler(EulerRot::XYZ, rotation_x, rotation_y, 0.0));
-        TransformTo {
-          target: target_transform,
+          target: Transform::from_translation(move_dice.target_position)
+            .with_rotation(transform.rotation),
           linear_speed: LINEAR_SPEED,
           angular_speed: ANGULAR_SPEED,
         }
-      });
+      };
+      info!("Moving dice {:?} to transform {:?}", move_dice.dice_id, transform_to);
+      commands.entity(*dice_entity).insert(transform_to);
+    }
+  }     
+}
+
+fn handle_move_to_middle_events(
+  mut move_dice_to_middle_reader: EventReader<MoveDiceToMiddle>,
+  mut move_dice_writer: EventWriter<MoveDice>,
+) {
+  for move_dice_to_middle in move_dice_to_middle_reader.read() {
+    info!("Handling move dice to middle event for dice_id: {:?}", move_dice_to_middle.dice_id);
+    let target_y = if move_dice_to_middle.dice_id.team_id == 0 { HEIGHT / 5.0 } else { -HEIGHT / 5.0 };
+    let target_position = Vec3::new(0.0, target_y, DICE_SIZE / 2.0);
+    move_dice_writer.send(MoveDice {
+      dice_id: move_dice_to_middle.dice_id,
+      target_position,
+    });
+  }
+}
+
+fn handle_move_to_row_events(
+  mut move_dice_to_row_reader: EventReader<MoveDiceToRow>,
+  mut move_dice_writer: EventWriter<MoveDice>,
+) {
+  for move_dice_to_row in move_dice_to_row_reader.read() {
+    let target_y = if move_dice_to_row.dice_id.team_id == 0 { HEIGHT * 2.0 / 5.0 } else { -HEIGHT * 2.0 / 5.0 };
+    let target_x: f32 = 0.0; // TODO: Calculate x based on the index within row
+    let target_position = Vec3::new(target_x, target_y, DICE_SIZE / 2.0);
+    move_dice_writer.send(MoveDice {
+      dice_id: move_dice_to_row.dice_id,
+      target_position,
+    });
+  }
+}
+
+fn handle_orient_dice_events(
+  mut commands: Commands,
+  dices: Query<(Entity, &Transform, &Dice)>,
+  transforms_to: Query<&TransformTo>,
+  mut orient_dice_reader: EventReader<OrientDice>,
+  entity_map: Res<DiceEntityMap>,
+) {
+  for orient_dice in orient_dice_reader.read() {
+    info!("Handling orient dice event for dice_id: {:?}", orient_dice.dice_id);
+    if let Some(dice_entity) = entity_map.0.get(&orient_dice.dice_id) {
+      let (_, transform, _) = dices.get(*dice_entity).unwrap();
+      let target_rotation = compute_target_rotation(transform.rotation);
+      let transform_to = if let Ok(transform_to) = transforms_to.get(*dice_entity) {
+        TransformTo {
+          target: Transform::from_translation(transform_to.target.translation)
+            .with_rotation(target_rotation),
+          linear_speed: transform_to.linear_speed,
+          angular_speed: ANGULAR_SPEED,
+        }
+      } else {
+        TransformTo {
+          target: Transform::from_translation(transform.translation)
+            .with_rotation(target_rotation),
+          linear_speed: LINEAR_SPEED,
+          angular_speed: ANGULAR_SPEED,
+        }
+      };
+      info!("Moving dice {:?} to transform {:?}", orient_dice.dice_id, transform_to);
+      commands.entity(*dice_entity).insert(transform_to);
     }
   }
+}
+
+fn compute_target_rotation(current_rotation: Quat) -> Quat {
+  let face_id = get_face_id(current_rotation);
+  Quat::from_rotation_arc(FACE_NORMALS[face_id], Vec3::Z)
 }
 
 fn move_entities(
@@ -135,8 +158,13 @@ fn move_entities(
     }
 
     let rhs_angular_difference = transform.rotation.inverse() * target.rotation;
-    let (axis, angle) = rhs_angular_difference.to_axis_angle();
-    if angle < angular_displacement {
+    let (mut axis, mut angle) = rhs_angular_difference.to_axis_angle();
+    if angle > PI {
+      // Normalize angle to be within [0, PI]
+      angle = angle - 2.0 * PI;
+      axis = -axis; // Reverse the axis if we normalize the angle
+    }
+    if angle.abs() < angular_displacement {
       transform.rotation = target.rotation;
       rotation_completed = true;
     } else {
@@ -146,11 +174,32 @@ fn move_entities(
 
     if translation_completed && rotation_completed {
       finished_movements += 1;
+      info!("Entity {:?} has completed its movement", entity);
       commands.entity(entity).remove::<TransformTo>();
     }
   }
 
   if finished_movements == total_entities_to_move {
     movement_finished.send(MovementFinished);
+  }
+}
+
+fn remove_physics(
+  mut commands: Commands,
+  entities: Query<Entity, With<Dice>>,
+) {
+  info!("Removing physics from dice entities");
+  for entity in &entities {
+    commands.entity(entity).insert(RigidBodyDisabled);
+  }
+}
+
+pub fn add_physics(
+  mut commands: Commands,
+  entities: Query<Entity, With<Dice>>,
+) {
+  info!("Adding physics to dice entities");
+  for entity in &entities {
+    commands.entity(entity).remove::<RigidBodyDisabled>();
   }
 }

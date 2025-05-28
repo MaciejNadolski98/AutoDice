@@ -74,12 +74,24 @@ fn get_uv(team_id: u32, dice_id: u32, face_id: u32) -> [f32; 2] {
 fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f32; 2] {
   let [x, y] = get_uv(team_id, dice_id, face_id);
   let dice_size = get_uv_dice_size();
-  match vertex_id {
+  match permute_vertex_id(face_id, vertex_id) {
     0 => [x, y],
     1 => [x, y+dice_size[1]],
     2 => [x+dice_size[0], y+dice_size[1]],
     3 => [x+dice_size[0], y],
     _ => panic!("Invali vertex_id value"),
+  }
+}
+
+fn permute_vertex_id(face_id: u32, vertex_id: u32) -> u32 {
+  match face_id {
+    0 => (vertex_id + 1) % 4,
+    1 => (vertex_id + 3) % 4,
+    2 => (vertex_id + 2) % 4,
+    3 => (vertex_id + 2) % 4,
+    4 => (vertex_id + 3) % 4,
+    5 => (vertex_id + 3) % 4,
+    _ => panic!("Invalid face_id value"),
   }
 }
 

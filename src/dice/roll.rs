@@ -4,18 +4,18 @@ use rand_distr::{Distribution, Normal};
 
 use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
 
-use super::{events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
+use super::{animation::add_physics, events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
 
 pub struct RollPlugin;
 
-#[derive(Resource, Default, Clone, Copy, PartialEq)]
+#[derive(Resource, Default, Clone, Copy, PartialEq, Eq)]
 pub struct DicesRolling(pub bool);
 
 impl Plugin for RollPlugin {
   fn build(&self, app: &mut App) {
     app
       .init_resource::<DicesRolling>()
-      .add_systems(Update, roll_dices.run_if(on_event::<TossDices>))
+      .add_systems(Update, (add_physics, roll_dices).chain().run_if(on_event::<TossDices>))
       .add_systems(Update, check_if_dices_stopped.run_if(resource_equals::<DicesRolling>(DicesRolling(true))))
       .add_systems(Update, check_roll_results.run_if(on_event::<DicesStopped>));
   }
@@ -25,6 +25,7 @@ fn roll_dices(
   mut dices: Query<(&mut Transform, &mut LinearVelocity, &mut AngularVelocity, &Dice)>,
   mut dices_rolling: ResMut<DicesRolling>,
 ) {
+  info!("Rolling dices");
   dices_rolling.0 = true;
   let dice_positions_team_1 = [
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0, DICE_SIZE * 1.5,),
@@ -74,6 +75,7 @@ fn check_if_dices_stopped(
       return;
     }
   }
+  info!("Dices stopped rolling");
   dices_rolling.0 = false;
   event_writer.send(DicesStopped);
 }
@@ -93,7 +95,7 @@ fn check_roll_results(
   event_writer.send(RollResult(results));
 }
 
-fn get_face_id(rotation: Quat) -> usize {
+pub fn get_face_id(rotation: Quat) -> usize {
   let mut face_id = 0;
   let mut max_dot = -1.0;
   for i in 0..6 {

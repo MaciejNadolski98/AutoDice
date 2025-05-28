@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::camera::BattleCamera;
-use crate::dice::{DiceID, MoveDiceToMiddle, TossDices};
+use crate::dice::{DiceID, MoveDiceToMiddle, OrientDice, TossDices};
 use crate::states::GameState;
 use crate::constants::{ 
   DICE_SIZE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH
@@ -120,6 +120,7 @@ fn debug_control(
   mut battle_camera: Query<&mut Transform, With<BattleCamera>>,
   mut dices: Query<&mut Dice>,
   mut move_dices: EventWriter<MoveDiceToMiddle>,
+  mut orient_dices: EventWriter<OrientDice>,
 ) {
   if keys.just_pressed(KeyCode::KeyQ) {
     toss_dices.send(TossDices {});
@@ -219,7 +220,10 @@ fn debug_control(
 
   if keys.just_pressed(KeyCode::KeyC) {
     move_dices.send(MoveDiceToMiddle {
-      dice_id: DiceID { team_id: 0, dice_id: 1 },
+      dice_id: DiceID { team_id: 0, dice_id: 0 },
+    });
+    orient_dices.send(OrientDice {
+      dice_id: DiceID { team_id: 0, dice_id: 0 },
     });
   }
 }
