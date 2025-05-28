@@ -27,14 +27,19 @@ fn add_battle_scene(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+  asset_server: Res<AssetServer>,
 ) {
   commands.spawn((Name::new("Battle Scene"), Visibility::default(), Transform::default(), BattleComponent)).with_children(|commands| {
+    commands.spawn(SceneRoot(asset_server.load(
+        GltfAssetLabel::Scene(0).from_asset("autodicetable.gltf"),
+    )));
+
     let cube_mesh = meshes.add(Cuboid::default());
 
     commands.spawn((
       Name::new("Base"),
       Mesh3d(cube_mesh.clone()),
-      MeshMaterial3d(materials.add(Color::srgb(0.0, 1.0, 0.0))),
+      MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.0))),
       Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(256.0, 0.01, 144.0)),
       RigidBody::Static,
       Collider::cuboid(1.0, 1.0, 1.0),
