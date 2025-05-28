@@ -4,7 +4,7 @@ use rand_distr::{Distribution, Normal};
 
 use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
 
-use super::{animation::add_physics, events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
+use super::{events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
 
 pub struct RollPlugin;
 
@@ -15,7 +15,7 @@ impl Plugin for RollPlugin {
   fn build(&self, app: &mut App) {
     app
       .init_resource::<DicesRolling>()
-      .add_systems(Update, (add_physics, roll_dices).chain().run_if(on_event::<TossDices>))
+      .add_systems(Update, roll_dices.run_if(on_event::<TossDices>))
       .add_systems(Update, check_if_dices_stopped.run_if(resource_equals::<DicesRolling>(DicesRolling(true))))
       .add_systems(Update, check_roll_results.run_if(on_event::<DicesStopped>));
   }

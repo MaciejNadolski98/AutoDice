@@ -1,13 +1,13 @@
 use avian3d::math::PI;
-use avian3d::prelude::{RigidBody, RigidBodyDisabled};
+use avian3d::prelude::RigidBodyDisabled;
 use bevy::prelude::*;
 
 use crate::constants::{ANGULAR_SPEED, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_SPEED};
 use crate::states::GameState;
 
 use super::dice_instance::DiceEntityMap;
-use super::Dice;
-use super::events::{TossDices, DicesStopped, MoveDice, MoveDiceToMiddle, MoveDiceToRow, MovementFinished, OrientDice, ShakeDice};
+use super::{Dice, TossDices};
+use super::events::{DicesStopped, MoveDice, MoveDiceToMiddle, MoveDiceToRow, MovementFinished, OrientDice};
 use super::roll::get_face_id;
 
 pub struct AnimationPlugin;
@@ -22,6 +22,7 @@ impl Plugin for AnimationPlugin {
         handle_orient_dice_events,
         move_entities,
       ).chain().run_if(in_state(GameState::Battle)))
+      .add_systems(Update, add_physics.run_if(on_event::<TossDices>))
       .add_systems(Update, remove_physics.run_if(on_event::<DicesStopped>));
   }
 }
