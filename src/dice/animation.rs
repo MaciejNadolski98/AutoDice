@@ -2,12 +2,12 @@ use avian3d::math::PI;
 use avian3d::prelude::RigidBodyDisabled;
 use bevy::prelude::*;
 
-use crate::constants::{ANGULAR_SPEED, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_SPEED};
+use crate::constants::{ANGULAR_SPEED, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_SPEED, SPIN_ANGULAR_SPEED, SPIN_DURATION};
 use crate::states::GameState;
 
 use super::dice_instance::DiceEntityMap;
 use super::{Dice, TossDices};
-use super::events::{DicesStopped, MoveDice, MoveDiceToMiddle, MoveDiceToRow, MovementFinished, OrientDice};
+use super::events::{DicesStopped, MoveDice, MoveDiceToMiddle, MoveDiceToRow, MovementFinished, OrientDice, SpinDice, SpinFinished};
 use super::roll::get_face_id;
 
 pub struct AnimationPlugin;
@@ -20,7 +20,9 @@ impl Plugin for AnimationPlugin {
         handle_move_to_row_events,
         handle_move_events,
         handle_orient_dice_events,
+        handle_spin_dice_events,
         move_entities,
+        spin_dices,
       ).chain().run_if(in_state(GameState::Battle)))
       .add_systems(Update, add_physics.run_if(on_event::<TossDices>))
       .add_systems(Update, remove_physics.run_if(on_event::<DicesStopped>));
@@ -32,6 +34,13 @@ pub struct TransformTo {
   pub target: Transform,
   pub linear_speed: f32,
   pub angular_speed: f32,
+}
+
+#[derive(Event)]
+pub struct Spin {
+  pub spin_axis: Vec3,
+  pub angular_speed: f32,
+  pub timer: Timer,
 }
 
 fn handle_move_events(
@@ -120,6 +129,42 @@ fn handle_orient_dice_events(
         }
       };
       commands.entity(*dice_entity).insert(transform_to);
+    }
+  }
+}
+
+fn handle_spin_dice_events(
+  mut commands: Commands,
+  dices: Query<&Transform>,
+  mut spin_dice_reader: EventReader<SpinDice>,
+  entity_map: Res<DiceEntityMap>,
+) {
+  for spin_dice in spin_dice_reader.read() {
+    if let Some(dice_entity) = entity_map.0.get(&spin_dice.dice_id) {
+      let transform = dices.get(*dice_entity).unwrap();
+      commands.entity(*dice_entity).insert(Spin {
+        spin_axis: FACE_NORMALS[get_face_id(transform.rotation)],
+        angular_speed: SPIN_ANGULAR_SPEED,
+        timer: Timer::from_seconds(SPIN_DURATION, TimerMode::Once),
+      });
+    }
+  }
+}
+
+fn spin_dices(
+  mut commands: Commands,
+  mut spins: Query<(Entity, &Dice, &mut Transform, &mut Spin)>,
+  time: Res<Time>,
+  mut spin_finished_writer: EventWriter<SpinFinished>,
+) {
+  for (entity, dice, mut transform, mut spin) in &mut spins {
+    let remaining_time = spin.timer.remaining_secs();
+    let angle = f32::min(remaining_time, time.delta_secs()) * spin.angular_speed;
+    spin.timer.tick(time.delta());
+    transform.rotation = transform.rotation * Quat::from_axis_angle(spin.spin_axis, angle);
+    if spin.timer.just_finished() {
+      commands.entity(entity).remove::<Spin>();
+      spin_finished_writer.send(SpinFinished { dice_id: dice.id() });
     }
   }
 }
