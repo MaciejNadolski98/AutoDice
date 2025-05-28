@@ -30,6 +30,7 @@ impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_event::<ChangeDiceFace>()
+      .add_event::<RowPositionChanged>()
       .add_event::<TossDices>()
       .add_event::<SpawnDices>()
       .add_event::<DicesStopped>()
@@ -50,6 +51,12 @@ pub struct ChangeDiceFace {
   pub dice_id: DiceID,
   pub face_id: usize,
   pub face: FaceDescription,
+}
+
+#[derive(Event)]
+pub struct RowPositionChanged {
+  pub dice_id: DiceID,
+  pub position: usize,
 }
 
 #[derive(Event)]
