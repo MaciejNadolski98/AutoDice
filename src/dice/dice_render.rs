@@ -168,7 +168,7 @@ fn update_dice_faces(
     let face_entity = entities.get(face_update.dice_id, face_update.face_id);
     
     commands.entity(face_entity)
-      .despawn_descendants()
+      .despawn_related::<Children>()
       .with_children(|commands| {
         commands.spawn((
           Name::new("Face image"),

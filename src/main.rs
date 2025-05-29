@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::input::common_conditions::input_toggle_active;
 use bevy::window::WindowResolution;
+use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use constants::{RESOLUTION_HEIGHT, RESOLUTION_WIDTH};
 
@@ -31,6 +32,7 @@ fn main() {
         }))
         .init_state::<GameState>()
         .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin))
+        .add_plugins(EguiPlugin { enable_multipass_for_primary_context: true })
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
         )

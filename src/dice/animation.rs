@@ -36,7 +36,7 @@ pub struct TransformTo {
   pub angular_speed: f32,
 }
 
-#[derive(Event)]
+#[derive(Component)]
 pub struct Spin {
   pub spin_axis: Vec3,
   pub angular_speed: f32,
@@ -80,7 +80,7 @@ fn handle_move_to_middle_events(
   for move_dice_to_middle in move_dice_to_middle_reader.read() {
     let target_y = if move_dice_to_middle.dice_id.team_id == 0 { HEIGHT / 5.0 } else { -HEIGHT / 5.0 };
     let target_position = Vec3::new(0.0, target_y, DICE_SIZE / 2.0);
-    move_dice_writer.send(MoveDice {
+    move_dice_writer.write(MoveDice {
       dice_id: move_dice_to_middle.dice_id,
       target_position,
     });
@@ -99,7 +99,7 @@ fn handle_move_to_row_events(
     let target_y = if move_dice_to_row.dice_id.team_id == 0 { HEIGHT * 2.0 / 5.0 } else { -HEIGHT * 2.0 / 5.0 };
     let target_x = compute_target_x(row_position);
     let target_position = Vec3::new(target_x, target_y, DICE_SIZE / 2.0);
-    move_dice_writer.send(MoveDice {
+    move_dice_writer.write(MoveDice {
       dice_id: move_dice_to_row.dice_id,
       target_position,
     });
@@ -174,7 +174,7 @@ fn spin_dices(
     transform.rotation = transform.rotation * Quat::from_axis_angle(spin.spin_axis, angle);
     if spin.timer.just_finished() {
       commands.entity(entity).remove::<Spin>();
-      spin_finished_writer.send(SpinFinished { dice_id: dice.id() });
+      spin_finished_writer.write(SpinFinished { dice_id: dice.id() });
     }
   }
 }
@@ -230,7 +230,7 @@ fn move_entities(
   }
 
   if finished_movements == total_entities_to_move {
-    movement_finished.send(MovementFinished);
+    movement_finished.write(MovementFinished);
   }
 }
 

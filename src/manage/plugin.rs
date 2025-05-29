@@ -98,7 +98,7 @@ fn despawn_manage(
   screen: Query<Entity, With<ManageScreen>>,
   mut commands: Commands,
 ) {
-  commands.entity(screen.single()).despawn_recursive();
+  commands.entity(screen.single().unwrap()).despawn();
 }
 
 #[derive(Resource, Default)]

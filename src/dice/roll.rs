@@ -76,7 +76,7 @@ fn check_if_dices_stopped(
     }
   }
   dices_rolling.0 = false;
-  event_writer.send(DicesStopped);
+  event_writer.write(DicesStopped);
 }
 
 fn check_roll_results(
@@ -88,7 +88,7 @@ fn check_roll_results(
     let face_id = get_face_id(transform.rotation);
     results.push((dice.id(), face_id));
   }
-  event_writer.send(RollResult(results));
+  event_writer.write(RollResult(results));
 }
 
 fn compute_row_positions(
@@ -113,13 +113,13 @@ fn compute_row_positions(
   for (i, (_, dice_id)) in team_1_dices.iter().enumerate() {
     let entity = dice_mapping.0.get(dice_id).unwrap();
     let mut dice = dices.get_mut(*entity).unwrap();
-    row_position_changed.send(dice.1.set_row_position(i));
+    row_position_changed.write(dice.1.set_row_position(i));
   }
 
   for (i, (_, dice_id)) in team_2_dices.iter().enumerate() {
     let entity = dice_mapping.0.get(dice_id).unwrap();
     let mut dice = dices.get_mut(*entity).unwrap();
-    row_position_changed.send(dice.1.set_row_position(i));
+    row_position_changed.write(dice.1.set_row_position(i));
   }
 }
 

@@ -61,7 +61,7 @@ fn despawn_orphan_health_bars(
 ) {
   for (health_bar_entity, related) in health_bars.iter() {
     if existing_dice.get(related.related_entity).is_err() {
-      commands.entity(health_bar_entity).despawn_recursive();
+      commands.entity(health_bar_entity).despawn();
     }
   }
 }

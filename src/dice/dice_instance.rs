@@ -53,7 +53,7 @@ impl Dice {
     dice.set_max_hp(template.hp);
     dice.set_current_hp(template.hp);
     for i in 0..6 {
-      dice_face_changed.send(dice.set_face(i, template.faces[i]));
+      dice_face_changed.write(dice.set_face(i, template.faces[i]));
     }
     dice.set_row_position(dice_id.dice_id);
     dice
@@ -155,7 +155,7 @@ fn spawn_dices(
     )).id();
     dice_entity_map.0.insert(dice_id, entity);
   }
-  dice_spawn_event.send(SpawnDices);
+  dice_spawn_event.write(SpawnDices);
 }
 
 fn despawn_dices(
