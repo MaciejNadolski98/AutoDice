@@ -8,7 +8,6 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
- "bevy-async-ecs",
  "bevy-inspector-egui",
  "profiling",
  "rand",
@@ -481,19 +480,6 @@ checksum = "2a5cd3b24a5adb7c7378da7b3eea47639877643d11b6b087fc8a8094f2528615"
 dependencies = [
  "bevy_dylib",
  "bevy_internal",
-]
-
-[[package]]
-name = "bevy-async-ecs"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d707f61b5adbbeabdd305487971bdb6f2dd540d87a3a3301f425ee650d047a18"
-dependencies = [
- "async-channel",
- "bevy_app",
- "bevy_ecs",
- "bevy_log",
- "bevy_platform",
 ]
 
 [[package]]

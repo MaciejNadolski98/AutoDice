@@ -56,20 +56,16 @@ fn flow(
 ){
   match *state {
     FlowState::Init => {
-      info!("flow: Init");
       *state = FlowState::RollingDices;
       *round = 1;
     },
     FlowState::RollingDices => {
-      info!("flow: RollingDices");
       *state = FlowState::ResolvingDices;
     },
     FlowState::ResolvingDices => {
-      info!("flow: ResolvingDices");
       *state = FlowState::RoundEnd;
     },
     FlowState::RoundEnd => {
-      info!("flow: RoundEnd, next round: {}", *round + 1);
       *round += 1;
       *state = FlowState::RollingDices;
     },
