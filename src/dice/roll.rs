@@ -1,32 +1,46 @@
 use avian3d::prelude::*;
+use futures_::future::{join, join_all};
 use bevy::prelude::*;
+use bevy_defer::{AccessError, AsyncWorld};
 use rand_distr::{Distribution, Normal};
 
 use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
 
-use super::{dice_instance::{DiceEntityMap, RowPositionMappings}, events::{DicesStopped, RollResult, RowPositionChanged}, Dice, DiceID, TossDices};
+use super::{animation::{add_physics, move_dice_to_row, orient_dice, remove_physics}, dice_instance::DiceEntityMap, Dice};
 
 pub struct RollPlugin;
 
-#[derive(Resource, Default, Clone, Copy, PartialEq, Eq)]
-pub struct DicesRolling(pub bool);
-
 impl Plugin for RollPlugin {
-  fn build(&self, app: &mut App) {
-    app
-      .init_resource::<DicesRolling>()
-      .add_systems(Update, roll_dices.run_if(on_event::<TossDices>))
-      .add_systems(Update, check_if_dices_stopped.run_if(resource_equals::<DicesRolling>(DicesRolling(true))))
-      .add_systems(Update, (check_roll_results, compute_row_positions).run_if(on_event::<DicesStopped>))
-      .add_systems(Update, update_row_positions);
+  fn build(&self, _app: &mut App) {
   }
 }
 
-fn roll_dices(
+pub async fn set_physics(on: bool) -> Result<(), AccessError> {
+  if on {
+    AsyncWorld.run_system_cached(add_physics)?;
+  } else {
+    AsyncWorld.run_system_cached(remove_physics)?;
+  }
+  Ok(())
+}
+
+pub async fn roll_dices() -> Result<(), AccessError> {
+  set_physics(true).await?;
+  AsyncWorld.run_system_cached(set_dice_roll_positions_and_velocities)?;
+  wait_for_dices_to_stop().await.unwrap();
+  set_physics(false).await?;
+
+  AsyncWorld.run_system_cached(compute_row_positions)?;
+
+  let (result1, result2) = join(move_dices_to_rows(), orient_dices()).await;
+  result1?;
+  result2?;
+  Ok(())
+}
+
+fn set_dice_roll_positions_and_velocities(
   mut dices: Query<(&mut Transform, &mut LinearVelocity, &mut AngularVelocity, &Dice)>,
-  mut dices_rolling: ResMut<DicesRolling>,
 ) {
-  dices_rolling.0 = true;
   let dice_positions_team_1 = [
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0, DICE_SIZE * 1.5,),
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 + DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
@@ -65,35 +79,46 @@ fn roll_dices(
   }
 }
 
-fn check_if_dices_stopped(
-  dices: Query<(&LinearVelocity, &AngularVelocity), With<Dice>>,
-  mut dices_rolling: ResMut<DicesRolling>,
-  mut event_writer: EventWriter<DicesStopped>
-) {
-  for (linear_velocity, angular_velocity) in &dices {
-    if linear_velocity.0.length() > LINEAR_VELOCITY_EPSILON || angular_velocity.0.length() > ANGULAR_VELOCITY_EPSILON {
-      return;
-    }
-  }
-  dices_rolling.0 = false;
-  event_writer.write(DicesStopped);
+async fn move_dices_to_rows() -> Result<(), AccessError> {
+  let mut tasks = vec![];
+  AsyncWorld.query::<&Dice>().for_each(|dice| {
+    tasks.push(move_dice_to_row(dice.id()));
+  });
+  join_all(tasks).await;
+  Ok(())
 }
 
-fn check_roll_results(
-  mut dices: Query<(&Transform, &Dice)>,
-  mut event_writer: EventWriter<RollResult>
-) {
-  let mut results = Vec::new();
-  for (transform, dice) in &mut dices {
-    let face_id = get_face_id(transform.rotation);
-    results.push((dice.id(), face_id));
+async fn orient_dices() -> Result<(), AccessError> {
+  let mut tasks = vec![];
+  AsyncWorld.query::<&Dice>().for_each(|dice| {
+    tasks.push(orient_dice(dice.id()));
+  });
+  join_all(tasks).await;
+  Ok(())
+}
+
+async fn wait_for_dices_to_stop() -> Result<(), AccessError> {
+  loop {
+    if dices_stopped().await.unwrap() {
+      break;
+    }
+    AsyncWorld.sleep(0.1).await;
   }
-  event_writer.write(RollResult(results));
+  Ok(())
+}
+
+async fn dices_stopped() -> Result<bool, AccessError> {
+  let mut stopped = true;
+  AsyncWorld.query::<(&LinearVelocity, &AngularVelocity)>().for_each(|(linear_velocity, angular_velocity)| {
+    if linear_velocity.0.length() > LINEAR_VELOCITY_EPSILON || angular_velocity.0.length() > ANGULAR_VELOCITY_EPSILON {
+      stopped = false;
+    }
+  });
+  return Ok(stopped);
 }
 
 fn compute_row_positions(
   mut dices: Query<(&Transform, &mut Dice)>,
-  mut row_position_changed: EventWriter<RowPositionChanged>,
   dice_mapping: Res<DiceEntityMap>,
 ) {
   let mut team_1_dices = Vec::new();
@@ -113,26 +138,13 @@ fn compute_row_positions(
   for (i, (_, dice_id)) in team_1_dices.iter().enumerate() {
     let entity = dice_mapping.0.get(dice_id).unwrap();
     let mut dice = dices.get_mut(*entity).unwrap();
-    row_position_changed.write(dice.1.set_row_position(i));
+    dice.1.set_row_position(i);
   }
 
   for (i, (_, dice_id)) in team_2_dices.iter().enumerate() {
     let entity = dice_mapping.0.get(dice_id).unwrap();
     let mut dice = dices.get_mut(*entity).unwrap();
-    row_position_changed.write(dice.1.set_row_position(i));
-  }
-}
-
-fn update_row_positions(
-  mut row_position_changed: EventReader<RowPositionChanged>,
-  mut row_mappings: ResMut<RowPositionMappings>,
-) {
-  for event in row_position_changed.read() {
-    if event.dice_id.team_id == 0 {
-      row_mappings.team1.insert(event.position, event.dice_id);
-    } else {
-      row_mappings.team2.insert(event.position, event.dice_id);
-    }
+    dice.1.set_row_position(i);
   }
 }
 

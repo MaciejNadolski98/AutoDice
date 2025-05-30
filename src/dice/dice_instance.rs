@@ -11,7 +11,6 @@ use super::dice_render::{
   DiceFaceImage
 };
 use super::dice_template::DiceTemplate;
-use super::events::RowPositionChanged;
 use super::{ChangeDiceFace, FaceDescription};
 use std::collections::HashMap;
 
@@ -21,7 +20,6 @@ impl Plugin for DiceInstancePlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(DiceEntityMap::default())
-      .insert_resource(RowPositionMappings::default())
       .add_systems(OnEnter(GameState::Battle), spawn_dices)
       .add_systems(OnExit(GameState::Battle), despawn_dices);
   }
@@ -71,10 +69,12 @@ impl Dice {
     self.current_hp
   }
 
+  #[allow(dead_code)]
   pub fn face(&self, face_id: usize) -> FaceDescription {
     self.current_faces[face_id]
   }
 
+  #[allow(dead_code)]
   pub fn faces(&self) -> &[FaceDescription; 6] {
     &self.current_faces
   }
@@ -100,20 +100,13 @@ impl Dice {
     ChangeDiceFace { dice_id: self.id, face_id: face_id, face: face }
   }
 
-  pub fn set_row_position(&mut self, row_position: usize) -> RowPositionChanged {
+  pub fn set_row_position(&mut self, row_position: usize) {
     self.row_position = row_position;
-    RowPositionChanged { dice_id: self.id, position: row_position }
   }
 }
 
 #[derive(Resource, Default)]
 pub struct DiceEntityMap(pub HashMap<DiceID, Entity>);
-
-#[derive(Resource, Default)]
-pub struct RowPositionMappings {
-  pub team1: HashMap<usize, DiceID>,
-  pub team2: HashMap<usize, DiceID>,
-}
 
 fn spawn_dices(
   dice_data: Res<DiceData>,

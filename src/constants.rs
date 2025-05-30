@@ -41,6 +41,3 @@ pub const FACE_NORMALS: [Vec3; 6] = [
     Vec3::Y,
     Vec3::NEG_Y,
 ];
-
-pub const SPIN_ANGULAR_SPEED: f32 = 2.0 * (2.0 * PI);
-pub const SPIN_DURATION: f32 = 0.5;

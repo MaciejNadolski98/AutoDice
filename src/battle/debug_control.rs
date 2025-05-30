@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{camera::BattleCamera, constants::DICE_SIZE, dice::{DiceID, MoveDiceToRow, OrientDice, SpinDice, TossDices}, states::GameState};
+use crate::{camera::BattleCamera, constants::DICE_SIZE, states::GameState};
 
 pub struct DebugControlPlugin;
 
@@ -14,16 +14,8 @@ impl Plugin for DebugControlPlugin {
 // For debug
 fn debug_control(
   keys: Res<ButtonInput<KeyCode>>,
-  mut toss_dices: EventWriter<TossDices>,
   mut battle_camera: Query<&mut Transform, With<BattleCamera>>,
-  mut move_dices: EventWriter<MoveDiceToRow>,
-  mut orient_dices: EventWriter<OrientDice>,
-  mut spin_dice_writer: EventWriter<SpinDice>,
 ) {
-  if keys.just_pressed(KeyCode::KeyQ) {
-    toss_dices.write(TossDices {});
-  }
-
   if keys.pressed(KeyCode::ArrowUp) {
     battle_camera.single_mut().unwrap().rotate_local_x(0.1);
   }
@@ -103,24 +95,5 @@ fn debug_control(
   }
   if keys.just_pressed(KeyCode::Digit5) {
     digits_pressed.push(5);
-  }
-
-  for digit in digits_pressed {
-    spin_dice_writer.write(SpinDice {
-      dice_id: DiceID { team_id: 0, dice_id: digit - 1 },
-    });
-  }
-
-  if keys.just_pressed(KeyCode::KeyC) {
-    for dice_id in 0..5 {
-      for team_id in 0..2 {
-        move_dices.write(MoveDiceToRow {
-          dice_id: DiceID { team_id: team_id, dice_id: dice_id },
-        });
-        orient_dices.write(OrientDice {
-          dice_id: DiceID { team_id: team_id, dice_id: dice_id },
-        });
-      }
-    }
   }
 }
