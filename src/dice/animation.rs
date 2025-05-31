@@ -99,7 +99,7 @@ fn compute_target_rotation(current_rotation: Quat) -> Quat {
   Quat::from_rotation_arc(FACE_NORMALS[face_id], Vec3::Z)
 }
 
-pub async fn spin_dice(
+pub async fn _spin_dice(
   dice_id: DiceID,
   mut duration: f32,
 ) -> Result<(), AccessError> {

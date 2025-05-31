@@ -123,8 +123,8 @@ fn button_actions(
       }
       ButtonAction::Battle => {
         *dice_data = DiceData {
-          team1: (0..MAX_DICE_COUNT).into_iter().map(|i| DiceTemplate::generate(i==0)).collect(),
-          team2: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate(false)).collect(),
+          team1: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
+          team2: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
         };
         game_state.set(GameState::Battle);
       }

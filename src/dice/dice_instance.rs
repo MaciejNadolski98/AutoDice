@@ -11,9 +11,9 @@ use super::dice_render::{
   build_dices,
   DiceFaceImage
 };
-use super::dice_template::DiceTemplate;
+use super::dice_template::{DiceTemplate, Face};
 use super::roll::get_face_id;
-use super::{ChangeDiceFace, FaceDescription};
+use super::ChangeDiceFace;
 use std::collections::HashMap;
 
 pub struct DiceInstancePlugin;
@@ -39,7 +39,7 @@ pub struct Dice {
   id: DiceID,
   max_hp: u32,
   current_hp: u32,
-  current_faces: [FaceDescription; 6],
+  current_faces: [Face; 6],
   row_position: usize,
 }
 
@@ -73,12 +73,12 @@ impl Dice {
   }
 
   #[allow(dead_code)]
-  pub fn face(&self, face_id: usize) -> FaceDescription {
+  pub fn face(&self, face_id: usize) -> Face {
     self.current_faces[face_id]
   }
 
   #[allow(dead_code)]
-  pub fn faces(&self) -> &[FaceDescription; 6] {
+  pub fn faces(&self) -> &[Face; 6] {
     &self.current_faces
   }
 
@@ -98,7 +98,7 @@ impl Dice {
     self.current_hp = current_hp;
   }
 
-  pub fn set_face(&mut self, face_id: usize, face: FaceDescription) -> ChangeDiceFace {
+  pub fn set_face(&mut self, face_id: usize, face: Face) -> ChangeDiceFace {
     self.current_faces[face_id] = face;
     ChangeDiceFace { dice_id: self.id, face_id: face_id, face: face }
   }
@@ -171,7 +171,7 @@ fn despawn_dices(
   dice_entity_map.0.clear();
 }
 
-pub async fn fetch_current_face(
+pub async fn _fetch_current_face(
   entity: Entity,
 ) -> Result<usize, AccessError> {
   fetch!(entity, Transform).get(|transform| { get_face_id(transform.rotation) })

@@ -1,5 +1,3 @@
-use std::{collections::HashSet, hash::Hash};
-
 use avian3d::prelude::*;
 use futures_::future::{join, join_all};
 use bevy::prelude::*;
@@ -8,7 +6,7 @@ use rand_distr::{Distribution, Normal};
 
 use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, MAX_DICE_COUNT, WIDTH}};
 
-use super::{animation::{add_physics, get_dice_entity, move_dice_to_middle, move_dice_to_row, orient_dice, remove_physics}, dice_instance::{DiceEntityMap, Rows}, Dice, DiceID};
+use super::{animation::{add_physics, get_dice_entity, move_dice_to_middle, move_dice_to_row, orient_dice, remove_physics}, dice_instance::Rows, Dice, DiceID};
 
 pub struct RollPlugin;
 
@@ -103,7 +101,7 @@ async fn resolve_dice(dice_id: DiceID) -> Result<(), AccessError> {
   let face_id = fetch!(entity, Transform).get(|transform| get_face_id(transform.rotation))?;
   let face = fetch!(entity, Dice).get(|dice| dice.face(face_id))?;
 
-  face.resolve().await?;
+  face.resolve(dice_id).await?;
 
   Ok(())
 }
