@@ -85,12 +85,16 @@ pub async fn resolve_dices() -> Result<(), AccessError> {
   for i in 0..MAX_DICE_COUNT {
     async fn resolve(dice_id: DiceID) -> Result<(), AccessError> {
       move_dice_to_middle(dice_id).await?;
-      resolve_dice(dice_id).await?;
+      let _ = resolve_dice(dice_id).await;
       move_dice_to_row(dice_id).await?;
       Ok(())
     }
-    resolve(rows.team1[i]).await?;
-    resolve(rows.team2[i]).await?;
+    if rows.team1.len() > i {
+      let _ = resolve(rows.team1[i]).await;
+    }
+    if rows.team2.len() > i {
+      let _ = resolve(rows.team2[i]).await;
+    }
   }
   Ok(())
 }
