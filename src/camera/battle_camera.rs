@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy::animation::{animated_field, AnimationTarget, AnimationTargetId, RepeatAnimation};
 use bevy::render::camera::ScalingMode;
 
-use crate::constants::BATTLE_OVERLAY_LAYER;
+use crate::constants::{BATTLE_OVERLAY_LAYER, CAMERA_SWAP_TIME};
 use crate::{
   constants::{DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE, HEIGHT}, 
   states::GameState
@@ -27,7 +27,7 @@ impl Plugin for BattleCameraPlugin {
       .add_systems(OnEnter(GameState::Battle), (spawn_battle_camera, spawn_battle_overlay_camera))
       .add_systems(OnExit(GameState::Battle), (despawn_battle_camera, despawn_battle_overlay_camera))
       .add_systems(Update, update_camera_state.run_if(in_state(GameState::Battle)))
-      .add_systems(Update, swap_camera.run_if(input_just_pressed(KeyCode::KeyE)))
+      .add_systems(Update, swap_camera.run_if(on_event::<SwapBattleCamera>))
       .init_resource::<LocalResources>();
   }
 }
@@ -92,7 +92,7 @@ fn spawn_battle_camera(
   mut resources: ResMut<LocalResources>,
   mut commands: Commands,
 ) {
-  let distance_curve = FunctionCurve::new(Interval::UNIT, |t| { DEFAULT_CAMERA_DISTANCE * (t * (MAX_CAMERA_DISTANCE / DEFAULT_CAMERA_DISTANCE).ln()).exp()});
+  let distance_curve = FunctionCurve::new(Interval::new(0., CAMERA_SWAP_TIME).unwrap(), |t| { DEFAULT_CAMERA_DISTANCE * ((t / CAMERA_SWAP_TIME) * (MAX_CAMERA_DISTANCE / DEFAULT_CAMERA_DISTANCE).ln()).exp()});
   let fov_curve = distance_curve.clone().map(|distance| { compute_fov(distance, HEIGHT) });
 
   let battle_camera = Name::new("BattleCamera");

@@ -15,6 +15,7 @@ pub const HEALTH_BAR_HEIGHT: f32 = 0.15 * DICE_SIZE;
 
 pub const DEFAULT_CAMERA_DISTANCE: f32 = 200.0;
 pub const MAX_CAMERA_DISTANCE: f32 = 10_000.0;
+pub const CAMERA_SWAP_TIME: f32 = 0.5;
 
 // Dice are assumed to be around the size of 1 centimeter
 pub const GRAVITY_ACCELERATION: f32 = 9.81 * DICE_SIZE * 10.0;
