@@ -4,6 +4,9 @@ use super::DiceID;
 
 mod attack;
 
+mod helpers;
+mod interaction;
+
 use attack::attack;
 
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -24,10 +27,14 @@ impl Action {
   ) -> Result<(), AccessError> {
     match self {
       Action::Attack => attack(pips_count, dice_id).await,
-      Action::Defend => todo!(),
-      Action::Heal => todo!(),
-      Action::Fire => todo!(),
+      Action::Defend => placeholder().await,
+      Action::Heal => placeholder().await,
+      Action::Fire => placeholder().await,
       Action::Invalid => Err(AccessError::Custom("Invalid action")),
     }
   }
+}
+
+async fn placeholder() -> Result<(), AccessError> {
+  Ok(())
 }

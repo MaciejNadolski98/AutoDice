@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_defer::AppReactorExtension;
 
 use super::{dice_template::Face, DiceID};
 
@@ -8,7 +9,9 @@ impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_event::<ChangeDiceFace>()
-      .add_event::<SpawnDices>();
+      .add_event::<SpawnDices>()
+      .add_event::<DiceDied>()
+      .react_to_event::<DiceDied>();
   }
 }
 
@@ -22,3 +25,8 @@ pub struct ChangeDiceFace {
 
 #[derive(Event)]
 pub struct SpawnDices;
+
+#[derive(Event, Clone, Copy, Debug)]
+pub struct DiceDied {
+  pub dice_id: DiceID,
+}

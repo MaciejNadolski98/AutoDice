@@ -34,8 +34,7 @@ pub async fn roll_dices() -> Result<(), AccessError> {
   AsyncWorld.send_event(SwapBattleCamera)?;
 
   let (result1, result2) = join(move_dices_to_rows(), orient_dices()).await;
-  result1?;
-  result2?;
+  result1?; result2?;
   Ok(())
 }
 
