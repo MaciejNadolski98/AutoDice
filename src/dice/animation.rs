@@ -15,7 +15,7 @@ impl Plugin for AnimationPlugin {
   }
 }
 
-pub async fn _move_dice_to_middle(
+pub async fn move_dice_to_middle(
   dice_id: DiceID,
 ) -> Result<(), AccessError> {
   let target_y = if dice_id.team_id == 0 { HEIGHT / 5.0 } else { -HEIGHT / 5.0 };
@@ -30,7 +30,7 @@ pub async fn move_dice_to_row(
   let entity = get_dice_entity(dice_id).await?;
   let row_position = fetch!(entity, Dice).get(|dice| { dice.row_position() })?;
   let target_x = compute_target_x(row_position);
-  let target_y = if dice_id.team_id == 0 { HEIGHT / 5.0 } else { -HEIGHT / 5.0 };
+  let target_y = if dice_id.team_id == 0 { HEIGHT * 2.0 / 5.0 } else { -HEIGHT * 2.0 / 5.0 };
   let target_position = Vec3::new(target_x, target_y, DICE_SIZE / 2.0);
   move_dice(dice_id, target_position).await?;
   Ok(())
@@ -121,7 +121,7 @@ pub async fn spin_dice(
   Ok(())
 }
 
-async fn get_dice_entity(
+pub async fn get_dice_entity(
   dice_id: DiceID,
 ) -> Result<Entity, AccessError> {
   let entity_map = AsyncWorld.resource::<DiceEntityMap>();

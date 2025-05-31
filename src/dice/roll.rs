@@ -1,12 +1,14 @@
+use std::{collections::HashSet, hash::Hash};
+
 use avian3d::prelude::*;
 use futures_::future::{join, join_all};
 use bevy::prelude::*;
-use bevy_defer::{AccessError, AsyncWorld};
+use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 use rand_distr::{Distribution, Normal};
 
-use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH}};
+use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, MAX_DICE_COUNT, WIDTH}};
 
-use super::{animation::{add_physics, move_dice_to_row, orient_dice, remove_physics}, dice_instance::DiceEntityMap, Dice};
+use super::{animation::{add_physics, get_dice_entity, move_dice_to_middle, move_dice_to_row, orient_dice, remove_physics}, dice_instance::{DiceEntityMap, Rows}, Dice, DiceID};
 
 pub struct RollPlugin;
 
@@ -80,6 +82,32 @@ fn set_dice_roll_positions_and_velocities(
   }
 }
 
+pub async fn resolve_dices() -> Result<(), AccessError> {
+  let rows = AsyncWorld.resource::<Rows>().cloned().unwrap();
+
+  for i in 0..MAX_DICE_COUNT {
+    async fn resolve(dice_id: DiceID) -> Result<(), AccessError> {
+      move_dice_to_middle(dice_id).await?;
+      resolve_dice(dice_id).await?;
+      move_dice_to_row(dice_id).await?;
+      Ok(())
+    }
+    resolve(rows.team1[i]).await?;
+    resolve(rows.team2[i]).await?;
+  }
+  Ok(())
+}
+
+async fn resolve_dice(dice_id: DiceID) -> Result<(), AccessError> {
+  let entity = get_dice_entity(dice_id).await?;
+  let face_id = fetch!(entity, Transform).get(|transform| get_face_id(transform.rotation))?;
+  let face = fetch!(entity, Dice).get(|dice| dice.face(face_id))?;
+
+  face.resolve().await?;
+
+  Ok(())
+}
+
 async fn move_dices_to_rows() -> Result<(), AccessError> {
   let mut tasks = vec![];
   AsyncWorld.query::<&Dice>().for_each(|dice| {
@@ -119,33 +147,31 @@ async fn dices_stopped() -> Result<bool, AccessError> {
 }
 
 fn compute_row_positions(
-  mut dices: Query<(&Transform, &mut Dice)>,
-  dice_mapping: Res<DiceEntityMap>,
+  mut dices: Query<(Entity, &Transform, &mut Dice)>,
+  mut rows: ResMut<Rows>,
 ) {
-  let mut team_1_dices = Vec::new();
-  let mut team_2_dices = Vec::new();
-
-  for (transform, dice) in &mut dices {
+  let mut team1 = Vec::new();
+  let mut team2 = Vec::new();
+  for (entity, transform, dice) in &dices {
     if dice.id().team_id == 0 {
-      team_1_dices.push((transform.translation.x, dice.id()));
+      team1.push((transform.translation.x, entity));
     } else {
-      team_2_dices.push((transform.translation.x, dice.id()));
+      team2.push((transform.translation.x, entity));
     }
   }
+  team1.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
+  team2.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
 
-  team_1_dices.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
-  team_2_dices.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
-
-  for (i, (_, dice_id)) in team_1_dices.iter().enumerate() {
-    let entity = dice_mapping.0.get(dice_id).unwrap();
-    let mut dice = dices.get_mut(*entity).unwrap();
-    dice.1.set_row_position(i);
+  *rows = Rows::default();
+  for (_, entity) in team1 {
+    let (_, _, mut dice) = dices.get_mut(entity).unwrap();
+    dice.set_row_position(rows.team1.len());
+    rows.team1.push(dice.id());
   }
-
-  for (i, (_, dice_id)) in team_2_dices.iter().enumerate() {
-    let entity = dice_mapping.0.get(dice_id).unwrap();
-    let mut dice = dices.get_mut(*entity).unwrap();
-    dice.1.set_row_position(i);
+  for (_, entity) in team2 {
+    let (_, _, mut dice) = dices.get_mut(entity).unwrap();
+    dice.set_row_position(rows.team2.len());
+    rows.team2.push(dice.id());
   }
 }
 

@@ -11,7 +11,7 @@ impl Plugin for HealthBarPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Update, spawn_health_bars.run_if(on_event::<SpawnDices>))
-      .add_systems(Update, (despawn_orphan_health_bars, update_health_bar_position, update_health_bar_indicator).chain().run_if(in_state(GameState::Battle)));
+      .add_systems(PostUpdate, (despawn_orphan_health_bars, update_health_bar_position, update_health_bar_indicator).chain().run_if(in_state(GameState::Battle)));
   }
 }
 

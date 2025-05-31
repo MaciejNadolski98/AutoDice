@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_defer::AccessError;
 
 use super::DiceID;
 
@@ -7,6 +8,13 @@ pub struct FaceDescription {
   pub action_type: ActionType,
   #[allow(dead_code)]
   pub pips_count: u32,
+}
+
+impl FaceDescription {
+  pub async fn resolve(self) -> Result<(), AccessError> {
+    // TODO: Implement the logic to resolve the action based on the face description.
+    Ok(())
+  }
 }
 
 #[derive(Clone, Copy, Default)]
