@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncCommandsExtension};
 
 use crate::states::GameState;
-use crate::dice::roll_dices;
+use crate::dice::{roll_dices, spin_dice, DiceID};
 
 pub struct SequencePlugin;
 

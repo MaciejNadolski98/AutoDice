@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
+use bevy_defer::{fetch, AccessError, AsyncAccess};
 
 use crate::constants::MAX_DICE_COUNT;
 use crate::dice::events::SpawnDices;
@@ -11,6 +12,7 @@ use super::dice_render::{
   DiceFaceImage
 };
 use super::dice_template::DiceTemplate;
+use super::roll::get_face_id;
 use super::{ChangeDiceFace, FaceDescription};
 use std::collections::HashMap;
 
@@ -160,4 +162,10 @@ fn despawn_dices(
     commands.entity(entity).despawn();
   }
   dice_entity_map.0.clear();
+}
+
+pub async fn fetch_current_face(
+  entity: Entity,
+) -> Result<usize, AccessError> {
+  fetch!(entity, Transform).get(|transform| { get_face_id(transform.rotation) })
 }
