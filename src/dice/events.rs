@@ -11,7 +11,8 @@ impl Plugin for DiceEventsPlugin {
     app
       .add_event_and_listen::<ChangeDiceFace>()
       .add_event_and_listen::<SpawnDices>()
-      .add_event_and_listen::<DiceDied>();
+      .add_event_and_listen::<DiceDied>()
+      .add_event_and_listen::<StartRound>();
   }
 }
 
@@ -30,3 +31,6 @@ pub struct SpawnDices;
 pub struct DiceDied {
   pub dice_id: DiceID,
 }
+
+#[derive(Event, Clone, Copy, Debug)]
+pub struct StartRound;

@@ -3,7 +3,8 @@ use bevy_defer::{AccessError, AsyncCommandsExtension, AsyncWorld};
 
 use crate::camera::SwapBattleCamera;
 use crate::states::GameState;
-use crate::dice::{resolve_dices, roll_dices, Dice};
+use crate::dice::{resolve_dices, roll_dices, Dice, StartRound};
+use crate::utils::SyncEvents;
 
 pub struct SequencePlugin;
 
@@ -19,6 +20,7 @@ impl Plugin for SequencePlugin {
 async fn flow() -> Result<(), AccessError> {
   let mut current_round = 1;
   loop {
+    AsyncWorld.trigger_event(StartRound).await?;
     info!("Round {}", current_round);
 
     roll_dices().await?;

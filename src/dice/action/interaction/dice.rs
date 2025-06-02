@@ -1,5 +1,6 @@
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
+use crate::dice::status::Status;
 use crate::dice::{animation::get_dice_entity, events::DiceDied, Dice, DiceID};
 use crate::utils::*;
 
@@ -32,5 +33,21 @@ pub async fn heal(
     let new_hp = (dice.current_hp() + heal_amount).min(dice.max_hp());
     dice.set_current_hp(new_hp);
   })?;
+  Ok(())
+}
+
+pub async fn apply_status<S: Status>(
+  dice_id: DiceID,
+  status: S,
+) -> Result<(), AccessError> {
+  let entity = get_dice_entity(dice_id).await?;
+  let new_status = if let Ok(current_status) = fetch!(entity, S).get(|status| *status) {
+    current_status.combine(status)
+  } else {
+    status
+  };
+  AsyncWorld
+    .entity(entity)
+    .insert(new_status)?;
   Ok(())
 }

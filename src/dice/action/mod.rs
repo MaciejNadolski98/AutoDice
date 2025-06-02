@@ -3,11 +3,13 @@ use bevy_defer::AccessError;
 use super::DiceID;
 
 mod attack;
+mod fire;
 
 mod helpers;
-mod interaction;
+pub mod interaction;
 
 use attack::attack;
+use fire::fire;
 
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Action {
@@ -29,7 +31,7 @@ impl Action {
       Action::Attack => attack(pips_count, dice_id).await,
       Action::Defend => placeholder().await,
       Action::Heal => placeholder().await,
-      Action::Fire => placeholder().await,
+      Action::Fire => fire(pips_count, dice_id).await,
       Action::Invalid => Err(AccessError::Custom("Invalid action")),
     }
   }
