@@ -16,11 +16,11 @@ impl Plugin for DicePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugins((
+        DiceEventsPlugin,
         AnimationPlugin,
         DiceInstancePlugin,
         DiceRenderPlugin,
         DiceTemplatePlugin,
-        DiceEventsPlugin,
         HealthBarPlugin,
         RollPlugin,
       ));

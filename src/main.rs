@@ -13,6 +13,7 @@ mod manage;
 mod camera;
 mod dice;
 mod constants;
+mod utils;
 
 use crate::camera::plugin::CameraPlugin;
 use crate::battle::plugin::BattlePlugin;

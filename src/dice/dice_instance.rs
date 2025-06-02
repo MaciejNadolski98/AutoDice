@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
-use bevy_defer::reactors::Reactors;
-use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncExtension, AsyncWorld};
+use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
+
 
 use crate::constants::MAX_DICE_COUNT;
 use crate::dice::events::SpawnDices;
 use crate::manage::plugin::DiceData;
 use crate::states::GameState;
+use crate::utils::{RegisterListener, SyncEvents};
 
 use super::animation::get_dice_entity;
 use super::dice_render::{
@@ -17,6 +18,7 @@ use super::dice_template::{DiceTemplate, Face};
 use super::events::DiceDied;
 use super::roll::get_face_id;
 use super::ChangeDiceFace;
+
 use std::collections::HashMap;
 
 pub struct DiceInstancePlugin;
@@ -28,7 +30,7 @@ impl Plugin for DiceInstancePlugin {
       .insert_resource(Rows::default())
       .add_systems(OnEnter(GameState::Battle), spawn_dices)
       .add_systems(OnExit(GameState::Battle), despawn_dices)
-      .spawn_task(despawn_dead_dice());
+      .register_listener(despawn_dead_dice);
   }
 }
 
@@ -175,13 +177,11 @@ fn despawn_dices(
   dice_entity_map.0.clear();
 }
 
-async fn despawn_dead_dice() -> Result<(), AccessError> {
-  loop {
-    let event = AsyncWorld.next_event::<DiceDied>().await;
-    let dice_id = event.dice_id;
-    let entity = get_dice_entity(dice_id).await?;
-    AsyncWorld.entity(entity).despawn();
-  }
+async fn despawn_dead_dice(event: DiceDied) -> Result<(), AccessError> {
+  let dice_id = event.dice_id;
+  let entity = get_dice_entity(dice_id).await?;
+  AsyncWorld.entity(entity).despawn();
+  Ok(())
 }
 
 pub async fn _fetch_current_face(
