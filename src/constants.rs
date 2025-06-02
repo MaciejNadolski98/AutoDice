@@ -42,3 +42,7 @@ pub const FACE_NORMALS: [Vec3; 6] = [
     Vec3::Y,
     Vec3::NEG_Y,
 ];
+
+pub const FLOATING_TEXT_DURATION: f32 = 3.0;
+pub const FLOATING_TEXT_SPEED: f32 = DICE_SIZE;
+pub const FLOATING_TEXT_FONT_SIZE: f32 = DICE_SIZE / 2.0;

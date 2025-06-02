@@ -6,6 +6,9 @@ use super::{helpers::*, interaction::dice::apply_status};
 use crate::dice::{animation::spin_dice, status::Burning, DiceID};
 
 pub async fn fire(pips_count: u32, dice_id: DiceID) -> Result<(), AccessError> {
+  if pips_count == 0 {
+    return Ok(())
+  }
   if let Some(target_id) = select_enemy(dice_id).await? {
     join3(
       delayed(0.25, apply_status(target_id, Burning { intensity: pips_count })),

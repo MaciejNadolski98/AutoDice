@@ -1,8 +1,10 @@
+use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
 use crate::dice::status::Status;
 use crate::dice::{animation::get_dice_entity, events::DiceDied, Dice, DiceID};
 use crate::utils::*;
+use crate::battle::SpawnFloatingText;
 
 pub async fn damage(
   dice_id: DiceID,
@@ -10,6 +12,8 @@ pub async fn damage(
 ) -> Result<(), AccessError> {
   let mut died = false;
   let entity = get_dice_entity(dice_id).await?;
+  let position = fetch!(entity, Transform).get(|t| t.translation)?;
+  AsyncWorld.send_event(SpawnFloatingText::new(format!("-{}", damage), position))?;
   fetch!(entity, Dice).get_mut(|dice| {
     let new_hp = dice.current_hp().saturating_sub(damage);
     dice.set_current_hp(new_hp);

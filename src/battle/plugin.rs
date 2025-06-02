@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{debug_control::DebugControlPlugin, scene::ScenePlugin, sequence::SequencePlugin};
+use super::{debug_control::DebugControlPlugin, scene::ScenePlugin, sequence::SequencePlugin, floating_text::FloatingTextPlugin};
 
 pub struct BattlePlugin;
 
@@ -10,7 +10,8 @@ impl Plugin for BattlePlugin {
       .add_plugins((
         SequencePlugin,
         ScenePlugin,
-        DebugControlPlugin
+        DebugControlPlugin,
+        FloatingTextPlugin,
       ));
   }
 }
