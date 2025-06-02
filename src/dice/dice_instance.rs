@@ -7,7 +7,7 @@ use crate::constants::MAX_DICE_COUNT;
 use crate::dice::events::SpawnDices;
 use crate::manage::plugin::DiceData;
 use crate::states::GameState;
-use crate::utils::{RegisterListener, SyncEvents};
+use crate::utils::RegisterListener;
 
 use super::animation::get_dice_entity;
 use super::dice_render::{

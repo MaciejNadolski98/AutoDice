@@ -28,6 +28,7 @@ impl<E: Event + Clone> AsyncListeners<E> {
     id
   }
 
+  #[allow(dead_code)]
   pub fn remove_listener(&mut self, id: ListenerID) {
     if let Ok(pos) = self.listeners.binary_search_by_key(&id, |(listener_id, _)| *listener_id) {
       self.listeners.remove(pos);

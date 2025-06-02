@@ -22,6 +22,7 @@ pub async fn damage(
   Ok(())
 }
 
+#[allow(dead_code)]
 pub async fn heal(
   dice_id: DiceID,
   heal_amount: u32,
