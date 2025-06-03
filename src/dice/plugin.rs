@@ -8,6 +8,7 @@ use super::{
   events::DiceEventsPlugin,
   health_bar::HealthBarPlugin,
   roll::RollPlugin,
+  action::DiceActionPlugin,
   status::StatusPlugin,
 };
 
@@ -24,6 +25,7 @@ impl Plugin for DicePlugin {
         DiceTemplatePlugin,
         HealthBarPlugin,
         RollPlugin,
+        DiceActionPlugin,
         StatusPlugin,
       ));
   }

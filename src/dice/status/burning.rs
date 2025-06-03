@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use bevy::prelude::*;
 use bevy_defer::AccessError;
 
@@ -19,7 +21,7 @@ pub struct Burning {
 impl Status for Burning {
     type TriggerEvent = StartRound;
 
-  async fn resolve_status(&self, dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError> {
+  async fn resolve_status(&self, dice_id: DiceID, _event: Arc<Mutex<Self::TriggerEvent>>) -> Result<(), AccessError> {
     damage(dice_id, self.intensity).await?;
     Ok(())
   }

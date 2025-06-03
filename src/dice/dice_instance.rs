@@ -7,7 +7,7 @@ use crate::constants::MAX_DICE_COUNT;
 use crate::dice::events::SpawnDices;
 use crate::manage::plugin::DiceData;
 use crate::states::GameState;
-use crate::utils::RegisterListener;
+use crate::utils::*;
 
 use super::animation::get_dice_entity;
 use super::dice_render::{
@@ -20,6 +20,7 @@ use super::roll::get_face_id;
 use super::ChangeDiceFace;
 
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 pub struct DiceInstancePlugin;
 
@@ -177,8 +178,8 @@ fn despawn_dices(
   dice_entity_map.0.clear();
 }
 
-async fn despawn_dead_dice(event: DiceDied) -> Result<(), AccessError> {
-  let dice_id = event.dice_id;
+async fn despawn_dead_dice(event: Arc<Mutex<DiceDied>>) -> Result<(), AccessError> {
+  let dice_id = event.get().dice_id;
   let entity = get_dice_entity(dice_id).await?;
   AsyncWorld.entity(entity).despawn();
   Ok(())
