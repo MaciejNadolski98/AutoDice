@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::{Arc, Mutex}};
+use std::{fmt::Debug, sync::Arc};
 
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
@@ -18,11 +18,15 @@ pub use plugin::StatusPlugin;
 pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone + Copy {
   type TriggerEvent: Event + Clone + Copy + Debug;
 
-  fn trigger_condition(&self, _dice: &Dice, _event: Arc<Mutex<Self::TriggerEvent>>) -> bool {
+  fn trigger_condition(&self, _dice: &Dice, _event: Self::TriggerEvent) -> bool {
     true
   }
 
-  async fn resolve_status(&self, _dice_id: DiceID, _event: Arc<Mutex<Self::TriggerEvent>>) -> Result<(), AccessError>;
+  async fn resolve_status(&self, dice_id: DiceID, event: Self::TriggerEvent) -> Result<(), AccessError>;
+
+  async fn update_event(&self, _dice_id: DiceID, event: Self::TriggerEvent) -> Result<Self::TriggerEvent, AccessError> {
+    Ok(event)
+  }
   
   fn update(&mut self) -> bool;
 
@@ -62,19 +66,22 @@ where
         AsyncWorld
           .query::<(Entity, &Dice, &S)>()
           .for_each(|(entity, dice, status)| {
-            if status.trigger_condition(dice, event.clone()) {
+            if status.trigger_condition(dice, event.get()) {
               dice_ids.push((entity, dice.id(), *status));
             }
           });
         let statuses = AsyncWorld
           .query::<&mut S>();
+        let mut new_event = event.get();
 
         for (entity, dice_id, status) in dice_ids {
-          status.resolve_status(dice_id, event.clone()).await?;
+          status.resolve_status(dice_id, event.get()).await?;
           if Ok(true) == statuses.entity(entity).get_mut(|mut status| status.update()) {
             AsyncWorld.entity(entity).component::<S>().remove();
           }
+          new_event = status.update_event(dice_id, new_event).await?;
         }
+        event.mutate(|_| new_event);
         Ok(())
       })
     })
