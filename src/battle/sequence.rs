@@ -3,8 +3,8 @@ use bevy_defer::{AccessError, AsyncCommandsExtension, AsyncWorld};
 
 use crate::camera::SwapBattleCamera;
 use crate::states::GameState;
-use crate::dice::{resolve_dices, roll_dices, Dice, StartRound};
-use crate::utils::SyncEvents;
+use crate::dice::{resolve_dices, roll_dices, Dice};
+use crate::utils::*;
 
 pub struct SequencePlugin;
 
@@ -13,18 +13,33 @@ impl Plugin for SequencePlugin {
     app
       .add_systems(OnEnter(GameState::Battle), |mut commands: Commands| {
         commands.spawn_task(|| flow());
-      });
+      })
+      .add_event_and_listen::<StartRound>()
+      .add_event_and_listen::<BeforeRollDices>()
+      .add_event_and_listen::<BeforeResolveDices>();
   }
 }
+
+#[derive(Event, Clone, Debug)]
+pub struct StartRound {
+  round: u32,
+}
+
+#[derive(Event, Clone, Debug)]
+pub struct BeforeRollDices;
+
+#[derive(Event, Clone, Debug)]
+pub struct BeforeResolveDices;
 
 async fn flow() -> Result<(), AccessError> {
   let mut current_round = 1;
   loop {
-    AsyncWorld.trigger_event(StartRound).await?;
-    info!("Round {}", current_round);
+    AsyncWorld.trigger_event(StartRound { round: current_round }).await?;
 
+    AsyncWorld.trigger_event(BeforeRollDices).await?;
     roll_dices().await?;
 
+    AsyncWorld.trigger_event(BeforeResolveDices).await?;
     resolve_dices().await?;
 
     if done().await? {

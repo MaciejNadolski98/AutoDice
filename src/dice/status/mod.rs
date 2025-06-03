@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, fmt::Debug};
 
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
@@ -14,7 +14,7 @@ pub use burning::Burning;
 pub use plugin::StatusPlugin;
 
 pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone + Copy{
-  type TriggerEvent: Event + Clone;
+  type TriggerEvent: Event + Clone + Debug;
 
   fn trigger_condition(&self, _dice: &Dice, _event: Self::TriggerEvent) -> bool {
     true
@@ -32,7 +32,7 @@ trait Registrable {
 }
 
 trait TriggersToEvent {
-  type EventType: Event + Clone;
+  type EventType: Event + Clone + Debug;
 
   fn register_listener(listener: DynAsyncFunction<Self::EventType>, app: &mut App) {
     app.register_dyn_listener(listener);
@@ -69,8 +69,7 @@ where
 
         for (entity, dice_id, status) in dice_ids {
           status.resolve_status(dice_id, event.clone()).await?;
-          let remove_status = statuses.entity(entity).get_mut(|mut status| status.update())?;
-          if remove_status {
+          if Ok(true) == statuses.entity(entity).get_mut(|mut status| status.update()) {
             AsyncWorld.entity(entity).component::<S>().remove();
           }
         }

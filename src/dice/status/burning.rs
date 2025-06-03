@@ -1,7 +1,13 @@
 use bevy::prelude::*;
 use bevy_defer::AccessError;
 
-use crate::dice::{action::interaction::dice::damage, events::StartRound, DiceID};
+use crate::{
+  dice::{
+    action::interaction::dice::damage,
+    DiceID
+  },
+  battle::StartRound
+};
 
 use super::Status;
 

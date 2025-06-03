@@ -1,4 +1,4 @@
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::{future::Future, pin::Pin, sync::Arc, fmt::Debug};
 
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
@@ -20,7 +20,7 @@ impl<E: Event> Default for AsyncListeners<E> {
 
 pub type ListenerID = usize;
 
-impl<E: Event + Clone> AsyncListeners<E> {
+impl<E: Event + Clone + Debug> AsyncListeners<E> {
   pub fn add_listener(&mut self, listener: DynAsyncFunction<E>) -> ListenerID {
     let id = self.new_id;
     self.new_id += 1;
@@ -36,6 +36,7 @@ impl<E: Event + Clone> AsyncListeners<E> {
   }
 
   pub async fn trigger_event(&self, event: E) -> Result<(), AccessError> {
+    info!("{:?}", event);
     for (_, listener) in &self.listeners {
       listener(event.clone()).await?;
     }
@@ -44,11 +45,11 @@ impl<E: Event + Clone> AsyncListeners<E> {
 }
 
 pub trait SyncEvents {
-  async fn trigger_event<E: Event + Clone>(&self, event: E) -> Result<(), AccessError>;
+  async fn trigger_event<E: Event + Clone + Debug>(&self, event: E) -> Result<(), AccessError>;
 }
 
 impl SyncEvents for AsyncWorld {
-  async fn trigger_event<E: Event + Clone>(&self, event: E) -> Result<(), AccessError> {
+  async fn trigger_event<E: Event + Clone + Debug>(&self, event: E) -> Result<(), AccessError> {
     let listeners = self
       .resource::<AsyncListeners<E>>()
       .cloned()?;
@@ -80,16 +81,16 @@ impl AddEventAndListen for App {
 }
 
 pub trait RegisterListener {
-  fn register_listener<E: Event + Clone, F, FOut>(&mut self, listener: F) -> &mut Self
+  fn register_listener<E: Event + Clone + Debug, F, FOut>(&mut self, listener: F) -> &mut Self
   where 
     F: Fn(E) -> FOut + Send + Sync + 'static,
     FOut: Future<Output = Result<(), AccessError>> + Send + 'static;
 
-  fn register_dyn_listener<E: Event + Clone>(&mut self, listener: DynAsyncFunction<E>) -> &mut Self;
+  fn register_dyn_listener<E: Event + Clone + Debug>(&mut self, listener: DynAsyncFunction<E>) -> &mut Self;
 }
 
 impl RegisterListener for App {
-  fn register_listener<E: Event + Clone, F, FOut>(&mut self, listener: F) -> &mut Self
+  fn register_listener<E: Event + Clone + Debug, F, FOut>(&mut self, listener: F) -> &mut Self
   where 
     F: Fn(E) -> FOut + Send + Sync + 'static,
     FOut: Future<Output = Result<(), AccessError>> + Send + 'static,
@@ -97,7 +98,7 @@ impl RegisterListener for App {
     self.register_dyn_listener(Arc::new(move |event| Box::pin(listener(event))))
   }
 
-  fn register_dyn_listener<E: Event + Clone>(&mut self, listener: DynAsyncFunction<E>) -> &mut Self {
+  fn register_dyn_listener<E: Event + Clone + Debug>(&mut self, listener: DynAsyncFunction<E>) -> &mut Self {
     let _ = self
       .world_mut()
       .resource_mut::<AsyncListeners<E>>()
