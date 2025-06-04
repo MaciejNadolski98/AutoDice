@@ -8,7 +8,25 @@ pub const HEIGHT: f32 = 144.0;
 pub const WALL_SIZE: f32 = 10_000.0;
 
 pub const DICE_SIZE: f32 = 10.0;
-pub const DICE_TEXTURE_SIZE: f32 = 16.0;
+
+pub mod dice_texture {
+  use bevy::math::Vec2;
+
+  pub const SOURCE_SIZE: f32 = 16.0;
+  pub const SCALING_FACTOR: f32 = 4.0;
+
+  pub const SCALED_SOURCE_SIZE: f32 = SOURCE_SIZE * SCALING_FACTOR;
+  pub const INNER_SIZE: f32 = SCALED_SOURCE_SIZE + EXTRA_INNER_SPACE + INNER_MARGIN * 2.0;
+  pub const EXTRA_INNER_SPACE: f32 = 8.0;
+  pub const INNER_MARGIN: f32 = 1.0;
+  pub const OFFSET: Vec2 = Vec2::new(-EXTRA_INNER_SPACE / 2.0, EXTRA_INNER_SPACE / 2.0);
+
+  pub const FRAME_WIDTH: f32 = 3.0;
+  pub const TARGET_SIZE: f32 = INNER_SIZE + FRAME_WIDTH * 2.0;
+
+  pub const FONT_SIZE: f32 = 20.0;
+  pub const PIPS_POSITION: Vec2 = Vec2::new(TARGET_SIZE / 2.8, -TARGET_SIZE / 2.8);
+}
 
 pub const HEALTH_BAR_WIDTH: f32 = 1.0 * DICE_SIZE;
 pub const HEALTH_BAR_HEIGHT: f32 = 0.15 * DICE_SIZE;
