@@ -8,7 +8,7 @@ pub const HEIGHT: f32 = 144.0;
 pub const WALL_SIZE: f32 = 10_000.0;
 
 pub const DICE_SIZE: f32 = 10.0;
-pub const DICE_TEXTURE_SIZE: f32 = 32.0;
+pub const DICE_TEXTURE_SIZE: f32 = 16.0;
 
 pub const HEALTH_BAR_WIDTH: f32 = 1.0 * DICE_SIZE;
 pub const HEALTH_BAR_HEIGHT: f32 = 0.15 * DICE_SIZE;

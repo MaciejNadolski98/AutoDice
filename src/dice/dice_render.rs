@@ -5,7 +5,7 @@ use bevy::render::render_resource::{TextureDescriptor, TextureDimension, Texture
 
 use super::events::ChangeDiceFace;
 use super::DiceID;
-use crate::constants::{MAX_DICE_COUNT, DICE_TEXTURE_SIZE, DICE_FACES_LAYER};
+use crate::constants::{DICE_FACES_LAYER, DICE_TEXTURE_SIZE, MAX_DICE_COUNT};
 use crate::dice::action::Action;
 
 pub struct DiceRenderPlugin;
@@ -154,10 +154,10 @@ fn update_dice_faces(
     assert!(face_update.dice_id.dice_id < MAX_DICE_COUNT);
     assert!(face_update.face_id < 6);
     let texture = match face_update.face.action {
-      Action::Attack => asset_server.load("sword.png"),
-      Action::Regenerate => asset_server.load("heal.png"),
-      Action::Defend => asset_server.load("shield.png"),
-      Action::Fire => asset_server.load("fire.png"),
+      Action::Attack => asset_server.load("actions/axe.png"),
+      Action::Regenerate => asset_server.load("actions/heart.png"),
+      Action::Defend => asset_server.load("actions/shield.png"),
+      Action::Fire => asset_server.load("actions/fire.png"),
       _ => panic!("Invalid action type"),
     };
     let face_entity = entities.get(face_update.dice_id, face_update.face_id);
@@ -168,6 +168,11 @@ fn update_dice_faces(
         commands.spawn((
           Name::new("Face image"),
           Sprite::from_image(texture),
+          DICE_FACES_LAYER,
+        ));
+        commands.spawn((
+          Name::new("Face background"),
+          Sprite::from_color(Color::WHITE, Vec2::new(DICE_TEXTURE_SIZE, DICE_TEXTURE_SIZE)),
           DICE_FACES_LAYER,
         ));
       });
