@@ -4,7 +4,7 @@ use rand_distr::{Distribution, Normal};
 
 use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
 
-use super::{events::{DicesStopped, RollResult}, Dice, DiceID, TossDices};
+use super::{dice_instance::{DiceEntityMap, RowPositionMappings}, events::{DicesStopped, RollResult, RowPositionChanged}, Dice, DiceID, TossDices};
 
 pub struct RollPlugin;
 
@@ -17,7 +17,8 @@ impl Plugin for RollPlugin {
       .init_resource::<DicesRolling>()
       .add_systems(Update, roll_dices.run_if(on_event::<TossDices>))
       .add_systems(Update, check_if_dices_stopped.run_if(resource_equals::<DicesRolling>(DicesRolling(true))))
-      .add_systems(Update, check_roll_results.run_if(on_event::<DicesStopped>));
+      .add_systems(Update, (check_roll_results, compute_row_positions).run_if(on_event::<DicesStopped>))
+      .add_systems(Update, update_row_positions);
   }
 }
 
@@ -88,6 +89,51 @@ fn check_roll_results(
     results.push((dice.id(), face_id));
   }
   event_writer.send(RollResult(results));
+}
+
+fn compute_row_positions(
+  mut dices: Query<(&Transform, &mut Dice)>,
+  mut row_position_changed: EventWriter<RowPositionChanged>,
+  dice_mapping: Res<DiceEntityMap>,
+) {
+  let mut team_1_dices = Vec::new();
+  let mut team_2_dices = Vec::new();
+
+  for (transform, dice) in &mut dices {
+    if dice.id().team_id == 0 {
+      team_1_dices.push((transform.translation.x, dice.id()));
+    } else {
+      team_2_dices.push((transform.translation.x, dice.id()));
+    }
+  }
+
+  team_1_dices.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
+  team_2_dices.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
+
+  for (i, (_, dice_id)) in team_1_dices.iter().enumerate() {
+    let entity = dice_mapping.0.get(dice_id).unwrap();
+    let mut dice = dices.get_mut(*entity).unwrap();
+    row_position_changed.send(dice.1.set_row_position(i));
+  }
+
+  for (i, (_, dice_id)) in team_2_dices.iter().enumerate() {
+    let entity = dice_mapping.0.get(dice_id).unwrap();
+    let mut dice = dices.get_mut(*entity).unwrap();
+    row_position_changed.send(dice.1.set_row_position(i));
+  }
+}
+
+fn update_row_positions(
+  mut row_position_changed: EventReader<RowPositionChanged>,
+  mut row_mappings: ResMut<RowPositionMappings>,
+) {
+  for event in row_position_changed.read() {
+    if event.dice_id.team_id == 0 {
+      row_mappings.team1.insert(event.position, event.dice_id);
+    } else {
+      row_mappings.team2.insert(event.position, event.dice_id);
+    }
+  }
 }
 
 pub fn get_face_id(rotation: Quat) -> usize {

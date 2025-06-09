@@ -90,16 +90,26 @@ fn handle_move_to_middle_events(
 fn handle_move_to_row_events(
   mut move_dice_to_row_reader: EventReader<MoveDiceToRow>,
   mut move_dice_writer: EventWriter<MoveDice>,
+  dices: Query<&Dice>,
+  entity_map: Res<DiceEntityMap>,
 ) {
   for move_dice_to_row in move_dice_to_row_reader.read() {
+    let entity = entity_map.0.get(&move_dice_to_row.dice_id).unwrap();
+    let row_position = dices.get(*entity).unwrap().row_position();
     let target_y = if move_dice_to_row.dice_id.team_id == 0 { HEIGHT * 2.0 / 5.0 } else { -HEIGHT * 2.0 / 5.0 };
-    let target_x: f32 = 0.0; // TODO: Calculate x based on the index within row
+    let target_x = compute_target_x(row_position);
     let target_position = Vec3::new(target_x, target_y, DICE_SIZE / 2.0);
     move_dice_writer.send(MoveDice {
       dice_id: move_dice_to_row.dice_id,
       target_position,
     });
   }
+}
+
+fn compute_target_x(row_position: usize) -> f32 {
+  let row_start = -DICE_SIZE * 4.0;
+  let position = row_start + (DICE_SIZE * 2.0 * row_position as f32);
+  position
 }
 
 fn handle_orient_dice_events(

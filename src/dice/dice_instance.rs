@@ -11,6 +11,7 @@ use super::dice_render::{
   DiceFaceImage
 };
 use super::dice_template::DiceTemplate;
+use super::events::RowPositionChanged;
 use super::{ChangeDiceFace, FaceDescription};
 use std::collections::HashMap;
 
@@ -20,6 +21,7 @@ impl Plugin for DiceInstancePlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(DiceEntityMap::default())
+      .insert_resource(RowPositionMappings::default())
       .add_systems(OnEnter(GameState::Battle), spawn_dices)
       .add_systems(OnExit(GameState::Battle), despawn_dices);
   }
@@ -37,6 +39,7 @@ pub struct Dice {
   max_hp: u32,
   current_hp: u32,
   current_faces: [FaceDescription; 6],
+  row_position: usize,
 }
 
 impl Dice {
@@ -52,6 +55,7 @@ impl Dice {
     for i in 0..6 {
       dice_face_changed.send(dice.set_face(i, template.faces[i]));
     }
+    dice.set_row_position(dice_id.dice_id);
     dice
   }
 
@@ -75,6 +79,10 @@ impl Dice {
     &self.current_faces
   }
 
+  pub fn row_position(&self) -> usize {
+    self.row_position
+  }
+
   pub fn set_id(&mut self, id: DiceID) {
     self.id = id;
   }
@@ -91,10 +99,21 @@ impl Dice {
     self.current_faces[face_id] = face;
     ChangeDiceFace { dice_id: self.id, face_id: face_id, face: face }
   }
+
+  pub fn set_row_position(&mut self, row_position: usize) -> RowPositionChanged {
+    self.row_position = row_position;
+    RowPositionChanged { dice_id: self.id, position: row_position }
+  }
 }
 
 #[derive(Resource, Default)]
 pub struct DiceEntityMap(pub HashMap<DiceID, Entity>);
+
+#[derive(Resource, Default)]
+pub struct RowPositionMappings {
+  pub team1: HashMap<usize, DiceID>,
+  pub team2: HashMap<usize, DiceID>,
+}
 
 fn spawn_dices(
   dice_data: Res<DiceData>,
@@ -127,7 +146,7 @@ fn spawn_dices(
   for i in 0..dice_data.team2.len() {
     let dice_id = DiceID { team_id: 1, dice_id: i };
     let entity = commands.spawn((
-      Name::new(format!("Red dice {}", i+1)),
+      Name::new(format!("Blue dice {}", i+1)),
       Mesh3d(dice_meshes[0][i].clone()),
       MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
       RigidBody::Dynamic,

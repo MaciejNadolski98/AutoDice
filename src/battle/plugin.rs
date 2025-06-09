@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::camera::BattleCamera;
-use crate::dice::{DiceID, MoveDiceToMiddle, OrientDice, SpinDice, TossDices};
+use crate::dice::{DiceID, MoveDiceToRow, OrientDice, SpinDice, TossDices};
 use crate::states::GameState;
 use crate::constants::{ 
   DICE_SIZE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH
@@ -119,7 +119,7 @@ fn debug_control(
   mut toss_dices: EventWriter<TossDices>,
   mut battle_camera: Query<&mut Transform, With<BattleCamera>>,
   mut dices: Query<&mut Dice>,
-  mut move_dices: EventWriter<MoveDiceToMiddle>,
+  mut move_dices: EventWriter<MoveDiceToRow>,
   mut orient_dices: EventWriter<OrientDice>,
   mut spin_dice_writer: EventWriter<SpinDice>,
 ) {
@@ -215,11 +215,15 @@ fn debug_control(
   }
 
   if keys.just_pressed(KeyCode::KeyC) {
-    move_dices.send(MoveDiceToMiddle {
-      dice_id: DiceID { team_id: 0, dice_id: 0 },
-    });
-    orient_dices.send(OrientDice {
-      dice_id: DiceID { team_id: 0, dice_id: 0 },
-    });
+    for dice_id in 0..5 {
+      for team_id in 0..2 {
+        move_dices.send(MoveDiceToRow {
+          dice_id: DiceID { team_id: team_id, dice_id: dice_id },
+        });
+        orient_dices.send(OrientDice {
+          dice_id: DiceID { team_id: team_id, dice_id: dice_id },
+        });
+      }
+    }
   }
 }
