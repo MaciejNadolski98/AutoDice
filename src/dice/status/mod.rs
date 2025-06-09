@@ -1,4 +1,4 @@
-use std::{sync::Arc, fmt::Debug};
+use std::{fmt::Debug, sync::{Arc, Mutex}};
 
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
@@ -9,18 +9,20 @@ use super::{Dice, DiceID};
 
 mod burning;
 mod plugin;
+mod double;
 
 pub use burning::Burning;
+pub use double::Double;
 pub use plugin::StatusPlugin;
 
-pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone + Copy{
-  type TriggerEvent: Event + Clone + Debug;
+pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone + Copy {
+  type TriggerEvent: Event + Clone + Copy + Debug;
 
-  fn trigger_condition(&self, _dice: &Dice, _event: Self::TriggerEvent) -> bool {
+  fn trigger_condition(&self, _dice: &Dice, _event: Arc<Mutex<Self::TriggerEvent>>) -> bool {
     true
   }
 
-  async fn resolve_status(&self, _dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError>;
+  async fn resolve_status(&self, _dice_id: DiceID, _event: Arc<Mutex<Self::TriggerEvent>>) -> Result<(), AccessError>;
   
   fn update(&mut self) -> bool;
 
@@ -32,7 +34,7 @@ trait Registrable {
 }
 
 trait TriggersToEvent {
-  type EventType: Event + Clone + Debug;
+  type EventType: Event + Clone + Copy + Debug;
 
   fn register_listener(listener: DynAsyncFunction<Self::EventType>, app: &mut App) {
     app.register_dyn_listener(listener);

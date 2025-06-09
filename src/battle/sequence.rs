@@ -20,26 +20,26 @@ impl Plugin for SequencePlugin {
   }
 }
 
-#[derive(Event, Clone, Debug)]
+#[derive(Event, Clone, Copy, Debug)]
 pub struct StartRound {
   round: u32,
 }
 
-#[derive(Event, Clone, Debug)]
+#[derive(Event, Clone, Copy, Debug)]
 pub struct BeforeRollDices;
 
-#[derive(Event, Clone, Debug)]
+#[derive(Event, Clone, Copy, Debug)]
 pub struct BeforeResolveDices;
 
 async fn flow() -> Result<(), AccessError> {
   let mut current_round = 1;
   loop {
-    AsyncWorld.trigger_event(StartRound { round: current_round }).await?;
+    AsyncWorld.trigger_event(StartRound::new(StartRound { round: current_round })).await?;
 
-    AsyncWorld.trigger_event(BeforeRollDices).await?;
+    AsyncWorld.trigger_event(BeforeRollDices::new(BeforeRollDices)).await?;
     roll_dices().await?;
 
-    AsyncWorld.trigger_event(BeforeResolveDices).await?;
+    AsyncWorld.trigger_event(BeforeResolveDices::new(BeforeResolveDices)).await?;
     resolve_dices().await?;
 
     if done().await? {
