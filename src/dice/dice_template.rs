@@ -38,7 +38,7 @@ impl DiceTemplate {
         Face { action: Action::Attack, pips_count: 1 },
         Face { action: Action::Defend, pips_count: 1 },
         Face { action: Action::Heal, pips_count: 1 },
-        Face { action: Action::Fire, pips_count: 0 },
+        Face { action: Action::Fire, pips_count: 2 },
       ]
     }
   }
