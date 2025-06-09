@@ -8,6 +8,7 @@ use super::{
   events::DiceEventsPlugin,
   health_bar::HealthBarPlugin,
   roll::RollPlugin,
+  status::StatusPlugin,
 };
 
 pub struct DicePlugin;
@@ -23,6 +24,7 @@ impl Plugin for DicePlugin {
         DiceTemplatePlugin,
         HealthBarPlugin,
         RollPlugin,
+        StatusPlugin,
       ));
   }
 }

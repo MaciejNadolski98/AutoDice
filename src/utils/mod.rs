@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
 
 pub type DynAsyncFunction<E> =
-  Arc<dyn Fn(E) -> Pin<Box<dyn Future<Output = Result<(), AccessError>> + Send + 'static>> + Send + Sync>;
+  Arc<dyn Fn(E) -> Pin<Box<dyn Future<Output = Result<(), AccessError>>>> + Send + Sync>;
 
 #[derive(Resource, Clone)]
 pub struct AsyncListeners<E: Event> {
@@ -84,6 +84,8 @@ pub trait RegisterListener {
   where 
     F: Fn(E) -> FOut + Send + Sync + 'static,
     FOut: Future<Output = Result<(), AccessError>> + Send + 'static;
+
+  fn register_dyn_listener<E: Event + Clone>(&mut self, listener: DynAsyncFunction<E>) -> &mut Self;
 }
 
 impl RegisterListener for App {
@@ -92,10 +94,14 @@ impl RegisterListener for App {
     F: Fn(E) -> FOut + Send + Sync + 'static,
     FOut: Future<Output = Result<(), AccessError>> + Send + 'static,
   {
+    self.register_dyn_listener(Arc::new(move |event| Box::pin(listener(event))))
+  }
+
+  fn register_dyn_listener<E: Event + Clone>(&mut self, listener: DynAsyncFunction<E>) -> &mut Self {
     let _ = self
       .world_mut()
       .resource_mut::<AsyncListeners<E>>()
-      .add_listener(Arc::new(move |event| Box::pin(listener(event))));
+      .add_listener(listener);
     self
   }
 }

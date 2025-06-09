@@ -1,6 +1,7 @@
 pub mod plugin;
 
 mod action;
+mod status;
 mod animation;
 mod dice_instance;
 mod dice_render;
@@ -9,7 +10,7 @@ mod events;
 mod health_bar;
 mod roll;
 
-pub use events::ChangeDiceFace;
+pub use events::{ChangeDiceFace, StartRound};
 pub use dice_template::DiceTemplate;
 pub use dice_instance::{DiceID, Dice};
 pub use roll::{roll_dices, resolve_dices};
