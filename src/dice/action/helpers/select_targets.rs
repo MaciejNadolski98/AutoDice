@@ -11,6 +11,7 @@ pub async fn select_enemy(dice_id: DiceID) -> Result<Option<DiceID>, AccessError
   }).await
 }
 
+#[allow(dead_code)]
 pub async fn select_ally(dice_id: DiceID) -> Result<Option<DiceID>, AccessError> {
   select_random(|dice| {
     dice.id().team_id == dice_id.team_id && dice.id() != dice_id
@@ -29,6 +30,7 @@ pub async fn select_random(filter: impl Fn(&Dice) -> bool) -> Result<Option<Dice
   Ok(filtered_dices.select_random())
 }
 
+#[allow(dead_code)]
 pub async fn select_best<S>(score: impl Fn(&Dice) -> S) -> Result<Option<DiceID>, AccessError> 
 where S: Ord + Eq + Copy {
   let mut best_dices = Vec::new();

@@ -1,7 +1,7 @@
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
 use crate::dice::{animation::get_dice_entity, events::DiceDied, Dice, DiceID};
-
+use crate::utils::*;
 
 pub async fn damage(
   dice_id: DiceID,
@@ -17,11 +17,12 @@ pub async fn damage(
     }
   })?;
   if died {
-    AsyncWorld.send_event(DiceDied { dice_id })?;
+    AsyncWorld.trigger_event(DiceDied { dice_id }).await?;
   }
   Ok(())
 }
 
+#[allow(dead_code)]
 pub async fn heal(
   dice_id: DiceID,
   heal_amount: u32,
