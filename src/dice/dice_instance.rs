@@ -22,6 +22,7 @@ impl Plugin for DiceInstancePlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(DiceEntityMap::default())
+      .insert_resource(Rows::default())
       .add_systems(OnEnter(GameState::Battle), spawn_dices)
       .add_systems(OnExit(GameState::Battle), despawn_dices);
   }
@@ -109,6 +110,12 @@ impl Dice {
 
 #[derive(Resource, Default)]
 pub struct DiceEntityMap(pub HashMap<DiceID, Entity>);
+
+#[derive(Resource, Default, Clone)]
+pub struct Rows {
+  pub team1: Vec<DiceID>,
+  pub team2: Vec<DiceID>,
+}
 
 fn spawn_dices(
   dice_data: Res<DiceData>,

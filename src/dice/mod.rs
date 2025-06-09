@@ -11,5 +11,4 @@ mod roll;
 pub use events::{ChangeDiceFace, ActionType, FaceDescription};
 pub use dice_template::DiceTemplate;
 pub use dice_instance::{DiceID, Dice};
-pub use roll::roll_dices;
-pub use animation::spin_dice;
+pub use roll::{roll_dices, resolve_dices};
