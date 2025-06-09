@@ -104,6 +104,6 @@ fn despawn_battle_scene(
   mut commands: Commands,
   scene_: Query<Entity, With<BattleComponent>>,
 ) {
-  let scene = scene_.single();
-  commands.entity(scene).despawn_recursive();
+  let scene = scene_.single().unwrap();
+  commands.entity(scene).despawn();
 }

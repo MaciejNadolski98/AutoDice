@@ -82,7 +82,7 @@ fn despawn_menu(
   mut commands: Commands,
   menu: Query<Entity, With<MenuScreen>>,
 ) {
-  commands.entity(menu.single()).despawn_recursive();
+  commands.entity(menu.single().unwrap()).despawn();
 }
 
 fn button_actions(
@@ -97,7 +97,7 @@ fn button_actions(
 
     match button_action {
       ButtonAction::Play => { game_state.set(GameState::Manage); }
-      ButtonAction::Quit => { app_exit_events.send(AppExit::Success); }
+      ButtonAction::Quit => { app_exit_events.write(AppExit::Success); }
     }
   }
 }

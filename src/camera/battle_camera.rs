@@ -41,7 +41,7 @@ fn despawn_battle_camera(
   mut commands: Commands,
   camera_: Query<Entity, With<BattleCamera>>,
 ) {
-  let camera = camera_.single();
+  let camera = camera_.single().unwrap();
   commands.entity(camera).despawn();
 }
 
@@ -70,7 +70,7 @@ fn swap_camera(
   mut animation_player: Query<&mut AnimationPlayer, With<BattleCamera>>,
   resources: Res<LocalResources>,
 ) {
-  let mut player = animation_player.single_mut();
+  let mut player = animation_player.single_mut().unwrap();
   player.adjust_speeds(-1.0);
   let animation = player.animation_mut(resources.animation_index).unwrap();
   if animation.is_finished() {
@@ -81,7 +81,7 @@ fn swap_camera(
 fn update_camera_state(
   mut battle_camera: Query<(&mut Projection, &mut Transform, &CameraState), With<BattleCamera>>,
 ) {
-  let (mut projection, mut transform, camera_state) = battle_camera.single_mut();
+  let (mut projection, mut transform, camera_state) = battle_camera.single_mut().unwrap();
   *projection = Projection::Perspective(PerspectiveProjection { fov: camera_state.fov, ..default()});
   transform.translation.z = camera_state.distance;
 }
@@ -156,10 +156,10 @@ fn spawn_battle_overlay_camera(
     },
     Transform::from_translation(Vec3::new(0.0, 0.0, 100.0)).looking_at(Vec3::ZERO, Vec3::Y),
     BATTLE_OVERLAY_LAYER,
-    OrthographicProjection {
+    Projection::from(OrthographicProjection {
       scaling_mode: ScalingMode::FixedVertical { viewport_height: HEIGHT },
       ..OrthographicProjection::default_2d()
-    },
+    }),
     BattleOverlayCamera,
   ));
 }
@@ -168,6 +168,6 @@ fn despawn_battle_overlay_camera(
   mut commands: Commands,
   camera_: Query<Entity, With<BattleOverlayCamera>>,
 ) {
-  let camera = camera_.single();
+  let camera = camera_.single().unwrap();
   commands.entity(camera).despawn();
 }

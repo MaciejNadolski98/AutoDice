@@ -22,13 +22,13 @@ fn spawn_menu_camera(
   commands.spawn((
     Name::new("Menu camera"),
     Camera2d,
-    OrthographicProjection {
+    Projection::from(OrthographicProjection {
       scaling_mode: ScalingMode::AutoMin {
         min_width: WIDTH,
         min_height: HEIGHT,
       },
       ..OrthographicProjection::default_2d()
-    },
+    }),
     MenuCamera,
   ));
 }
@@ -37,6 +37,6 @@ fn despawn_menu_camera(
   mut commands: Commands,
   camera_: Query<Entity, With<MenuCamera>>,
 ) {
-  let camera = camera_.single();
+  let camera = camera_.single().unwrap();
   commands.entity(camera).despawn();
 }

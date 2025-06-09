@@ -21,27 +21,27 @@ fn debug_control(
   mut spin_dice_writer: EventWriter<SpinDice>,
 ) {
   if keys.just_pressed(KeyCode::KeyQ) {
-    toss_dices.send(TossDices {});
+    toss_dices.write(TossDices {});
   }
 
   if keys.pressed(KeyCode::ArrowUp) {
-    battle_camera.single_mut().rotate_local_x(0.1);
+    battle_camera.single_mut().unwrap().rotate_local_x(0.1);
   }
 
   if keys.pressed(KeyCode::ArrowDown) {
-    battle_camera.single_mut().rotate_local_x(-0.1);
+    battle_camera.single_mut().unwrap().rotate_local_x(-0.1);
   }
 
   if keys.pressed(KeyCode::ArrowRight) {
-    battle_camera.single_mut().rotate_local_y(-0.1);
+    battle_camera.single_mut().unwrap().rotate_local_y(-0.1);
   }
 
   if keys.pressed(KeyCode::ArrowLeft) {
-    battle_camera.single_mut().rotate_local_y(0.1);
+    battle_camera.single_mut().unwrap().rotate_local_y(0.1);
   }
 
   if keys.pressed(KeyCode::KeyW) {
-    let mut transform = battle_camera.single_mut();
+    let mut transform = battle_camera.single_mut().unwrap();
     let rotation = transform.rotation;
     let translation = transform.translation;
     let up = rotation.mul_vec3(Vec3::new(0.0, 1.0, 0.0));
@@ -49,7 +49,7 @@ fn debug_control(
   }
 
   if keys.pressed(KeyCode::KeyS) {
-    let mut transform = battle_camera.single_mut();
+    let mut transform = battle_camera.single_mut().unwrap();
     let rotation = transform.rotation;
     let translation = transform.translation;
     let up = rotation.mul_vec3(Vec3::new(0.0, 1.0, 0.0));
@@ -57,7 +57,7 @@ fn debug_control(
   }
 
   if keys.pressed(KeyCode::KeyD) {
-    let mut transform = battle_camera.single_mut();
+    let mut transform = battle_camera.single_mut().unwrap();
     let rotation = transform.rotation;
     let translation = transform.translation;
     let right = rotation.mul_vec3(Vec3::new(1.0, 0.0, 0.0));
@@ -65,7 +65,7 @@ fn debug_control(
   }
 
   if keys.pressed(KeyCode::KeyA) {
-    let mut transform = battle_camera.single_mut();
+    let mut transform = battle_camera.single_mut().unwrap();
     let rotation = transform.rotation;
     let translation = transform.translation;
     let right = rotation.mul_vec3(Vec3::new(1.0, 0.0, 0.0));
@@ -73,7 +73,7 @@ fn debug_control(
   }
 
   if keys.pressed(KeyCode::KeyX) {
-    let mut transform = battle_camera.single_mut();
+    let mut transform = battle_camera.single_mut().unwrap();
     let rotation = transform.rotation;
     let translation = transform.translation;
     let forward = rotation.mul_vec3(Vec3::new(0.0, 0.0, 1.0));
@@ -81,7 +81,7 @@ fn debug_control(
   }
 
   if keys.pressed(KeyCode::KeyZ) {
-    let mut transform = battle_camera.single_mut();
+    let mut transform = battle_camera.single_mut().unwrap();
     let rotation = transform.rotation;
     let translation = transform.translation;
     let forward = rotation.mul_vec3(Vec3::new(0.0, 0.0, 1.0));
@@ -106,7 +106,7 @@ fn debug_control(
   }
 
   for digit in digits_pressed {
-    spin_dice_writer.send(SpinDice {
+    spin_dice_writer.write(SpinDice {
       dice_id: DiceID { team_id: 0, dice_id: digit - 1 },
     });
   }
@@ -114,10 +114,10 @@ fn debug_control(
   if keys.just_pressed(KeyCode::KeyC) {
     for dice_id in 0..5 {
       for team_id in 0..2 {
-        move_dices.send(MoveDiceToRow {
+        move_dices.write(MoveDiceToRow {
           dice_id: DiceID { team_id: team_id, dice_id: dice_id },
         });
-        orient_dices.send(OrientDice {
+        orient_dices.write(OrientDice {
           dice_id: DiceID { team_id: team_id, dice_id: dice_id },
         });
       }
