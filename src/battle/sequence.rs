@@ -3,7 +3,7 @@ use bevy_defer::{AccessError, AsyncCommandsExtension, AsyncWorld};
 
 use crate::camera::SwapBattleCamera;
 use crate::states::GameState;
-use crate::dice::{resolve_dices, roll_dices};
+use crate::dice::{resolve_dices, roll_dices, Dice};
 
 pub struct SequencePlugin;
 
@@ -25,7 +25,23 @@ async fn flow() -> Result<(), AccessError> {
 
     resolve_dices().await?;
 
+    if done().await? {
+      info!("Battle finished");
+      AsyncWorld.set_state(GameState::Manage)?;
+      return Ok(())
+    }
+
     current_round += 1;
     AsyncWorld.send_event(SwapBattleCamera)?;
   }
+}
+
+async fn done() -> Result<bool, AccessError> {
+  let dices = AsyncWorld.query::<&Dice>();
+  let mut dices_1_left = false;
+  let mut dices_2_left = false;
+  dices.for_each(|dice| if dice.id().team_id == 0 { dices_1_left = true });
+  dices.for_each(|dice| if dice.id().team_id == 1 { dices_2_left = true });
+  
+  Ok(!(dices_1_left && dices_2_left))
 }

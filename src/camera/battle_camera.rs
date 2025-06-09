@@ -1,4 +1,3 @@
-use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use bevy::animation::{animated_field, AnimationTarget, AnimationTargetId, RepeatAnimation};
 use bevy::render::camera::ScalingMode;

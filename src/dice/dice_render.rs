@@ -3,9 +3,10 @@ use std::array;
 use bevy::{prelude::*, render::render_resource::Extent3d};
 use bevy::render::render_resource::{TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 
-use super::events::{ChangeDiceFace, ActionType};
+use super::events::ChangeDiceFace;
 use super::DiceID;
 use crate::constants::{MAX_DICE_COUNT, DICE_TEXTURE_SIZE, DICE_FACES_LAYER};
+use crate::dice::action::Action;
 
 pub struct DiceRenderPlugin;
 
@@ -152,17 +153,11 @@ fn update_dice_faces(
     assert!(face_update.dice_id.team_id <= 1);
     assert!(face_update.dice_id.dice_id < MAX_DICE_COUNT);
     assert!(face_update.face_id < 6);
-    let texture = match face_update.face.action_type {
-      ActionType::Attack => asset_server.load("sword.png"),
-      ActionType::Heal => asset_server.load("heal.png"),
-      ActionType::Defend => asset_server.load("shield.png"),
-      ActionType::Fire => asset_server.load("fire.png"),
-      ActionType::Digit1 => asset_server.load("1.png"),
-      ActionType::Digit2 => asset_server.load("2.png"),
-      ActionType::Digit3 => asset_server.load("3.png"),
-      ActionType::Digit4 => asset_server.load("4.png"),
-      ActionType::Digit5 => asset_server.load("5.png"),
-      ActionType::Digit6 => asset_server.load("6.png"),
+    let texture = match face_update.face.action {
+      Action::Attack => asset_server.load("sword.png"),
+      Action::Heal => asset_server.load("heal.png"),
+      Action::Defend => asset_server.load("shield.png"),
+      Action::Fire => asset_server.load("fire.png"),
       _ => panic!("Invalid action type"),
     };
     let face_entity = entities.get(face_update.dice_id, face_update.face_id);
