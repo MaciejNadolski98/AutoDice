@@ -4,7 +4,8 @@ use super::{
   dice_instance::DiceInstancePlugin,
   dice_render::DiceRenderPlugin,
   dice_template::DiceTemplatePlugin,
-  events::DiceEventsPlugin
+  events::DiceEventsPlugin,
+  health_bar::HealthBarPlugin,
 };
 
 pub struct DicePlugin;
@@ -16,7 +17,8 @@ impl Plugin for DicePlugin {
         DiceInstancePlugin,
         DiceRenderPlugin,
         DiceTemplatePlugin,
-        DiceEventsPlugin
+        DiceEventsPlugin,
+        HealthBarPlugin,
       ));
   }
 }

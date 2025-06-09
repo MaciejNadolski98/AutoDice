@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::camera::ScalingMode};
-use crate::states::GameState;
+use crate::{constants::{HEIGHT, WIDTH}, states::GameState};
 
 #[derive(Component)]
 struct MenuCamera;
@@ -24,8 +24,8 @@ fn spawn_menu_camera(
     Camera2d,
     OrthographicProjection {
       scaling_mode: ScalingMode::AutoMin {
-        min_width: 256.0,
-        min_height: 144.0,
+        min_width: WIDTH,
+        min_height: HEIGHT,
       },
       ..OrthographicProjection::default_2d()
     },
