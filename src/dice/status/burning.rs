@@ -2,22 +2,24 @@ use bevy::prelude::*;
 use bevy_defer::AccessError;
 
 use crate::{
-  dice::{
+  battle::StartRound, dice::{
     action::interaction::dice::damage,
     DiceID
-  },
-  battle::StartRound
+  }, impl_status_component
 };
 
 use super::Status;
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Burning {
   pub intensity: u32,
 }
 
+impl_status_component!(Burning);
+
 impl Status for Burning {
-    type TriggerEvent = StartRound;
+  type TriggerEvent = StartRound;
+  const STATUS_COLOR: Color = Color::linear_rgb(1.0, 0.0, 0.0);
 
   async fn resolve_status(&self, dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError> {
     damage(dice_id, self.intensity).await?;
@@ -33,5 +35,9 @@ impl Status for Burning {
     Self {
       intensity: self.intensity + other.intensity,
     }
+  }
+
+  fn intensity(&self) -> Option<u32> {
+    Some(self.intensity)
   }
 }

@@ -1,6 +1,6 @@
 use std::{fmt::Debug, sync::Arc};
 
-use bevy::prelude::*;
+use bevy::{ecs::component::Mutable, prelude::*};
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
 
 use crate::utils::*;
@@ -18,8 +18,10 @@ pub use double::Double;
 pub use plugin::StatusPlugin;
 pub use regeneration::Regeneration;
 
-pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone + Copy {
+pub trait Status: Component + Clone + Copy {
   type TriggerEvent: Event + Clone + Copy + Debug;
+
+  const STATUS_COLOR: Color;
 
   fn trigger_condition(&self, _dice: &Dice, _event: Self::TriggerEvent) -> bool {
     true
@@ -34,6 +36,59 @@ pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone 
   fn update(&mut self) -> bool;
 
   fn combine(self, other: Self) -> Self;
+
+  fn intensity(&self) -> Option<u32>;
+}
+
+#[macro_export]
+macro_rules! impl_status_component {
+  ($t:ty) => {
+    use bevy::{ecs::component::{ComponentHook, Mutable, StorageType}};
+    use crate::dice::dice_info_bar::{StatusBar, StatusIconOf, StatusIcon, StatusIntensityOf};
+    use crate::constants::{BATTLE_OVERLAY_LAYER, dice_info_bar::{STATUS_ICON_SIZE, STATUS_TEXT_SIZE}};
+
+    impl Component for $t {
+      const STORAGE_TYPE: StorageType = StorageType::Table;
+      type Mutability = Mutable;
+
+      fn on_add() -> Option<ComponentHook> {
+        Some(|mut world, context| {
+          let bar = world
+            .get::<StatusBar>(context.entity).unwrap().bar();
+          world
+            .commands()
+            .entity(bar)
+            .with_child((
+              Name::new("Status Icon"),
+              StatusIconOf::<Self>::new(context.entity),
+              Sprite::from_color(<$t>::STATUS_COLOR, STATUS_ICON_SIZE),
+              BATTLE_OVERLAY_LAYER,
+              related!(Children[(
+                Text2d::new(""),
+                TextFont {
+                  font_size: STATUS_TEXT_SIZE,
+                  ..default()
+                },
+                TextColor::BLACK,
+                StatusIntensityOf::<Self>::new(context.entity),
+                BATTLE_OVERLAY_LAYER,
+              )]),
+            ));
+        })
+      }
+
+      fn on_remove() -> Option<ComponentHook> {
+        Some(|mut world, context| {
+          let icon = world
+            .get::<StatusIcon::<Self>>(context.entity).unwrap().icon();
+          world
+            .commands()
+            .entity(icon)
+            .despawn();
+        })
+      }
+    }
+  };
 }
 
 trait Registrable {
@@ -58,7 +113,7 @@ impl<T: TriggersToEvent> Registrable for T {
 
 impl<S> TriggersToEvent for S
 where
-  S: Status,
+  S: Status + Component<Mutability = Mutable>,
 {
   type EventType = <S as Status>::TriggerEvent;
 

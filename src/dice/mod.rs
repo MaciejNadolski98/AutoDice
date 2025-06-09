@@ -7,7 +7,7 @@ mod dice_instance;
 mod dice_render;
 mod dice_template;
 mod events;
-mod health_bar;
+mod dice_info_bar;
 mod roll;
 
 pub use events::ChangeDiceFace;

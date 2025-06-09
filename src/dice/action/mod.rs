@@ -60,7 +60,3 @@ impl Action {
     }
   }
 }
-
-async fn placeholder() -> Result<(), AccessError> {
-  Ok(())
-}
