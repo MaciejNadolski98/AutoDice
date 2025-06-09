@@ -8,6 +8,6 @@ mod events;
 mod health_bar;
 mod roll;
 
-pub use events::{ChangeDiceFace, TossDices, ActionType, FaceDescription, MoveDiceToMiddle, OrientDice};
+pub use events::{ChangeDiceFace, TossDices, ActionType, FaceDescription, MoveDiceToMiddle, OrientDice, SpinDice};
 pub use dice_template::DiceTemplate;
 pub use dice_instance::{DiceID, Dice};

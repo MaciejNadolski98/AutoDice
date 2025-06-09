@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::camera::BattleCamera;
-use crate::dice::{DiceID, MoveDiceToMiddle, OrientDice, TossDices};
+use crate::dice::{DiceID, MoveDiceToMiddle, OrientDice, SpinDice, TossDices};
 use crate::states::GameState;
 use crate::constants::{ 
   DICE_SIZE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH
@@ -121,6 +121,7 @@ fn debug_control(
   mut dices: Query<&mut Dice>,
   mut move_dices: EventWriter<MoveDiceToMiddle>,
   mut orient_dices: EventWriter<OrientDice>,
+  mut spin_dice_writer: EventWriter<SpinDice>,
 ) {
   if keys.just_pressed(KeyCode::KeyQ) {
     toss_dices.send(TossDices {});
@@ -208,14 +209,9 @@ fn debug_control(
   }
 
   for digit in digits_pressed {
-    for mut dice in dices.iter_mut() {
-      if dice.id().team_id == 0 && dice.id().dice_id == digit {
-        let current_hp = dice.current_hp();
-        if current_hp > 0 {
-          dice.set_current_hp(current_hp - 1);
-        }
-      }
-    }
+    spin_dice_writer.send(SpinDice {
+      dice_id: DiceID { team_id: 0, dice_id: digit - 1 },
+    });
   }
 
   if keys.just_pressed(KeyCode::KeyC) {

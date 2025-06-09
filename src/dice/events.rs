@@ -37,9 +37,10 @@ impl Plugin for DiceEventsPlugin {
       .add_event::<MoveDice>()
       .add_event::<MoveDiceToMiddle>()
       .add_event::<MoveDiceToRow>()
-      .add_event::<ShakeDice>()
+      .add_event::<SpinDice>()
       .add_event::<OrientDice>()
-      .add_event::<MovementFinished>();
+      .add_event::<MovementFinished>()
+      .add_event::<SpinFinished>();
   }
 }
 
@@ -80,7 +81,7 @@ pub struct MoveDiceToRow {
 }
 
 #[derive(Event)]
-pub struct ShakeDice {
+pub struct SpinDice {
   pub dice_id: DiceID,
 }
 
@@ -91,3 +92,8 @@ pub struct OrientDice {
 
 #[derive(Event)]
 pub struct MovementFinished;
+
+#[derive(Event)]
+pub struct SpinFinished {
+  pub dice_id: DiceID,
+}
