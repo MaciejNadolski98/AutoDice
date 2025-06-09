@@ -29,30 +29,65 @@ pub struct DiceEventsPlugin;
 impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_event::<DiceFaceChangedEvent>()
-      .add_event::<TossDicesEvent>()
-      .add_event::<DiceSpawnEvent>()
-      .add_event::<DicesStoppedEvent>()
-      .add_event::<RollResultEvent>();
+      .add_event::<ChangeDiceFace>()
+      .add_event::<TossDices>()
+      .add_event::<SpawnDices>()
+      .add_event::<DicesStopped>()
+      .add_event::<RollResult>()
+      .add_event::<MoveDice>()
+      .add_event::<MoveDiceToMiddle>()
+      .add_event::<MoveDiceToRow>()
+      .add_event::<ShakeDice>()
+      .add_event::<OrientDice>()
+      .add_event::<MovementFinished>();
   }
 }
 
 
 #[derive(Event)]
-pub struct DiceFaceChangedEvent {
+pub struct ChangeDiceFace {
   pub dice_id: DiceID,
   pub face_id: usize,
   pub face: FaceDescription,
 }
 
 #[derive(Event)]
-pub struct TossDicesEvent;
+pub struct TossDices;
 
 #[derive(Event)]
-pub struct DiceSpawnEvent;
+pub struct SpawnDices;
 
 #[derive(Event)]
-pub struct DicesStoppedEvent;
+pub struct DicesStopped;
 
 #[derive(Event)]
-pub struct RollResultEvent(pub Vec<(DiceID, usize)>);
+pub struct RollResult(pub Vec<(DiceID, usize)>);
+
+#[derive(Event)]
+pub struct MoveDice {
+  pub dice_id: DiceID,
+  pub target_position: Vec3,
+}
+
+#[derive(Event)]
+pub struct MoveDiceToMiddle {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct MoveDiceToRow {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct ShakeDice {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct OrientDice {
+  pub dice_id: DiceID,
+}
+
+#[derive(Event)]
+pub struct MovementFinished;

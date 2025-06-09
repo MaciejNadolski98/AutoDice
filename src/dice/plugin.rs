@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use super::{
+  animation::AnimationPlugin,
   dice_instance::DiceInstancePlugin,
   dice_render::DiceRenderPlugin,
   dice_template::DiceTemplatePlugin,
@@ -15,6 +16,7 @@ impl Plugin for DicePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugins((
+        AnimationPlugin,
         DiceInstancePlugin,
         DiceRenderPlugin,
         DiceTemplatePlugin,
