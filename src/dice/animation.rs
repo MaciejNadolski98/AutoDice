@@ -99,6 +99,28 @@ fn compute_target_rotation(current_rotation: Quat) -> Quat {
   Quat::from_rotation_arc(FACE_NORMALS[face_id], Vec3::Z)
 }
 
+pub async fn spin_dice(
+  dice_id: DiceID,
+  mut duration: f32,
+) -> Result<(), AccessError> {
+  let entity = get_dice_entity(dice_id).await?;
+  let mut finished = false;
+  while !finished {
+    let mut delta = AsyncWorld.resource::<Time>().get_mut(|time| time.delta_secs())?;
+    if duration <= delta {
+      delta = duration;
+      finished = true;
+    }
+    duration -= delta;
+
+    let angular_displacement = ANGULAR_SPEED * delta;
+    fetch!(entity, Transform).get_mut(|t| t.rotate(Quat::from_axis_angle(Vec3::Z, -angular_displacement)))?;
+
+    AsyncWorld.yield_now().await;
+  }
+  Ok(())
+}
+
 async fn get_dice_entity(
   dice_id: DiceID,
 ) -> Result<Entity, AccessError> {

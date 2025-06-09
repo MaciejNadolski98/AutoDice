@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncWorld};
 use rand_distr::{Distribution, Normal};
 
-use crate::constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH};
+use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH}};
 
 use super::{animation::{add_physics, move_dice_to_row, orient_dice, remove_physics}, dice_instance::DiceEntityMap, Dice};
 
@@ -31,6 +31,7 @@ pub async fn roll_dices() -> Result<(), AccessError> {
   set_physics(false).await?;
 
   AsyncWorld.run_system_cached(compute_row_positions)?;
+  AsyncWorld.send_event(SwapBattleCamera)?;
 
   let (result1, result2) = join(move_dices_to_rows(), orient_dices()).await;
   result1?;

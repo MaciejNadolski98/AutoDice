@@ -1,6 +1,7 @@
 use bevy::prelude::*;
-use bevy_defer::{AccessError, AsyncCommandsExtension};
+use bevy_defer::{AccessError, AsyncCommandsExtension, AsyncWorld};
 
+use crate::camera::SwapBattleCamera;
 use crate::states::GameState;
 use crate::dice::roll_dices;
 
@@ -25,5 +26,6 @@ async fn flow() -> Result<(), AccessError> {
     // resolve_dices().await?;
 
     current_round += 1;
+    AsyncWorld.send_event(SwapBattleCamera)?;
   }
 }
