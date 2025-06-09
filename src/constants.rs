@@ -1,13 +1,14 @@
 use avian3d::math::PI;
 use bevy::{math::Vec3, render::view::RenderLayers};
 
+pub const BASE_SCALE: f32 = 10.0;
 
-pub const WIDTH: f32 = 256.0;
-pub const HEIGHT: f32 = 144.0;
+pub const WIDTH: f32 = 256.0 * BASE_SCALE;
+pub const HEIGHT: f32 = 144.0 * BASE_SCALE;
 
-pub const WALL_SIZE: f32 = 10_000.0;
+pub const WALL_SIZE: f32 = 10_000.0 * BASE_SCALE;
 
-pub const DICE_SIZE: f32 = 10.0;
+pub const DICE_SIZE: f32 = 10.0 * BASE_SCALE;
 
 pub mod dice_texture {
   use bevy::math::Vec2;
@@ -28,11 +29,25 @@ pub mod dice_texture {
   pub const PIPS_POSITION: Vec2 = Vec2::new(TARGET_SIZE / 2.8, -TARGET_SIZE / 2.8);
 }
 
-pub const HEALTH_BAR_WIDTH: f32 = 1.0 * DICE_SIZE;
-pub const HEALTH_BAR_HEIGHT: f32 = 0.15 * DICE_SIZE;
+pub mod dice_info_bar {
+  use bevy::math::{Vec2, Vec3};
 
-pub const DEFAULT_CAMERA_DISTANCE: f32 = 200.0;
-pub const MAX_CAMERA_DISTANCE: f32 = 10_000.0;
+  use crate::constants::DICE_SIZE;
+
+  pub const STATUS_MARGIN: f32 = 0.05 * DICE_SIZE;
+  pub const BAR_DISPLACEMENT: f32 = -0.8 * DICE_SIZE;
+
+  pub const STATUS_BAR_POSITION: Vec3 = Vec3::new(0.0, BAR_DISPLACEMENT, 0.0);
+  pub const STATUS_ICON_SIZE: Vec2 = Vec2::splat(0.25 * DICE_SIZE);
+  pub const STATUS_TEXT_SIZE: f32 = 0.25 * DICE_SIZE;
+
+  pub const HEALTH_BAR_POSITION: Vec3 = Vec3::new(0.0, BAR_DISPLACEMENT - STATUS_ICON_SIZE.y - STATUS_MARGIN, 0.0);
+  pub const HEALTH_BAR_WIDTH: f32 = 1.0 * DICE_SIZE;
+  pub const HEALTH_BAR_HEIGHT: f32 = 0.25 * DICE_SIZE;
+}
+
+pub const DEFAULT_CAMERA_DISTANCE: f32 = 200.0 * BASE_SCALE;
+pub const MAX_CAMERA_DISTANCE: f32 = 10_000.0 * BASE_SCALE;
 pub const CAMERA_SWAP_TIME: f32 = 0.5;
 
 // Dice are assumed to be around the size of 1 centimeter
@@ -46,7 +61,7 @@ pub const BATTLE_OVERLAY_LAYER: RenderLayers = RenderLayers::layer(2);
 pub const RESOLUTION_WIDTH: f32 = 1280.0;
 pub const RESOLUTION_HEIGHT: f32 = 720.0;
 
-pub const LINEAR_VELOCITY_EPSILON: f32 = 1.0;
+pub const LINEAR_VELOCITY_EPSILON: f32 = 1.0 * BASE_SCALE;
 pub const ANGULAR_VELOCITY_EPSILON: f32 = 1.0;
 
 pub const LINEAR_SPEED: f32 = DICE_SIZE * 10.0;

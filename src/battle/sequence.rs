@@ -22,6 +22,7 @@ impl Plugin for SequencePlugin {
 
 #[derive(Event, Clone, Copy, Debug)]
 pub struct StartRound {
+  #[allow(unused)]
   round: u32,
 }
 

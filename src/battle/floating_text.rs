@@ -16,6 +16,7 @@ impl Plugin for FloatingTextPlugin {
 pub struct SpawnFloatingText {
   pub text: String,
   pub position: Vec3,
+  #[allow(unused)]
   pub color: Color,
 }
 
@@ -28,6 +29,7 @@ impl SpawnFloatingText {
     }
   }
 
+  #[allow(unused)]
   pub fn with_color(&mut self, color: Color) -> &mut Self {
     self.color = color;
     self

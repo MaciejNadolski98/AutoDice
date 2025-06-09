@@ -46,6 +46,7 @@ pub async fn apply_status<S: Status>(
 ) -> Result<(), AccessError> {
   let entity = get_dice_entity(dice_id).await?;
   let new_status = if let Ok(current_status) = fetch!(entity, S).get(|status| *status) {
+    AsyncWorld.entity(entity).remove::<S>()?;
     current_status.combine(status)
   } else {
     status
