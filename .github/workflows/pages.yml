@@ -25,6 +25,9 @@ jobs:
         with:
           toolchain: stable
           override: true
+      
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
 
       - uses: jetli/wasm-bindgen-action@v0.2.0
         with:
