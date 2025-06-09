@@ -155,7 +155,7 @@ fn update_dice_faces(
     assert!(face_update.face_id < 6);
     let texture = match face_update.face.action {
       Action::Attack => asset_server.load("sword.png"),
-      Action::Heal => asset_server.load("heal.png"),
+      Action::Regenerate => asset_server.load("heal.png"),
       Action::Defend => asset_server.load("shield.png"),
       Action::Fire => asset_server.load("fire.png"),
       _ => panic!("Invalid action type"),

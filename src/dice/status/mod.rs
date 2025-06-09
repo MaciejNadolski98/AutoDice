@@ -10,10 +10,13 @@ use super::{Dice, DiceID};
 mod burning;
 mod plugin;
 mod double;
+mod regeneration;
+
 
 pub use burning::Burning;
 pub use double::Double;
 pub use plugin::StatusPlugin;
+pub use regeneration::Regeneration;
 
 pub trait Status: Component<Mutability = bevy::ecs::component::Mutable> + Clone + Copy {
   type TriggerEvent: Event + Clone + Copy + Debug;

@@ -7,6 +7,7 @@ use super::DiceID;
 mod attack;
 mod fire;
 mod double;
+mod regenerate;
 
 mod helpers;
 pub mod interaction;
@@ -14,6 +15,7 @@ pub mod interaction;
 use attack::attack;
 use fire::fire;
 use double::double;
+use regenerate::regenerate;
 
 pub struct DiceActionPlugin;
 
@@ -30,7 +32,7 @@ pub enum Action {
   Invalid,
   Attack,
   Defend,
-  Heal,
+  Regenerate,
   Fire,
 }
 
@@ -52,7 +54,7 @@ impl Action {
     match self {
       Action::Attack => attack(pips_count, dice_id).await,
       Action::Defend => double(dice_id).await,
-      Action::Heal => placeholder().await,
+      Action::Regenerate => regenerate(pips_count, dice_id).await,
       Action::Fire => fire(pips_count, dice_id).await,
       Action::Invalid => Err(AccessError::Custom("Invalid action")),
     }
