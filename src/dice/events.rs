@@ -16,6 +16,12 @@ pub enum ActionType {
   Heal,
   Defend,
   Fire,
+  Digit1,
+  Digit2,
+  Digit3,
+  Digit4,
+  Digit5,
+  Digit6,
 }
 
 pub struct DiceEventsPlugin;
@@ -25,7 +31,9 @@ impl Plugin for DiceEventsPlugin {
     app
       .add_event::<DiceFaceChangedEvent>()
       .add_event::<TossDicesEvent>()
-      .add_event::<DiceSpawnEvent>();
+      .add_event::<DiceSpawnEvent>()
+      .add_event::<DicesStoppedEvent>()
+      .add_event::<RollResultEvent>();
   }
 }
 
@@ -42,3 +50,9 @@ pub struct TossDicesEvent;
 
 #[derive(Event)]
 pub struct DiceSpawnEvent;
+
+#[derive(Event)]
+pub struct DicesStoppedEvent;
+
+#[derive(Event)]
+pub struct RollResultEvent(pub Vec<(DiceID, usize)>);

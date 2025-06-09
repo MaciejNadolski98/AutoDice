@@ -76,9 +76,9 @@ fn get_uv_vertex(team_id: u32, dice_id: u32, face_id: u32, vertex_id: u32) -> [f
   let dice_size = get_uv_dice_size();
   match vertex_id {
     0 => [x, y],
-    1 => [x+dice_size[0], y],
+    1 => [x, y+dice_size[1]],
     2 => [x+dice_size[0], y+dice_size[1]],
-    3 => [x, y+dice_size[1]],
+    3 => [x+dice_size[0], y],
     _ => panic!("Invali vertex_id value"),
   }
 }
@@ -145,6 +145,12 @@ fn update_dice_faces(
       ActionType::Heal => asset_server.load("heal.png"),
       ActionType::Defend => asset_server.load("shield.png"),
       ActionType::Fire => asset_server.load("fire.png"),
+      ActionType::Digit1 => asset_server.load("1.png"),
+      ActionType::Digit2 => asset_server.load("2.png"),
+      ActionType::Digit3 => asset_server.load("3.png"),
+      ActionType::Digit4 => asset_server.load("4.png"),
+      ActionType::Digit5 => asset_server.load("5.png"),
+      ActionType::Digit6 => asset_server.load("6.png"),
       _ => panic!("Invalid action type"),
     };
     let face_entity = entities.get(face_update.dice_id, face_update.face_id);

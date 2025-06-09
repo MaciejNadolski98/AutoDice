@@ -6,6 +6,7 @@ use super::{
   dice_template::DiceTemplatePlugin,
   events::DiceEventsPlugin,
   health_bar::HealthBarPlugin,
+  roll::RollPlugin,
 };
 
 pub struct DicePlugin;
@@ -19,6 +20,7 @@ impl Plugin for DicePlugin {
         DiceTemplatePlugin,
         DiceEventsPlugin,
         HealthBarPlugin,
+        RollPlugin,
       ));
   }
 }
