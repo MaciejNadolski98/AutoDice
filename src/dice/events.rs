@@ -5,6 +5,7 @@ use super::DiceID;
 #[derive(Clone, Copy, Default)]
 pub struct FaceDescription {
   pub action_type: ActionType,
+  #[allow(dead_code)]
   pub pips_count: u32,
 }
 
@@ -30,18 +31,7 @@ impl Plugin for DiceEventsPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_event::<ChangeDiceFace>()
-      .add_event::<RowPositionChanged>()
-      .add_event::<TossDices>()
-      .add_event::<SpawnDices>()
-      .add_event::<DicesStopped>()
-      .add_event::<RollResult>()
-      .add_event::<MoveDice>()
-      .add_event::<MoveDiceToMiddle>()
-      .add_event::<MoveDiceToRow>()
-      .add_event::<SpinDice>()
-      .add_event::<OrientDice>()
-      .add_event::<MovementFinished>()
-      .add_event::<SpinFinished>();
+      .add_event::<SpawnDices>();
   }
 }
 
@@ -54,53 +44,4 @@ pub struct ChangeDiceFace {
 }
 
 #[derive(Event)]
-pub struct RowPositionChanged {
-  pub dice_id: DiceID,
-  pub position: usize,
-}
-
-#[derive(Event)]
-pub struct TossDices;
-
-#[derive(Event)]
 pub struct SpawnDices;
-
-#[derive(Event)]
-pub struct DicesStopped;
-
-#[derive(Event)]
-pub struct RollResult(pub Vec<(DiceID, usize)>);
-
-#[derive(Event)]
-pub struct MoveDice {
-  pub dice_id: DiceID,
-  pub target_position: Vec3,
-}
-
-#[derive(Event)]
-pub struct MoveDiceToMiddle {
-  pub dice_id: DiceID,
-}
-
-#[derive(Event)]
-pub struct MoveDiceToRow {
-  pub dice_id: DiceID,
-}
-
-#[derive(Event)]
-pub struct SpinDice {
-  pub dice_id: DiceID,
-}
-
-#[derive(Event)]
-pub struct OrientDice {
-  pub dice_id: DiceID,
-}
-
-#[derive(Event)]
-pub struct MovementFinished;
-
-#[derive(Event)]
-pub struct SpinFinished {
-  pub dice_id: DiceID,
-}

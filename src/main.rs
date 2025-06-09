@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::input::common_conditions::input_toggle_active;
 use bevy::window::WindowResolution;
+use bevy_defer::AsyncPlugin;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use constants::{RESOLUTION_HEIGHT, RESOLUTION_WIDTH};
@@ -22,6 +23,7 @@ use crate::states::GameState;
 
 fn main() {
     App::new()
+        .add_plugins(AsyncPlugin::default_settings())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Auto Dice".to_string(),

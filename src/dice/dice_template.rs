@@ -5,8 +5,7 @@ use super::{ActionType, FaceDescription};
 pub struct DiceTemplatePlugin;
 
 impl Plugin for DiceTemplatePlugin {
-  fn build(&self, app: &mut App) {
-    app;
+  fn build(&self, _app: &mut App) {
   }
 }
 
