@@ -182,7 +182,7 @@ fn update_dice_faces(
           commands.spawn((
             Name::new("Inside"),
             Sprite::from_color(Color::WHITE, Vec2::splat(dice_texture::INNER_SIZE)),
-            Transform::default(),
+            Transform::from_translation(Vec3::Z),
             DICE_FACES_LAYER,
           ));
         });
