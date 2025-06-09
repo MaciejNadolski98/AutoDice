@@ -5,7 +5,8 @@ use bevy::render::render_resource::{TextureDescriptor, TextureDimension, Texture
 
 use super::events::ChangeDiceFace;
 use super::DiceID;
-use crate::constants::{MAX_DICE_COUNT, DICE_TEXTURE_SIZE, DICE_FACES_LAYER};
+use crate::constants::{DICE_FACES_LAYER, MAX_DICE_COUNT};
+use crate::constants::dice_texture;
 use crate::dice::action::Action;
 
 pub struct DiceRenderPlugin;
@@ -42,8 +43,8 @@ fn spawn_dice_faces(
     let ret: [_; MAX_DICE_COUNT] = array::from_fn(|dice_id| {
       let ret: [_; 6] = array::from_fn(|face_id| {
         let [x, y] = get_uv(team_id, dice_id as u32, face_id as u32);
-        let [width, height] = [6.0 * DICE_TEXTURE_SIZE, 2.0 * DICE_TEXTURE_SIZE * (MAX_DICE_COUNT as f32)];
-        let [abs_x, abs_y] = [x * width + 0.5 * DICE_TEXTURE_SIZE, y * height + 0.5 * DICE_TEXTURE_SIZE];
+        let [width, height] = [6.0 * dice_texture::TARGET_SIZE, 2.0 * dice_texture::TARGET_SIZE * (MAX_DICE_COUNT as f32)];
+        let [abs_x, abs_y] = [x * width + 0.5 * dice_texture::TARGET_SIZE, y * height + 0.5 * dice_texture::TARGET_SIZE];
         let [center_x, center_y] = [abs_x - width / 2.0, height / 2.0 - abs_y];
         commands.spawn((
           Name::new("Dice face"),
@@ -106,8 +107,8 @@ fn spawn_dice_camera(
   mut images: ResMut<Assets<Image>>,
 ) {
   let size = Extent3d {
-    width: 6u32 * (DICE_TEXTURE_SIZE as u32),
-    height: 2u32 * (MAX_DICE_COUNT as u32) * (DICE_TEXTURE_SIZE as u32),
+    width: 6 * (dice_texture::TARGET_SIZE as u32),
+    height: 2 * (MAX_DICE_COUNT as u32) * (dice_texture::TARGET_SIZE as u32),
     ..default()
   };
 
@@ -154,10 +155,10 @@ fn update_dice_faces(
     assert!(face_update.dice_id.dice_id < MAX_DICE_COUNT);
     assert!(face_update.face_id < 6);
     let texture = match face_update.face.action {
-      Action::Attack => asset_server.load("sword.png"),
-      Action::Regenerate => asset_server.load("heal.png"),
-      Action::Defend => asset_server.load("shield.png"),
-      Action::Fire => asset_server.load("fire.png"),
+      Action::Attack => asset_server.load("actions/axe.png"),
+      Action::Regenerate => asset_server.load("actions/heart.png"),
+      Action::Defend => asset_server.load("actions/shield.png"),
+      Action::Fire => asset_server.load("actions/fire.png"),
       _ => panic!("Invalid action type"),
     };
     let face_entity = entities.get(face_update.dice_id, face_update.face_id);
@@ -168,6 +169,32 @@ fn update_dice_faces(
         commands.spawn((
           Name::new("Face image"),
           Sprite::from_image(texture),
+          Transform::default()
+            .with_scale(Vec3::splat(dice_texture::SCALING_FACTOR))
+            .with_translation((dice_texture::OFFSET, 1.0).into()),
+          DICE_FACES_LAYER,
+        ));
+        commands.spawn((
+          Name::new("Face background"),
+          Sprite::from_color(Color::linear_rgb(0.2, 0.2, 0.2), Vec2::splat(dice_texture::TARGET_SIZE)),
+          DICE_FACES_LAYER,
+        )).with_children(|commands| {
+          commands.spawn((
+            Name::new("Inside"),
+            Sprite::from_color(Color::WHITE, Vec2::splat(dice_texture::INNER_SIZE)),
+            Transform::default(),
+            DICE_FACES_LAYER,
+          ));
+        });
+        commands.spawn((
+          Name::new("Pips"),
+          Text2d(format!("{}", face_update.face.pips_count)),
+          TextFont {
+            font_size: dice_texture::FONT_SIZE,
+            ..default()
+          },
+          TextColor::BLACK,
+          Transform::from_translation((dice_texture::PIPS_POSITION, 1.0).into()),
           DICE_FACES_LAYER,
         ));
       });
