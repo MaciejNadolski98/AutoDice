@@ -128,6 +128,7 @@ fn spawn_battle_camera(
     Transform::from_translation(Vec3::new(0.0, 0.0, DEFAULT_CAMERA_DISTANCE)).looking_at(Vec3::ZERO, Vec3::Y),
     Projection::Perspective(PerspectiveProjection {
       fov: compute_fov(Vec3::new(0.0, 0.0, DEFAULT_CAMERA_DISTANCE).distance(Vec3::ZERO), HEIGHT),
+      far: 2.0 * MAX_CAMERA_DISTANCE,
       ..default()
     }),
     CameraState::default(),
