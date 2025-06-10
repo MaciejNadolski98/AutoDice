@@ -46,6 +46,16 @@ pub mod dice_info_bar {
   pub const HEALTH_BAR_HEIGHT: f32 = 0.25 * DICE_SIZE;
 }
 
+pub mod loading_screen {
+  use bevy::math::Vec2;
+
+  use crate::constants::{BASE_SCALE, HEIGHT, WIDTH};
+
+  pub const MARGIN: f32 = 1.0 * BASE_SCALE;
+  pub const INNER_BAR_SIZE: Vec2 = Vec2::new(0.3 * WIDTH, 0.05 * HEIGHT);
+  pub const BAR_SIZE: Vec2 = Vec2::new(INNER_BAR_SIZE.x + MARGIN, INNER_BAR_SIZE.y + MARGIN);
+}
+
 pub const DEFAULT_CAMERA_DISTANCE: f32 = 200.0 * BASE_SCALE;
 pub const MAX_CAMERA_DISTANCE: f32 = 800.0 * BASE_SCALE;
 pub const CAMERA_SWAP_TIME: f32 = 0.5;

@@ -9,6 +9,8 @@ pub struct MenuCameraPlugin;
 impl Plugin for MenuCameraPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_systems(OnEnter(GameState::Loading), spawn_menu_camera)
+      .add_systems(OnExit(GameState::Loading), despawn_menu_camera)
       .add_systems(OnEnter(GameState::Menu), spawn_menu_camera)
       .add_systems(OnExit(GameState::Menu), despawn_menu_camera)
       .add_systems(OnEnter(GameState::Manage), spawn_menu_camera)

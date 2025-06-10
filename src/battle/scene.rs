@@ -1,7 +1,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{constants::{BASE_SCALE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH}, states::GameState};
+use crate::{constants::{BASE_SCALE, GRAVITY_ACCELERATION, HEIGHT, WALL_SIZE, WIDTH}, loading_screen::AssetStore, states::GameState};
 
 pub struct ScenePlugin;
 
@@ -23,12 +23,11 @@ fn spawn_battle_scene(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  asset_server: Res<AssetServer>,
+  asset_store: Res<AssetStore>,
 ) {
   commands.spawn((Name::new("Battle Scene"), Visibility::default(), Transform::default(), BattleComponent)).with_children(|commands| {
-    commands.spawn((SceneRoot(asset_server.load(
-      GltfAssetLabel::Scene(0).from_asset("autodicetable.gltf"),
-      )),
+    commands.spawn((
+      SceneRoot(asset_store.get("autodicetable.gltf",)),
       Transform::from_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2))
         .with_scale(Vec3::splat(BASE_SCALE)),
     ));

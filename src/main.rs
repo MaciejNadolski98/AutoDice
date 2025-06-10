@@ -14,12 +14,14 @@ mod camera;
 mod dice;
 mod constants;
 mod utils;
+mod loading_screen;
 
 use crate::camera::plugin::CameraPlugin;
 use crate::battle::plugin::BattlePlugin;
 use crate::dice::plugin::DicePlugin;
 use crate::menu::plugin::MenuPlugin;
 use crate::manage::plugin::ManagePlugin;
+use crate::loading_screen::LoadingScreenPlugin;
 use crate::states::GameState;
 
 fn main() {
@@ -39,7 +41,7 @@ fn main() {
       .set(ImagePlugin::default_nearest())
     )
     .init_state::<GameState>()
-    .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin))
+    .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin, LoadingScreenPlugin))
     .add_plugins(EguiPlugin { enable_multipass_for_primary_context: true });
   
   if cfg!(debug_assertions) {

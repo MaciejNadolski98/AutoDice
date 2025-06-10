@@ -8,6 +8,7 @@ use super::DiceID;
 use crate::constants::{DICE_FACES_LAYER, MAX_DICE_COUNT};
 use crate::constants::dice_texture;
 use crate::dice::action::Action;
+use crate::loading_screen::AssetStore;
 
 pub struct DiceRenderPlugin;
 
@@ -148,17 +149,17 @@ fn update_dice_faces(
   mut commands: Commands,
   mut events: EventReader<ChangeDiceFace>,
   entities: Res<FaceMatrix>,
-  asset_server: Res<AssetServer>
+  asset_store: Res<AssetStore>,
 ) {
   for face_update in events.read() {
     assert!(face_update.dice_id.team_id <= 1);
     assert!(face_update.dice_id.dice_id < MAX_DICE_COUNT);
     assert!(face_update.face_id < 6);
     let texture = match face_update.face.action {
-      Action::Attack => asset_server.load("actions/axe.png"),
-      Action::Regenerate => asset_server.load("actions/heart.png"),
-      Action::Defend => asset_server.load("actions/shield.png"),
-      Action::Fire => asset_server.load("actions/fire.png"),
+      Action::Attack => asset_store.get("actions/axe.png"),
+      Action::Regenerate => asset_store.get("actions/heart.png"),
+      Action::Defend => asset_store.get("actions/shield.png"),
+      Action::Fire => asset_store.get("actions/fire.png"),
       _ => panic!("Invalid action type"),
     };
     let face_entity = entities.get(face_update.dice_id, face_update.face_id);
@@ -171,7 +172,7 @@ fn update_dice_faces(
           Sprite::from_image(texture),
           Transform::default()
             .with_scale(Vec3::splat(dice_texture::SCALING_FACTOR))
-            .with_translation((dice_texture::OFFSET, 1.0).into()),
+            .with_translation((dice_texture::OFFSET, 3.0).into()),
           DICE_FACES_LAYER,
         ));
         commands.spawn((
