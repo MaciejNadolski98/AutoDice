@@ -47,7 +47,7 @@ pub mod dice_info_bar {
 }
 
 pub const DEFAULT_CAMERA_DISTANCE: f32 = 200.0 * BASE_SCALE;
-pub const MAX_CAMERA_DISTANCE: f32 = 1_000.0 * BASE_SCALE;
+pub const MAX_CAMERA_DISTANCE: f32 = 800.0 * BASE_SCALE;
 pub const CAMERA_SWAP_TIME: f32 = 0.5;
 
 // Dice are assumed to be around the size of 1 centimeter
