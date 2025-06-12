@@ -36,6 +36,18 @@ pub enum Action {
   Fire,
 }
 
+impl From<Action> for &'static str {
+  fn from(action: Action) -> Self {
+    match action {
+      Action::Attack => "actions/axe.png",
+      Action::Defend => "actions/shield.png",
+      Action::Regenerate => "actions/heart.png",
+      Action::Fire => "actions/fire.png",
+      _ => panic!(),
+    }
+  }
+}
+
 #[derive(Event, Clone, Copy, Debug)]
 pub struct GetPips {
   pub dice_id: DiceID,

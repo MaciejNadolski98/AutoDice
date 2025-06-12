@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{constants::MAX_DICE_COUNT, dice::DiceTemplate, states::GameState};
+use crate::{constants::{ui::BUTTON_SIZE, MAX_DICE_COUNT}, dice::DiceTemplate, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -31,12 +31,46 @@ fn spawn_manage(
       width: Val::Percent(100.0), 
       height: Val::Percent(100.0),
       flex_direction: FlexDirection::Column,
-      justify_content: JustifyContent::End,
+      justify_content: JustifyContent::Start,
       ..default() 
     },
     BackgroundColor(Color::srgb(0.5, 0.5, 0.5)),
     ManageScreen,
   )).with_children(|commands| {
+    commands.spawn((
+      Name::new("Shop area"),
+      Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(80.0),
+        flex_direction: FlexDirection::Row,
+        ..default()
+      },
+    )).with_children(|commands|{
+      commands.spawn((
+        Name::new("Dice display"),
+        Node {
+          flex_grow: 0.7,
+          justify_content: JustifyContent::SpaceAround,
+          flex_wrap: FlexWrap::Wrap,
+          align_content: AlignContent::SpaceAround,
+          align_items: AlignItems::Center,
+          ..default()
+        },
+        BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
+      )).with_children(|commands| {
+        // TODO: spawn dice grids
+      });
+
+      commands.spawn((
+        Name::new("Shop"),
+        Node {
+          flex_grow: 0.3,
+          ..default()
+        },
+        BackgroundColor(Color::srgb(0.8, 0.6, 0.4)),
+      ));
+    });
+
     commands.spawn((
       Name::new("Bottom menu"),
       Node { 
@@ -50,45 +84,66 @@ fn spawn_manage(
       BackgroundColor(Color::srgb(0.25, 0.25, 0.25)),
     )).with_children(|commands| {
       commands.spawn((
-        Name::new("Back to menu button"),
-        Button,
-        Node { 
-          width: Val::Percent(10.0), 
-          height: Val::Percent(60.0), 
-          left: Val::Px(50.0),
-          justify_content: JustifyContent::Center, 
-          align_items: AlignItems::Center, 
-          ..default() 
+        Name::new("Left side"),
+        Node {
+          align_items: AlignItems::Center,
+          height: Val::Percent(100.0),
+          flex_grow: 1.0,
+          left: Val::Percent(10.0),
+          ..default()
         },
-        BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
-        ButtonAction::BackToMenu,
       )).with_children(|commands| {
         commands.spawn((
-          Text("Go Back".to_string()),
-          TextFont { font_size: 30.0, ..default() },
-          TextColor(Color::srgb(0.0, 0.0, 0.0)),
-        ));
+          Name::new("Back to menu button"),
+          Button,
+          Node {
+            width: BUTTON_SIZE,
+            height: Val::Percent(60.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+          },
+          BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
+          ButtonAction::BackToMenu,
+        )).with_children(|commands| {
+          commands.spawn((
+            Text("Go Back".to_string()),
+            TextFont { font_size: 30.0, ..default() },
+            TextColor(Color::srgb(0.0, 0.0, 0.0)),
+          ));
+        });
       });
 
       commands.spawn((
-        Name::new("Battle button"),
-        Button,
-        Node { 
-          width: Val::Percent(10.0), 
-          height: Val::Percent(60.0),
-          right: Val::Px(50.0),
-          justify_content: JustifyContent::Center, 
-          align_items: AlignItems::Center, 
-          ..default() 
+        Name::new("Right side"),
+        Node {
+          height: Val::Percent(100.0),
+          flex_grow: 1.0,
+          flex_direction: FlexDirection::RowReverse,
+          align_items: AlignItems::Center,
+          right: Val::Percent(10.0),
+          ..default()
         },
-        BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
-        ButtonAction::Battle,
       )).with_children(|commands| {
         commands.spawn((
-          Text("Battle!".to_string()),
-          TextFont { font_size: 30.0, ..default() },
-          TextColor(Color::srgb(0.0, 0.0, 0.0)),
-        ));
+          Name::new("Battle button"),
+          Button,
+          Node {
+            width: BUTTON_SIZE,
+            height: Val::Percent(60.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+          },
+          BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
+          ButtonAction::Battle,
+        )).with_children(|commands| {
+          commands.spawn((
+            Text("Battle!".to_string()),
+            TextFont { font_size: 30.0, ..default() },
+            TextColor(Color::srgb(0.0, 0.0, 0.0)),
+          ));
+        });
       });
     });
   });

@@ -1,23 +1,22 @@
+use bevy::ecs::component::HookContext;
+use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
-use avian3d::prelude::*;
+use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
-
+use crate::constants::dice_texture::TARGET_SIZE;
 use crate::constants::MAX_DICE_COUNT;
+use crate::dice::dice_render::{despawn_face, spawn_dice_camera, update_dice_face};
 use crate::dice::events::SpawnDices;
 use crate::manage::plugin::DiceData;
 use crate::states::GameState;
 use crate::utils::*;
 
 use super::animation::get_dice_entity;
-use super::dice_render::{
-  build_dices,
-  DiceFaceImage
-};
+use super::dice_render::spawn_dice;
 use super::dice_template::{DiceTemplate, Face};
 use super::events::DiceDied;
 use super::roll::get_face_id;
-use super::ChangeDiceFace;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -41,27 +40,60 @@ pub struct DiceID {
   pub dice_id: usize,
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
+#[component(on_remove = free_dice_faces)]
 pub struct Dice {
   id: DiceID,
   max_hp: u32,
   current_hp: u32,
-  current_faces: [Face; 6],
+  current_faces: [(Face, Handle<Image>); 6],
   row_position: usize,
+}
+
+fn free_dice_faces(
+  mut world: DeferredWorld,
+  context: HookContext,
+) {
+  let entity = context.entity;
+  let dice = world.get::<Dice>(entity).unwrap().clone();
+
+  for (_, handle) in dice.faces() {
+    world.commands().run_system_cached_with(despawn_face, handle);
+  }
 }
 
 impl Dice {
   pub fn build(
-    dice_face_changed: &mut EventWriter<ChangeDiceFace>,
     template: DiceTemplate, 
     dice_id: DiceID,
+    images: &mut Assets<Image>,
   ) -> Self {
     let mut dice = Dice::default();
     dice.set_id(dice_id);
     dice.set_max_hp(template.hp);
     dice.set_current_hp(template.hp);
     for i in 0..6 {
-      dice_face_changed.write(dice.set_face(i, template.faces[i]));
+      let size = Extent3d {
+        width: TARGET_SIZE as u32,
+        height: TARGET_SIZE as u32,
+        depth_or_array_layers: 1,
+      };
+      let mut image = Image {
+        texture_descriptor: TextureDescriptor {
+          label: None,
+          size,
+          dimension: TextureDimension::D2,
+          format: TextureFormat::Bgra8UnormSrgb,
+          mip_level_count: 1,
+          sample_count: 1,
+          usage: TextureUsages::TEXTURE_BINDING
+            | TextureUsages::RENDER_ATTACHMENT,
+          view_formats: &[],
+        },
+        ..default()
+      };
+      image.resize(size);
+      dice.current_faces[i] = (template.faces[i], images.add(image));
     }
     dice.set_row_position(dice_id.dice_id);
     dice
@@ -79,14 +111,12 @@ impl Dice {
     self.current_hp
   }
 
-  #[allow(dead_code)]
-  pub fn face(&self, face_id: usize) -> Face {
-    self.current_faces[face_id]
+  pub fn faces(&self) -> [(Face, Handle<Image>); 6] {
+    self.current_faces.clone()
   }
 
-  #[allow(dead_code)]
-  pub fn faces(&self) -> &[Face; 6] {
-    &self.current_faces
+  pub fn face(&self, face_id: usize) -> Face {
+    self.current_faces[face_id].0
   }
 
   pub fn row_position(&self) -> usize {
@@ -105,11 +135,6 @@ impl Dice {
     self.current_hp = current_hp;
   }
 
-  pub fn set_face(&mut self, face_id: usize, face: Face) -> ChangeDiceFace {
-    self.current_faces[face_id] = face;
-    ChangeDiceFace { dice_id: self.id, face_id: face_id, face: face }
-  }
-
   pub fn set_row_position(&mut self, row_position: usize) {
     self.row_position = row_position;
   }
@@ -126,43 +151,31 @@ pub struct Rows {
 
 fn spawn_dices(
   dice_data: Res<DiceData>,
-  meshes: ResMut<Assets<Mesh>>,
   mut commands: Commands,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  dice_face_image: Res<DiceFaceImage>,
-  mut dice_face_changed: EventWriter<ChangeDiceFace>,
   mut dice_spawn_event: EventWriter<SpawnDices>,
-  mut dice_entity_map: ResMut<DiceEntityMap>,
+  mut images: ResMut<Assets<Image>>,
 ) {
   assert!(dice_data.team1.len() <= MAX_DICE_COUNT);
   assert!(dice_data.team2.len() <= MAX_DICE_COUNT);
-  
-  let dice_meshes = build_dices(meshes);
 
   for i in 0..dice_data.team1.len() {
     let dice_id = DiceID { team_id: 0, dice_id: i };
-    let entity = commands.spawn((
-      Name::new(format!("Red dice {}", i+1)),
-      Mesh3d(dice_meshes[0][i].clone()),
-      MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
-      RigidBody::Dynamic,
-      Collider::cuboid(1.0, 1.0, 1.0),
-      Dice::build(&mut dice_face_changed, dice_data.team1[i].clone(), dice_id),
-    )).id();
-    dice_entity_map.0.insert(dice_id, entity);
+    let dice = Dice::build(dice_data.team1[i].clone(), dice_id, &mut images);
+    for (face, handle) in dice.faces() {
+      commands.run_system_cached_with(spawn_dice_camera, handle.clone());
+      commands.run_system_cached_with(update_dice_face, (face, handle));
+    }
+    commands.run_system_cached_with(spawn_dice, dice);
   }
 
   for i in 0..dice_data.team2.len() {
     let dice_id = DiceID { team_id: 1, dice_id: i };
-    let entity = commands.spawn((
-      Name::new(format!("Blue dice {}", i+1)),
-      Mesh3d(dice_meshes[0][i].clone()),
-      MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
-      RigidBody::Dynamic,
-      Collider::cuboid(1.0, 1.0, 1.0),
-      Dice::build(&mut dice_face_changed, dice_data.team2[i].clone(), dice_id),
-    )).id();
-    dice_entity_map.0.insert(dice_id, entity);
+    let dice = Dice::build(dice_data.team2[i].clone(), dice_id, &mut images);
+    for (face, handle) in dice.faces() {
+      commands.run_system_cached_with(spawn_dice_camera, handle.clone());
+      commands.run_system_cached_with(update_dice_face, (face, handle));
+    }
+    commands.run_system_cached_with(spawn_dice, dice);
   }
   dice_spawn_event.write(SpawnDices);
 }
