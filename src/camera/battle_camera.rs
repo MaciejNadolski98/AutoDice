@@ -66,12 +66,11 @@ impl Default for CameraState {
 }
 
 fn swap_camera(
-  mut animation_player: Query<&mut AnimationPlayer, With<BattleCamera>>,
+  mut animation_player: Single<&mut AnimationPlayer, With<BattleCamera>>,
   resources: Res<LocalResources>,
 ) {
-  let mut player = animation_player.single_mut().unwrap();
-  player.adjust_speeds(-1.0);
-  let animation = player.animation_mut(resources.animation_index).unwrap();
+  animation_player.adjust_speeds(-1.0);
+  let animation = animation_player.animation_mut(resources.animation_index).unwrap();
   if animation.is_finished() {
     animation.set_repeat(RepeatAnimation::Count(animation.completions() + 1));
   }

@@ -1,14 +1,10 @@
 use bevy::ecs::component::HookContext;
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
-use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
-use crate::constants::dice_texture::TARGET_SIZE;
-use crate::constants::MAX_DICE_COUNT;
-use crate::dice::dice_render::{despawn_face, spawn_dice_camera, update_dice_face};
 use crate::dice::events::SpawnDices;
-use crate::manage::plugin::DiceData;
+use crate::manage::plugin::{EnemyTeam, MyTeam};
 use crate::states::GameState;
 use crate::utils::*;
 
@@ -41,25 +37,28 @@ pub struct DiceID {
 }
 
 #[derive(Component, Default, Clone)]
-#[component(on_remove = free_dice_faces)]
+#[component(on_add = spawn_dice_faces)]
 pub struct Dice {
   id: DiceID,
   max_hp: u32,
   current_hp: u32,
-  current_faces: [(Face, Handle<Image>); 6],
+  current_faces: [Face; 6],
   row_position: usize,
 }
 
-fn free_dice_faces(
+fn spawn_dice_faces(
   mut world: DeferredWorld,
   context: HookContext,
 ) {
-  let entity = context.entity;
-  let dice = world.get::<Dice>(entity).unwrap().clone();
-
-  for (_, handle) in dice.faces() {
-    world.commands().run_system_cached_with(despawn_face, handle);
-  }
+  let dice = world.get::<Dice>(context.entity).unwrap().clone();
+  world
+    .commands()
+    .entity(context.entity)
+    .with_children(|commands| {
+      for face in dice.faces() {
+        commands.spawn(face);
+      }
+    });
 }
 
 impl Dice {
@@ -73,27 +72,7 @@ impl Dice {
     dice.set_max_hp(template.hp);
     dice.set_current_hp(template.hp);
     for i in 0..6 {
-      let size = Extent3d {
-        width: TARGET_SIZE as u32,
-        height: TARGET_SIZE as u32,
-        depth_or_array_layers: 1,
-      };
-      let mut image = Image {
-        texture_descriptor: TextureDescriptor {
-          label: None,
-          size,
-          dimension: TextureDimension::D2,
-          format: TextureFormat::Bgra8UnormSrgb,
-          mip_level_count: 1,
-          sample_count: 1,
-          usage: TextureUsages::TEXTURE_BINDING
-            | TextureUsages::RENDER_ATTACHMENT,
-          view_formats: &[],
-        },
-        ..default()
-      };
-      image.resize(size);
-      dice.current_faces[i] = (template.faces[i], images.add(image));
+      dice.current_faces[i] = Face::from_other(&template.faces[i], images);
     }
     dice.set_row_position(dice_id.dice_id);
     dice
@@ -111,12 +90,12 @@ impl Dice {
     self.current_hp
   }
 
-  pub fn faces(&self) -> [(Face, Handle<Image>); 6] {
+  pub fn faces(&self) -> [Face; 6] {
     self.current_faces.clone()
   }
 
   pub fn face(&self, face_id: usize) -> Face {
-    self.current_faces[face_id].0
+    self.current_faces[face_id].clone()
   }
 
   pub fn row_position(&self) -> usize {
@@ -150,31 +129,30 @@ pub struct Rows {
 }
 
 fn spawn_dices(
-  dice_data: Res<DiceData>,
   mut commands: Commands,
   mut dice_spawn_event: EventWriter<SpawnDices>,
   mut images: ResMut<Assets<Image>>,
+  my_team: Single<&Children, With<MyTeam>>,
+  enemy_team: Single<&Children, With<EnemyTeam>>,
+  templates: Query<&DiceTemplate>,
 ) {
-  assert!(dice_data.team1.len() <= MAX_DICE_COUNT);
-  assert!(dice_data.team2.len() <= MAX_DICE_COUNT);
-
-  for i in 0..dice_data.team1.len() {
+  for (i, child) in my_team.iter().enumerate() {
     let dice_id = DiceID { team_id: 0, dice_id: i };
-    let dice = Dice::build(dice_data.team1[i].clone(), dice_id, &mut images);
-    for (face, handle) in dice.faces() {
-      commands.run_system_cached_with(spawn_dice_camera, handle.clone());
-      commands.run_system_cached_with(update_dice_face, (face, handle));
-    }
+    let dice = Dice::build(
+      templates.get(child).unwrap().clone(),
+      dice_id,
+      &mut images
+    );
     commands.run_system_cached_with(spawn_dice, dice);
   }
 
-  for i in 0..dice_data.team2.len() {
+  for (i, child) in enemy_team.iter().enumerate() {
     let dice_id = DiceID { team_id: 1, dice_id: i };
-    let dice = Dice::build(dice_data.team2[i].clone(), dice_id, &mut images);
-    for (face, handle) in dice.faces() {
-      commands.run_system_cached_with(spawn_dice_camera, handle.clone());
-      commands.run_system_cached_with(update_dice_face, (face, handle));
-    }
+    let dice = Dice::build(
+      templates.get(child).unwrap().clone(),
+      dice_id,
+      &mut images
+    );
     commands.run_system_cached_with(spawn_dice, dice);
   }
   dice_spawn_event.write(SpawnDices);

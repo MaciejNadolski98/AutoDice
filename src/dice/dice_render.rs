@@ -1,26 +1,18 @@
-use std::collections::HashMap;
-
 use avian3d::prelude::{Collider, RigidBody};
 use bevy::render::mesh::{MeshVertexAttribute, MeshVertexBufferLayouts, VertexAttributeValues, VertexFormat};
 use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::prelude::*;
 
-use crate::constants::DICE_FACES_LAYER;
-use crate::constants::dice_texture::{FONT_SIZE, INNER_SIZE, OFFSET, PIPS_POSITION, SCALING_FACTOR, TARGET_SIZE};
 use crate::dice::dice_instance::DiceEntityMap;
-use crate::dice::dice_template::Face;
 use crate::dice::Dice;
-use crate::loading_screen::AssetStore;
 
 pub struct DiceRenderPlugin;
 
 impl Plugin for DiceRenderPlugin {
   fn build(&self, app: &mut App) {
     app
-      .init_resource::<MapHandleToRootAndCamera>()
       .init_resource::<MeshVertexBufferLayouts>()
-      .add_plugins(MaterialPlugin::<DiceMaterial>::default())
-      .add_systems(First, deactivate_dice_cameras);
+      .add_plugins(MaterialPlugin::<DiceMaterial>::default());
   }
 }
 
@@ -36,137 +28,8 @@ fn permute_vertex_id(face_id: usize, vertex_id: usize) -> usize {
   }
 }
 
-#[derive(Resource, Default)]
-pub struct MapHandleToRootAndCamera {
-  counter: usize,
-  mapping: HashMap<Handle<Image>, (Entity, Entity)>,
-}
-
 #[derive(Component)]
 pub struct DiceCamera;
-
-impl MapHandleToRootAndCamera {
-  fn add(&mut self, image: Handle<Image>, commands: &mut Commands) {
-    let position = TARGET_SIZE * Vec2::X * self.counter as f32;
-    self.counter += 1;
-    let root = commands.spawn((
-      Name::new("Dice face root"),
-      Visibility::Visible,
-      Transform::from_translation(Vec3::from((position, 0.0))),
-      DICE_FACES_LAYER,
-    )).id();
-    let camera = commands
-      .spawn((
-        Name::new("Dice texture camera"),
-        Camera2d,
-        DiceCamera,
-        Camera {
-          order: -1,
-          target: image.clone().into(),
-          ..default()
-        },
-        Transform::from_translation(Vec3::from((position, 100.0))).looking_at(Vec3::from((position, 0.0)), Vec3::Y),
-        DICE_FACES_LAYER,
-      )).id();
-    self.mapping.insert(
-      image.clone_weak(),
-      (root, camera),
-    );
-  }
-
-  fn get(&self, image: Handle<Image>) -> (Entity, Entity) {
-    *self.mapping.get(&image).unwrap()
-  }
-
-  pub fn remove(&mut self, image: Handle<Image>, commands: &mut Commands) {
-    let (root, camera) = self.mapping.get(&image).unwrap();
-    commands.entity(*root).despawn();
-    commands.entity(*camera).despawn();
-    self.mapping.remove(&image);
-  }
-}
-
-pub fn spawn_dice_camera(
-  image: In<Handle<Image>>,
-  mut commands: Commands,
-  mut map_handle_to_root: ResMut<MapHandleToRootAndCamera>,
-) {
-  map_handle_to_root.add(image.clone(), &mut commands);
-}
-
-pub fn despawn_face(
-  image: In<Handle<Image>>,
-  mut commands: Commands,
-  mut map_handle_to_root: ResMut<MapHandleToRootAndCamera>,
-) {
-  map_handle_to_root.remove(image.clone(), &mut commands);
-}
-
-pub fn update_dice_face(
-  input: In<(Face, Handle<Image>)>,
-  asset_store: Res<AssetStore>,
-  map_handle_to_root: Res<MapHandleToRootAndCamera>,
-  mut commands: Commands,
-  mut cameras: Query<&mut Camera>,
-) {
-  let (face, target_image) = input.clone();
-  let action_image = asset_store.get(face.action.into());
-
-  let (root, camera) = map_handle_to_root.get(target_image.clone());
-  commands
-    .entity(root)
-    .despawn_related::<Children>()
-    .with_children(|commands| {
-      commands.spawn((
-        Name::new("Background"),
-        Sprite::from_color(
-          Color::linear_rgb(0.2, 0.2, 0.2),
-          Vec2::splat(TARGET_SIZE)
-        ),
-        DICE_FACES_LAYER,
-      )).with_children(|commands| {
-        commands.spawn((
-          Name::new("Foreground"),
-          Transform::from_translation(Vec3::Z),
-          Sprite::from_color(
-            Color::WHITE,
-            Vec2::splat(INNER_SIZE),
-          ),
-          DICE_FACES_LAYER,
-        )).with_children(|commands| {
-          commands.spawn((
-            Name::new("Face icon"),
-            Sprite::from_image(action_image),
-            Transform::default()
-              .with_scale(Vec3::splat(SCALING_FACTOR))
-              .with_translation((OFFSET, 3.0).into()),
-            DICE_FACES_LAYER,
-          ));
-
-          commands.spawn((
-            Name::new("Pips"),
-            Text2d(format!("{}", face.pips_count)),
-            TextFont {
-              font_size: FONT_SIZE,
-              ..default()
-            },
-            TextColor::BLACK,
-            Transform::from_translation((PIPS_POSITION, 1.0).into()),
-            DICE_FACES_LAYER,
-          ));
-        });
-      });
-    });
-  cameras.get_mut(camera).unwrap().is_active = true;
-}
-
-fn deactivate_dice_cameras(
-  cameras: Query<&mut Camera, (Changed<Camera>, With<DiceCamera>)>,
-) {
-  for mut camera in cameras {
-    camera.is_active = false;
-  }
-}
 
 #[derive(Asset, TypePath, AsBindGroup, Clone)]
 pub struct DiceMaterial {
@@ -257,7 +120,7 @@ pub fn spawn_dice(
   let mesh = DiceMeshBuilder.build();
   let handle = meshes.add(mesh.clone());
 
-  let images = dice.faces().map(|(_, image)| {image});
+  let images = dice.faces().map(|face| { face.image.clone() });
   let entity = commands.spawn((
     Name::new("Dice instance"),
     Mesh3d(handle),

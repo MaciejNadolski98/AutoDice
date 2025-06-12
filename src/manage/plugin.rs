@@ -1,12 +1,11 @@
 use bevy::prelude::*;
-use crate::{constants::{ui::BUTTON_SIZE, MAX_DICE_COUNT}, dice::DiceTemplate, states::GameState};
+use crate::{constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, MAX_DICE_COUNT}, dice::DiceTemplate, manage::dice_grid::{update_grid, DiceGridOf}, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
-      .init_resource::<DiceData>()
       .add_systems(OnEnter(GameState::Manage), spawn_manage)
       .add_systems(OnExit(GameState::Manage), despawn_manage)
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
@@ -22,8 +21,42 @@ enum ButtonAction {
     BackToMenu,
 }
 
+#[derive(Component)]
+pub struct MyTeam;
+
+#[derive(Component)]
+pub struct EnemyTeam;
+
+pub fn spawn_teams(
+  mut commands: Commands,
+  mut images: ResMut<Assets<Image>>
+) {
+  commands.spawn((
+    Name::new("My team"),
+    MyTeam,
+  )).with_children(|commands| {
+    for _ in 0..MAX_DICE_COUNT {
+      commands.spawn((
+        DiceTemplate::generate(&mut images),
+      ));
+    }
+  });
+
+  commands.spawn((
+    Name::new("Enemy team"),
+    EnemyTeam,
+  )).with_children(|commands| {
+    for _ in 0..MAX_DICE_COUNT {
+      commands.spawn((
+        DiceTemplate::generate(&mut images),
+      ));
+    }
+  });
+}
+
 fn spawn_manage(
   mut commands: Commands,
+  my_team: Single<&Children, With<MyTeam>>,
 ) {
   commands.spawn((
     Name::new("Manage"),
@@ -49,22 +82,36 @@ fn spawn_manage(
       commands.spawn((
         Name::new("Dice display"),
         Node {
-          flex_grow: 0.7,
-          justify_content: JustifyContent::SpaceAround,
+          width: Val::Percent(70.0),
+          justify_content: JustifyContent::Center,
           flex_wrap: FlexWrap::Wrap,
           align_content: AlignContent::SpaceAround,
           align_items: AlignItems::Center,
+          row_gap: Val::Px(-TARGET_SIZE),
+          column_gap: Val::Px(TARGET_SIZE / 8.0),
           ..default()
         },
         BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
       )).with_children(|commands| {
-        // TODO: spawn dice grids
-      });
+        for &template in *my_team {
+          commands.spawn((
+            Name::new("Dice grid"),
+            DiceGridOf::new(template),
+            Node {
+              display: Display::Grid,
+              grid_template_columns: vec![RepeatedGridTrack::px(3, TARGET_SIZE)],
+              grid_template_rows: vec![RepeatedGridTrack::px(4, TARGET_SIZE)],
+              ..default()
+            },
+          ));
 
+          commands.commands().run_system_cached_with(update_grid, template);
+        }
+      });
       commands.spawn((
         Name::new("Shop"),
         Node {
-          flex_grow: 0.3,
+          width: Val::Percent(30.0),
           ..default()
         },
         BackgroundColor(Color::srgb(0.8, 0.6, 0.4)),
@@ -156,16 +203,9 @@ fn despawn_manage(
   commands.entity(screen.single().unwrap()).despawn();
 }
 
-#[derive(Resource, Default)]
-pub struct DiceData {
-  pub team1: Vec<DiceTemplate>,
-  pub team2: Vec<DiceTemplate>,
-}
-
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,
-  mut dice_data: ResMut<DiceData>,
 ) {
   for (interaction, button_action) in &interaction_query {
     if *interaction != Interaction::Pressed {
@@ -177,10 +217,6 @@ fn button_actions(
         game_state.set(GameState::Menu);
       }
       ButtonAction::Battle => {
-        *dice_data = DiceData {
-          team1: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
-          team2: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
-        };
         game_state.set(GameState::Battle);
       }
     }
