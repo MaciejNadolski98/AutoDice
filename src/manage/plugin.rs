@@ -1,12 +1,12 @@
 use bevy::prelude::*;
-use crate::{constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, MAX_DICE_COUNT}, dice::DiceTemplate, manage::dice_grid::{update_grid, DiceGridOf}, states::GameState};
+use crate::{constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, DICE_COUNT, SHOP_ITEMS_COUNT}, dice::DiceTemplate, manage::{dice_grid::{update_grid, DiceGridOf}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(OnEnter(GameState::Manage), spawn_manage)
+      .add_systems(OnEnter(GameState::Manage), (spawn_shop, spawn_manage).chain())
       .add_systems(OnExit(GameState::Manage), despawn_manage)
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
   }
@@ -35,7 +35,7 @@ pub fn spawn_teams(
     Name::new("My team"),
     MyTeam,
   )).with_children(|commands| {
-    for _ in 0..MAX_DICE_COUNT {
+    for _ in 0..DICE_COUNT {
       commands.spawn((
         DiceTemplate::generate(&mut images),
       ));
@@ -46,7 +46,7 @@ pub fn spawn_teams(
     Name::new("Enemy team"),
     EnemyTeam,
   )).with_children(|commands| {
-    for _ in 0..MAX_DICE_COUNT {
+    for _ in 0..DICE_COUNT {
       commands.spawn((
         DiceTemplate::generate(&mut images),
       ));
@@ -54,9 +54,29 @@ pub fn spawn_teams(
   });
 }
 
+#[derive(Component)]
+pub struct Shop;
+
+fn spawn_shop(
+  mut commands: Commands,
+  mut images: ResMut<Assets<Image>>,
+) {
+  commands.spawn((
+      Shop,
+    ))
+    .with_children(|commands| {
+      for _ in 0..SHOP_ITEMS_COUNT {
+        commands.spawn((
+          Tile::generate(&mut images),
+        ));
+      }
+    });
+}
+
 fn spawn_manage(
   mut commands: Commands,
   my_team: Single<&Children, With<MyTeam>>,
+  shop: Single<&Children, With<Shop>>,
 ) {
   commands.spawn((
     Name::new("Manage"),
@@ -99,23 +119,37 @@ fn spawn_manage(
             DiceGridOf::new(template),
             Node {
               display: Display::Grid,
-              grid_template_columns: vec![RepeatedGridTrack::px(3, TARGET_SIZE)],
-              grid_template_rows: vec![RepeatedGridTrack::px(4, TARGET_SIZE)],
               ..default()
             },
           ));
 
-          commands.commands().run_system_cached_with(update_grid, template);
+          commands.commands().run_system_cached_with(update_grid::<DiceTemplate>, template);
         }
       });
       commands.spawn((
         Name::new("Shop"),
         Node {
           width: Val::Percent(30.0),
+          justify_content: JustifyContent::SpaceAround,
+          flex_direction: FlexDirection::Column,
+          align_items: AlignItems::Center,
           ..default()
         },
         BackgroundColor(Color::srgb(0.8, 0.6, 0.4)),
-      ));
+      )).with_children(|commands| {
+        for &tile in *shop {
+          commands.spawn((
+            Name::new("Dice grid"),
+            DiceGridOf::new(tile),
+            Node {
+              display: Display::Grid,
+              ..default()
+            },
+          ));
+
+          commands.commands().run_system_cached_with(update_grid::<Tile>, tile);
+        }
+      });
     });
 
     commands.spawn((
