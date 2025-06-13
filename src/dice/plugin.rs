@@ -10,6 +10,7 @@ use super::{
   roll::RollPlugin,
   action::DiceActionPlugin,
   status::StatusPlugin,
+  face::FacePlugin,
 };
 
 pub struct DicePlugin;
@@ -27,6 +28,7 @@ impl Plugin for DicePlugin {
         RollPlugin,
         DiceActionPlugin,
         StatusPlugin,
+        FacePlugin,
       ));
   }
 }

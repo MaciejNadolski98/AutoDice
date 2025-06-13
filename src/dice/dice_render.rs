@@ -4,7 +4,7 @@ use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::prelude::*;
 
 use crate::dice::dice_instance::DiceEntityMap;
-use crate::dice::Dice;
+use crate::dice::{Dice, FaceCollection};
 
 pub struct DiceRenderPlugin;
 
@@ -120,7 +120,7 @@ pub fn spawn_dice(
   let mesh = DiceMeshBuilder.build();
   let handle = meshes.add(mesh.clone());
 
-  let images = dice.faces().map(|face| { face.image.clone() });
+  let images = dice.faces().into_iter().map(|face| { face.image.clone() });
   let entity = commands.spawn((
     Name::new("Dice instance"),
     Mesh3d(handle),

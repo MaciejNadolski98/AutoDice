@@ -1,16 +1,15 @@
-use bevy::ecs::component::HookContext;
-use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
 use crate::dice::events::SpawnDices;
+use crate::dice::{spawn_dice_faces, Face, FaceCollection};
 use crate::manage::plugin::{EnemyTeam, MyTeam};
 use crate::states::GameState;
 use crate::utils::*;
 
 use super::animation::get_dice_entity;
 use super::dice_render::spawn_dice;
-use super::dice_template::{DiceTemplate, Face};
+use super::dice_template::DiceTemplate;
 use super::events::DiceDied;
 use super::roll::get_face_id;
 
@@ -37,7 +36,7 @@ pub struct DiceID {
 }
 
 #[derive(Component, Default, Clone)]
-#[component(on_add = spawn_dice_faces)]
+#[component(on_add = spawn_dice_faces::<Dice>)]
 pub struct Dice {
   id: DiceID,
   max_hp: u32,
@@ -46,19 +45,10 @@ pub struct Dice {
   row_position: usize,
 }
 
-fn spawn_dice_faces(
-  mut world: DeferredWorld,
-  context: HookContext,
-) {
-  let dice = world.get::<Dice>(context.entity).unwrap().clone();
-  world
-    .commands()
-    .entity(context.entity)
-    .with_children(|commands| {
-      for face in dice.faces() {
-        commands.spawn(face);
-      }
-    });
+impl FaceCollection for Dice {
+  fn faces(&self) -> Vec<Face> {
+    self.current_faces.to_vec()
+  }
 }
 
 impl Dice {
@@ -90,12 +80,8 @@ impl Dice {
     self.current_hp
   }
 
-  pub fn faces(&self) -> [Face; 6] {
-    self.current_faces.clone()
-  }
-
   pub fn face(&self, face_id: usize) -> Face {
-    self.current_faces[face_id].clone()
+    self.current_faces.get(face_id).unwrap().clone()
   }
 
   pub fn row_position(&self) -> usize {
