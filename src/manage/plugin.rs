@@ -1,12 +1,11 @@
 use bevy::prelude::*;
-use crate::{constants::MAX_DICE_COUNT, dice::DiceTemplate, states::GameState};
+use crate::{constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, MAX_DICE_COUNT}, dice::DiceTemplate, manage::dice_grid::{update_grid, DiceGridOf}, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
-      .init_resource::<DiceData>()
       .add_systems(OnEnter(GameState::Manage), spawn_manage)
       .add_systems(OnExit(GameState::Manage), despawn_manage)
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
@@ -22,8 +21,42 @@ enum ButtonAction {
     BackToMenu,
 }
 
+#[derive(Component)]
+pub struct MyTeam;
+
+#[derive(Component)]
+pub struct EnemyTeam;
+
+pub fn spawn_teams(
+  mut commands: Commands,
+  mut images: ResMut<Assets<Image>>
+) {
+  commands.spawn((
+    Name::new("My team"),
+    MyTeam,
+  )).with_children(|commands| {
+    for _ in 0..MAX_DICE_COUNT {
+      commands.spawn((
+        DiceTemplate::generate(&mut images),
+      ));
+    }
+  });
+
+  commands.spawn((
+    Name::new("Enemy team"),
+    EnemyTeam,
+  )).with_children(|commands| {
+    for _ in 0..MAX_DICE_COUNT {
+      commands.spawn((
+        DiceTemplate::generate(&mut images),
+      ));
+    }
+  });
+}
+
 fn spawn_manage(
   mut commands: Commands,
+  my_team: Single<&Children, With<MyTeam>>,
 ) {
   commands.spawn((
     Name::new("Manage"),
@@ -31,12 +64,60 @@ fn spawn_manage(
       width: Val::Percent(100.0), 
       height: Val::Percent(100.0),
       flex_direction: FlexDirection::Column,
-      justify_content: JustifyContent::End,
+      justify_content: JustifyContent::Start,
       ..default() 
     },
     BackgroundColor(Color::srgb(0.5, 0.5, 0.5)),
     ManageScreen,
   )).with_children(|commands| {
+    commands.spawn((
+      Name::new("Shop area"),
+      Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(80.0),
+        flex_direction: FlexDirection::Row,
+        ..default()
+      },
+    )).with_children(|commands|{
+      commands.spawn((
+        Name::new("Dice display"),
+        Node {
+          width: Val::Percent(70.0),
+          justify_content: JustifyContent::Center,
+          flex_wrap: FlexWrap::Wrap,
+          align_content: AlignContent::SpaceAround,
+          align_items: AlignItems::Center,
+          row_gap: Val::Px(-TARGET_SIZE),
+          column_gap: Val::Px(TARGET_SIZE / 8.0),
+          ..default()
+        },
+        BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
+      )).with_children(|commands| {
+        for &template in *my_team {
+          commands.spawn((
+            Name::new("Dice grid"),
+            DiceGridOf::new(template),
+            Node {
+              display: Display::Grid,
+              grid_template_columns: vec![RepeatedGridTrack::px(3, TARGET_SIZE)],
+              grid_template_rows: vec![RepeatedGridTrack::px(4, TARGET_SIZE)],
+              ..default()
+            },
+          ));
+
+          commands.commands().run_system_cached_with(update_grid, template);
+        }
+      });
+      commands.spawn((
+        Name::new("Shop"),
+        Node {
+          width: Val::Percent(30.0),
+          ..default()
+        },
+        BackgroundColor(Color::srgb(0.8, 0.6, 0.4)),
+      ));
+    });
+
     commands.spawn((
       Name::new("Bottom menu"),
       Node { 
@@ -50,45 +131,66 @@ fn spawn_manage(
       BackgroundColor(Color::srgb(0.25, 0.25, 0.25)),
     )).with_children(|commands| {
       commands.spawn((
-        Name::new("Back to menu button"),
-        Button,
-        Node { 
-          width: Val::Percent(10.0), 
-          height: Val::Percent(60.0), 
-          left: Val::Px(50.0),
-          justify_content: JustifyContent::Center, 
-          align_items: AlignItems::Center, 
-          ..default() 
+        Name::new("Left side"),
+        Node {
+          align_items: AlignItems::Center,
+          height: Val::Percent(100.0),
+          flex_grow: 1.0,
+          left: Val::Percent(10.0),
+          ..default()
         },
-        BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
-        ButtonAction::BackToMenu,
       )).with_children(|commands| {
         commands.spawn((
-          Text("Go Back".to_string()),
-          TextFont { font_size: 30.0, ..default() },
-          TextColor(Color::srgb(0.0, 0.0, 0.0)),
-        ));
+          Name::new("Back to menu button"),
+          Button,
+          Node {
+            width: BUTTON_SIZE,
+            height: Val::Percent(60.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+          },
+          BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
+          ButtonAction::BackToMenu,
+        )).with_children(|commands| {
+          commands.spawn((
+            Text("Go Back".to_string()),
+            TextFont { font_size: 30.0, ..default() },
+            TextColor(Color::srgb(0.0, 0.0, 0.0)),
+          ));
+        });
       });
 
       commands.spawn((
-        Name::new("Battle button"),
-        Button,
-        Node { 
-          width: Val::Percent(10.0), 
-          height: Val::Percent(60.0),
-          right: Val::Px(50.0),
-          justify_content: JustifyContent::Center, 
-          align_items: AlignItems::Center, 
-          ..default() 
+        Name::new("Right side"),
+        Node {
+          height: Val::Percent(100.0),
+          flex_grow: 1.0,
+          flex_direction: FlexDirection::RowReverse,
+          align_items: AlignItems::Center,
+          right: Val::Percent(10.0),
+          ..default()
         },
-        BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
-        ButtonAction::Battle,
       )).with_children(|commands| {
         commands.spawn((
-          Text("Battle!".to_string()),
-          TextFont { font_size: 30.0, ..default() },
-          TextColor(Color::srgb(0.0, 0.0, 0.0)),
-        ));
+          Name::new("Battle button"),
+          Button,
+          Node {
+            width: BUTTON_SIZE,
+            height: Val::Percent(60.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+          },
+          BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
+          ButtonAction::Battle,
+        )).with_children(|commands| {
+          commands.spawn((
+            Text("Battle!".to_string()),
+            TextFont { font_size: 30.0, ..default() },
+            TextColor(Color::srgb(0.0, 0.0, 0.0)),
+          ));
+        });
       });
     });
   });
@@ -101,16 +203,9 @@ fn despawn_manage(
   commands.entity(screen.single().unwrap()).despawn();
 }
 
-#[derive(Resource, Default)]
-pub struct DiceData {
-  pub team1: Vec<DiceTemplate>,
-  pub team2: Vec<DiceTemplate>,
-}
-
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,
-  mut dice_data: ResMut<DiceData>,
 ) {
   for (interaction, button_action) in &interaction_query {
     if *interaction != Interaction::Pressed {
@@ -122,10 +217,6 @@ fn button_actions(
         game_state.set(GameState::Menu);
       }
       ButtonAction::Battle => {
-        *dice_data = DiceData {
-          team1: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
-          team2: (0..MAX_DICE_COUNT).into_iter().map(|_| DiceTemplate::generate()).collect(),
-        };
         game_state.set(GameState::Battle);
       }
     }

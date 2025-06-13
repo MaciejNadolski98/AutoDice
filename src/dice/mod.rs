@@ -10,7 +10,7 @@ mod events;
 mod dice_info_bar;
 mod roll;
 
-pub use events::ChangeDiceFace;
-pub use dice_template::DiceTemplate;
+pub use dice_template::{DiceTemplate, Face};
 pub use dice_instance::{DiceID, Dice};
 pub use roll::{roll_dices, resolve_dices};
+pub use action::Action;

@@ -1,23 +1,18 @@
+use bevy::ecs::component::HookContext;
+use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
-use avian3d::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
-
-use crate::constants::MAX_DICE_COUNT;
 use crate::dice::events::SpawnDices;
-use crate::manage::plugin::DiceData;
+use crate::manage::plugin::{EnemyTeam, MyTeam};
 use crate::states::GameState;
 use crate::utils::*;
 
 use super::animation::get_dice_entity;
-use super::dice_render::{
-  build_dices,
-  DiceFaceImage
-};
+use super::dice_render::spawn_dice;
 use super::dice_template::{DiceTemplate, Face};
 use super::events::DiceDied;
 use super::roll::get_face_id;
-use super::ChangeDiceFace;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -41,7 +36,8 @@ pub struct DiceID {
   pub dice_id: usize,
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
+#[component(on_add = spawn_dice_faces)]
 pub struct Dice {
   id: DiceID,
   max_hp: u32,
@@ -50,18 +46,33 @@ pub struct Dice {
   row_position: usize,
 }
 
+fn spawn_dice_faces(
+  mut world: DeferredWorld,
+  context: HookContext,
+) {
+  let dice = world.get::<Dice>(context.entity).unwrap().clone();
+  world
+    .commands()
+    .entity(context.entity)
+    .with_children(|commands| {
+      for face in dice.faces() {
+        commands.spawn(face);
+      }
+    });
+}
+
 impl Dice {
   pub fn build(
-    dice_face_changed: &mut EventWriter<ChangeDiceFace>,
     template: DiceTemplate, 
     dice_id: DiceID,
+    images: &mut Assets<Image>,
   ) -> Self {
     let mut dice = Dice::default();
     dice.set_id(dice_id);
     dice.set_max_hp(template.hp);
     dice.set_current_hp(template.hp);
     for i in 0..6 {
-      dice_face_changed.write(dice.set_face(i, template.faces[i]));
+      dice.current_faces[i] = Face::from_other(&template.faces[i], images);
     }
     dice.set_row_position(dice_id.dice_id);
     dice
@@ -79,14 +90,12 @@ impl Dice {
     self.current_hp
   }
 
-  #[allow(dead_code)]
-  pub fn face(&self, face_id: usize) -> Face {
-    self.current_faces[face_id]
+  pub fn faces(&self) -> [Face; 6] {
+    self.current_faces.clone()
   }
 
-  #[allow(dead_code)]
-  pub fn faces(&self) -> &[Face; 6] {
-    &self.current_faces
+  pub fn face(&self, face_id: usize) -> Face {
+    self.current_faces[face_id].clone()
   }
 
   pub fn row_position(&self) -> usize {
@@ -105,11 +114,6 @@ impl Dice {
     self.current_hp = current_hp;
   }
 
-  pub fn set_face(&mut self, face_id: usize, face: Face) -> ChangeDiceFace {
-    self.current_faces[face_id] = face;
-    ChangeDiceFace { dice_id: self.id, face_id: face_id, face: face }
-  }
-
   pub fn set_row_position(&mut self, row_position: usize) {
     self.row_position = row_position;
   }
@@ -125,44 +129,31 @@ pub struct Rows {
 }
 
 fn spawn_dices(
-  dice_data: Res<DiceData>,
-  meshes: ResMut<Assets<Mesh>>,
   mut commands: Commands,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  dice_face_image: Res<DiceFaceImage>,
-  mut dice_face_changed: EventWriter<ChangeDiceFace>,
   mut dice_spawn_event: EventWriter<SpawnDices>,
-  mut dice_entity_map: ResMut<DiceEntityMap>,
+  mut images: ResMut<Assets<Image>>,
+  my_team: Single<&Children, With<MyTeam>>,
+  enemy_team: Single<&Children, With<EnemyTeam>>,
+  templates: Query<&DiceTemplate>,
 ) {
-  assert!(dice_data.team1.len() <= MAX_DICE_COUNT);
-  assert!(dice_data.team2.len() <= MAX_DICE_COUNT);
-  
-  let dice_meshes = build_dices(meshes);
-
-  for i in 0..dice_data.team1.len() {
+  for (i, child) in my_team.iter().enumerate() {
     let dice_id = DiceID { team_id: 0, dice_id: i };
-    let entity = commands.spawn((
-      Name::new(format!("Red dice {}", i+1)),
-      Mesh3d(dice_meshes[0][i].clone()),
-      MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
-      RigidBody::Dynamic,
-      Collider::cuboid(1.0, 1.0, 1.0),
-      Dice::build(&mut dice_face_changed, dice_data.team1[i].clone(), dice_id),
-    )).id();
-    dice_entity_map.0.insert(dice_id, entity);
+    let dice = Dice::build(
+      templates.get(child).unwrap().clone(),
+      dice_id,
+      &mut images
+    );
+    commands.run_system_cached_with(spawn_dice, dice);
   }
 
-  for i in 0..dice_data.team2.len() {
+  for (i, child) in enemy_team.iter().enumerate() {
     let dice_id = DiceID { team_id: 1, dice_id: i };
-    let entity = commands.spawn((
-      Name::new(format!("Blue dice {}", i+1)),
-      Mesh3d(dice_meshes[0][i].clone()),
-      MeshMaterial3d(materials.add(StandardMaterial { base_color_texture: Some(dice_face_image.image.clone()), ..default()})),
-      RigidBody::Dynamic,
-      Collider::cuboid(1.0, 1.0, 1.0),
-      Dice::build(&mut dice_face_changed, dice_data.team2[i].clone(), dice_id),
-    )).id();
-    dice_entity_map.0.insert(dice_id, entity);
+    let dice = Dice::build(
+      templates.get(child).unwrap().clone(),
+      dice_id,
+      &mut images
+    );
+    commands.run_system_cached_with(spawn_dice, dice);
   }
   dice_spawn_event.write(SpawnDices);
 }

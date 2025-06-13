@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-use crate::{constants::{loading_screen::{BAR_SIZE, INNER_BAR_SIZE}, HEIGHT, WIDTH}, states::GameState};
+use crate::{constants::{loading_screen::{BAR_SIZE, INNER_BAR_SIZE}, HEIGHT, WIDTH}, dice::Action, states::GameState};
 
 pub struct LoadingScreenPlugin;
 
@@ -57,13 +57,13 @@ fn populate_asset_store(
   mut asset_store: ResMut<AssetStore>,
 ) {
   for name in [
-    "actions/axe.png",
-    "actions/shield.png",
-    "actions/heart.png",
-    "actions/fire.png",
+    Action::Attack,
+    Action::Defend,
+    Action::Regenerate,
+    Action::Fire,
   ] {
-    let handle = asset_server.load::<Image>(name);
-    asset_store.load(name, handle.into());
+    let handle = asset_server.load::<Image>(Into::<&'static str>::into(name));
+    asset_store.load(name.into(), handle.into());
   }
   {
     let name = "autodicetable.gltf";

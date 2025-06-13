@@ -10,6 +10,13 @@ pub const WALL_SIZE: f32 = 10_000.0 * BASE_SCALE;
 
 pub const DICE_SIZE: f32 = 10.0 * BASE_SCALE;
 
+pub mod ui {
+  use bevy::ui::Val;
+  use crate::constants::BASE_SCALE;
+
+  pub const BUTTON_SIZE: Val = Val::Px(BASE_SCALE * 20.0);
+}
+
 pub mod dice_texture {
   use bevy::math::Vec2;
 

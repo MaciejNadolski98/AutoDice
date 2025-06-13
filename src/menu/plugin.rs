@@ -1,5 +1,5 @@
 use bevy::{prelude::*, app::AppExit, ui::Interaction};
-use crate::states::GameState;
+use crate::{manage::plugin::spawn_teams, states::GameState};
 
 pub struct MenuPlugin;
 
@@ -89,6 +89,7 @@ fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,
   mut app_exit_events: EventWriter<AppExit>,
+  mut commands: Commands,
 ) {
   for (interaction, button_action) in &interaction_query {
     if *interaction != Interaction::Pressed {
@@ -96,7 +97,10 @@ fn button_actions(
     }
 
     match button_action {
-      ButtonAction::Play => { game_state.set(GameState::Manage); }
+      ButtonAction::Play => {
+        commands.run_system_cached(spawn_teams);
+        game_state.set(GameState::Manage);
+      }
       ButtonAction::Quit => { app_exit_events.write(AppExit::Success); }
     }
   }
