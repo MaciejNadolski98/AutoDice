@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, GridableFaceCollection}, manage::tile::Tile};
+use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile};
 
 pub struct DiceGridPlugin;
 
@@ -11,7 +11,7 @@ impl Plugin for DiceGridPlugin {
   }
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 #[relationship(relationship_target = DiceGrid)]
 pub struct DiceGridOf {
   collection: Entity,
@@ -23,16 +23,39 @@ impl DiceGridOf {
       collection
     }
   }
+
+  pub fn collection(&self) -> Entity {
+    self.collection
+  }
 }
 
-#[derive(Component, Clone)]
-#[relationship_target(relationship = DiceGridOf)]
+#[derive(Component, Reflect, Clone)]
+#[relationship_target(relationship = DiceGridOf, linked_spawn)]
 pub struct DiceGrid {
   grid: Entity,
 }
 
-fn update_grids<Faces: GridableFaceCollection>(
-  collections: Query<Entity, Changed<Faces>>,
+impl DiceGrid {
+  pub fn grid(&self) -> Entity {
+    self.grid
+  }
+
+  pub fn spawn<'a>(commands: &'a mut RelatedSpawnerCommands<ChildOf>, gridable: Entity) -> EntityCommands<'a> {
+    commands
+      .spawn((
+        Name::new("Dice grid"),
+        DiceGridOf::new(gridable),
+        Node {
+          display: Display::Grid,
+          ..default()
+        },
+        Pickable::default(),
+      ))
+  }
+}
+
+fn update_grids<Faces: Gridable>(
+  collections: Query<Entity, (With<Faces>, Changed<Children>)>,
   mut commands: Commands,
 ) {
   for collection in collections {
@@ -40,24 +63,38 @@ fn update_grids<Faces: GridableFaceCollection>(
   }
 }
 
-pub fn update_grid<Faces: GridableFaceCollection>(
+pub fn update_grid<Faces: Gridable>(
   input: In<Entity>,
+  world: &World,
   mut commands: Commands,
-  templates: Query<(&Faces, &DiceGrid)>,
+  collections: Query<(&Faces, &DiceGrid)>,
+  faces: Query<&Face>,
+  children: Query<&Children>,
 ) {
-  let (collection, DiceGrid { grid }) = templates.get(*input).unwrap();
-  let faces = collection
-    .gridded_faces().into_iter()
-    .map(|(x, y, face)| (
+  let collection_entity = *input;
+  info!("{:#?}",
+    world
+      .inspect_entity(collection_entity)
+      .unwrap()
+      .map(|info| info.name())
+      .collect::<Vec<_>>()
+  );
+  let (collection, DiceGrid { grid: grid_entity }) = collections.get(collection_entity).unwrap();
+  let grid = collection
+    .grid()
+    .into_iter()
+    .zip(children.get(collection_entity).unwrap())
+    .map(|((x, y), face_entity)| (
       GridPlacement::start_span(x as i16, 1),
       GridPlacement::start_span(y as i16, 1),
-      face,
+      *face_entity,
     ));
   commands
-    .entity(*grid)
+    .entity(*grid_entity)
     .despawn_related::<Children>()
     .with_children(|commands | {
-      for (x, y, Face { image, .. }) in faces {
+      for (x, y, face) in grid {
+        let Face { image, .. } = faces.get(face).unwrap();
         commands.spawn((
           Name::new("Face"),
           Node {
@@ -67,7 +104,9 @@ pub fn update_grid<Faces: GridableFaceCollection>(
             height: Val::Px(GRID_FACE_SIZE),
             ..default()
           },
-          ImageNode::from(image),
+          FaceSource::new(face),
+          ImageNode::from(image.clone()),
+          Pickable::IGNORE,
         ));
       }
     });

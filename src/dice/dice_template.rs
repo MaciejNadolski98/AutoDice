@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::dice::{face::{spawn_dice_faces, Face, FaceCollection}, GridableFaceCollection};
+use crate::dice::{face::Face, Gridable};
 
 use super::action::Action;
 
@@ -12,39 +12,32 @@ impl Plugin for DiceTemplatePlugin {
 }
 
 #[derive(Component, Clone)]
-#[component(on_add = spawn_dice_faces::<DiceTemplate>)]
 pub struct DiceTemplate {
   pub hp: u32,
-  pub faces: [Face; 6],
 }
 
-impl FaceCollection for DiceTemplate {
-  fn faces(&self) -> Vec<Face> {
-    self.faces.clone().into()
-  }
-}
-
-impl GridableFaceCollection for DiceTemplate {
-  fn gridded_faces(&self) -> Vec<(i16, i16, Face)> {
-    [(2, 1), (1, 2), (3, 2), (2, 2), (2, 3), (2, 4)]
-      .into_iter().zip(self.faces.clone().into_iter())
-      .map(|((x, y), face)| (x, y, face))
-      .collect()
+impl Gridable for DiceTemplate {
+  fn grid(&self) -> Vec<(i16, i16)> {
+    vec![(2, 1), (1, 2), (3, 2), (2, 2), (2, 3), (2, 4)]
   }
 }
 
 impl DiceTemplate {
-  pub fn generate(images: &mut Assets<Image>) -> Self {
-    Self {
-      hp: 10,
-      faces: [
-        Face::new(Action::Attack, 2, images),
-        Face::new(Action::Attack, 1, images),
-        Face::new(Action::Attack, 1, images),
-        Face::new(Action::Defend, 1, images),
-        Face::new(Action::Regenerate, 1, images),
-        Face::new(Action::Fire, 2, images),
-      ]
-    }
+  pub fn spawn(mut images: &mut Assets<Image>, commands: &mut RelatedSpawnerCommands<ChildOf>) {
+    let template = Self { hp: 10 };
+    commands
+      .spawn(template)
+      .with_children(|commands| {
+        [
+          Face::new(Action::Attack, 2, &mut images),
+          Face::new(Action::Attack, 2, &mut images),
+          Face::new(Action::Attack, 2, &mut images),
+          Face::new(Action::Attack, 2, &mut images),
+          Face::new(Action::Attack, 2, &mut images),
+          Face::new(Action::Attack, 2, &mut images),
+        ].map(|face|{
+          commands.spawn(face);
+        });
+      });
   }
 }

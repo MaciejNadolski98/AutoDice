@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
 use crate::dice::events::SpawnDices;
-use crate::dice::{spawn_dice_faces, Face, FaceCollection};
 use crate::manage::plugin::{EnemyTeam, MyTeam};
 use crate::states::GameState;
 use crate::utils::*;
@@ -35,19 +34,22 @@ pub struct DiceID {
   pub dice_id: usize,
 }
 
-#[derive(Component, Default, Clone)]
-#[component(on_add = spawn_dice_faces::<Dice>)]
+#[derive(Component, Clone)]
 pub struct Dice {
   id: DiceID,
   max_hp: u32,
   current_hp: u32,
-  current_faces: [Face; 6],
   row_position: usize,
 }
 
-impl FaceCollection for Dice {
-  fn faces(&self) -> Vec<Face> {
-    self.current_faces.to_vec()
+impl Default for Dice {
+  fn default() -> Self {
+    Self {
+      id: DiceID::default(),
+      max_hp: 0,
+      current_hp: 0,
+      row_position: 0,
+    }
   }
 }
 
@@ -55,15 +57,11 @@ impl Dice {
   pub fn build(
     template: DiceTemplate, 
     dice_id: DiceID,
-    images: &mut Assets<Image>,
   ) -> Self {
     let mut dice = Dice::default();
     dice.set_id(dice_id);
     dice.set_max_hp(template.hp);
     dice.set_current_hp(template.hp);
-    for i in 0..6 {
-      dice.current_faces[i] = Face::from_other(&template.faces[i], images);
-    }
     dice.set_row_position(dice_id.dice_id);
     dice
   }
@@ -78,10 +76,6 @@ impl Dice {
 
   pub fn current_hp(&self) -> u32 {
     self.current_hp
-  }
-
-  pub fn face(&self, face_id: usize) -> Face {
-    self.current_faces.get(face_id).unwrap().clone()
   }
 
   pub fn row_position(&self) -> usize {
@@ -117,29 +111,17 @@ pub struct Rows {
 fn spawn_dices(
   mut commands: Commands,
   mut dice_spawn_event: EventWriter<SpawnDices>,
-  mut images: ResMut<Assets<Image>>,
   my_team: Single<&Children, With<MyTeam>>,
   enemy_team: Single<&Children, With<EnemyTeam>>,
-  templates: Query<&DiceTemplate>,
 ) {
-  for (i, child) in my_team.iter().enumerate() {
+  for (i, my_template) in my_team.iter().enumerate() {
     let dice_id = DiceID { team_id: 0, dice_id: i };
-    let dice = Dice::build(
-      templates.get(child).unwrap().clone(),
-      dice_id,
-      &mut images
-    );
-    commands.run_system_cached_with(spawn_dice, dice);
+    commands.run_system_cached_with(spawn_dice, (dice_id, my_template));
   }
 
-  for (i, child) in enemy_team.iter().enumerate() {
+  for (i, enemy_template) in enemy_team.iter().enumerate() {
     let dice_id = DiceID { team_id: 1, dice_id: i };
-    let dice = Dice::build(
-      templates.get(child).unwrap().clone(),
-      dice_id,
-      &mut images
-    );
-    commands.run_system_cached_with(spawn_dice, dice);
+    commands.run_system_cached_with(spawn_dice, (dice_id, enemy_template));
   }
   dice_spawn_event.write(SpawnDices);
 }

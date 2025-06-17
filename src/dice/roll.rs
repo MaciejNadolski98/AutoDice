@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 use rand_distr::{Distribution, Normal};
 
-use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, DICE_COUNT, WIDTH}};
+use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_COUNT, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH}, dice::Face};
 
 use super::{animation::{add_physics, get_dice_entity, move_dice_to_middle, move_dice_to_row, orient_dice, remove_physics}, dice_instance::Rows, Dice, DiceID};
 
@@ -42,11 +42,11 @@ fn set_dice_roll_positions_and_velocities(
   mut dices: Query<(&mut Transform, &mut LinearVelocity, &mut AngularVelocity, &Dice)>,
 ) {
   let dice_positions_team_1 = [
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0, DICE_SIZE * 1.5,),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 + DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 - DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 + DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
-    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, HEIGHT / 4.0 - DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 + DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 - DICE_SIZE * 3.0, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 + DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
+    Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 - DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
   ];
   let dice_positions_team_2 = dice_positions_team_1.clone().map(|vec| {
     let mut ret = vec.clone();
@@ -102,7 +102,8 @@ pub async fn resolve_dices() -> Result<(), AccessError> {
 async fn resolve_dice(dice_id: DiceID) -> Result<(), AccessError> {
   let entity = get_dice_entity(dice_id).await?;
   let face_id = fetch!(entity, Transform).get(|transform| get_face_id(transform.rotation))?;
-  let face = fetch!(entity, Dice).get(|dice| dice.face(face_id))?;
+  let face_entity = fetch!(entity, Children).get(|children| (*children)[face_id])?;
+  let face = fetch!(face_entity, Face).get(|face| face.clone())?;
 
   face.resolve(dice_id).await?;
 
