@@ -11,7 +11,7 @@ impl Plugin for DiceGridPlugin {
   }
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component)]
 #[relationship(relationship_target = DiceGrid)]
 pub struct DiceGridOf {
   collection: Entity,
@@ -29,7 +29,7 @@ impl DiceGridOf {
   }
 }
 
-#[derive(Component, Reflect, Clone)]
+#[derive(Component, Clone)]
 #[relationship_target(relationship = DiceGridOf, linked_spawn)]
 pub struct DiceGrid {
   grid: Entity,
@@ -65,20 +65,12 @@ fn update_grids<Faces: Gridable>(
 
 pub fn update_grid<Faces: Gridable>(
   input: In<Entity>,
-  world: &World,
   mut commands: Commands,
   collections: Query<(&Faces, &DiceGrid)>,
   faces: Query<&Face>,
   children: Query<&Children>,
 ) {
   let collection_entity = *input;
-  info!("{:#?}",
-    world
-      .inspect_entity(collection_entity)
-      .unwrap()
-      .map(|info| info.name())
-      .collect::<Vec<_>>()
-  );
   let (collection, DiceGrid { grid: grid_entity }) = collections.get(collection_entity).unwrap();
   let grid = collection
     .grid()

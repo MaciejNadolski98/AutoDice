@@ -206,7 +206,7 @@ fn spawn_manage(
       });
 
       commands.spawn((
-        Name::new("top side"),
+        Name::new("Right side"),
         Node {
           height: Val::Percent(100.0),
           flex_grow: 1.0,
@@ -280,7 +280,6 @@ fn on_release(
   trigger.target
 }
 
-#[derive(Debug)]
 struct OverlapTileTemplateOutput {
   grid: Entity,
   matched: bool,
