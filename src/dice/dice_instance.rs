@@ -34,23 +34,12 @@ pub struct DiceID {
   pub dice_id: usize,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Default, Clone)]
 pub struct Dice {
   id: DiceID,
   max_hp: u32,
   current_hp: u32,
   row_position: usize,
-}
-
-impl Default for Dice {
-  fn default() -> Self {
-    Self {
-      id: DiceID::default(),
-      max_hp: 0,
-      current_hp: 0,
-      row_position: 0,
-    }
-  }
 }
 
 impl Dice {
