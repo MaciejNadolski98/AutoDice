@@ -376,8 +376,6 @@ fn apply_tile(
   mut faces: Query<&mut Face>,
   grids: Query<&DiceGridOf>,
   mut commands: Commands,
-  parents: Query<&ChildOf>,
-  mut images: ResMut<Assets<Image>>,
 ) {
   let In(OverlapTileTemplateOutput { grid, matched, matches }) = input;
   if !matched {

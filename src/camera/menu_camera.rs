@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::camera::ScalingMode};
 use crate::{constants::{HEIGHT, WIDTH}, states::GameState};
 
 #[derive(Component)]
-pub struct MenuCamera;
+struct MenuCamera;
 
 pub struct MenuCameraPlugin;
 
