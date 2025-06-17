@@ -1,36 +1,30 @@
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::dice::{spawn_dice_faces, Action, Face, FaceCollection, GridableFaceCollection};
+use crate::dice::{Action, Face, Gridable};
 
 #[derive(Component, Clone)]
-#[component(on_add = spawn_dice_faces::<Tile>)]
 pub struct Tile {
-  faces: Vec<(i16, i16, Face)>,
+  grid: Vec<(i16, i16)>,
 }
 
-impl FaceCollection for Tile {
-  fn faces(&self) -> Vec<Face> {
-    self.faces.clone().into_iter().map(|(_, _, face)| face).collect()
-  }
-}
-
-impl GridableFaceCollection for Tile {
-  fn gridded_faces(&self) -> Vec<(i16, i16, Face)> {
-    self.faces.clone()
+impl Gridable for Tile {
+  fn grid(&self) -> Vec<(i16, i16)> {
+    self.grid.clone()
   }
 }
 
 impl Tile {
-  pub fn generate(images: &mut Assets<Image>) -> Self {
-    let mut faces = Vec::new();
-    for (x, y) in build_tile_layout() {
-      let (action, pips_count) = random_face();
-      faces.push((x, y, Face::new(action, pips_count, images)));
-    }
-    Self {
-      faces
-    }
+  pub fn spawn(mut images: &mut Assets<Image>, commands: &mut RelatedSpawnerCommands<ChildOf>) {
+    let grid = build_tile_layout();
+    let faces_count = grid.len();
+    commands.spawn(Self { grid })
+      .with_children(|commands|{
+        for _ in 0..faces_count {
+          let (action, pips_count) = random_face();
+          commands.spawn(Face::new(action, pips_count, &mut images));
+        }
+    });
   }
 }
 

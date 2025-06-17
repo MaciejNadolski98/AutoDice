@@ -4,7 +4,7 @@ use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::prelude::*;
 
 use crate::dice::dice_instance::DiceEntityMap;
-use crate::dice::{Dice, FaceCollection};
+use crate::dice::{Dice, DiceID, DiceTemplate, Face};
 
 pub struct DiceRenderPlugin;
 
@@ -111,24 +111,42 @@ impl MeshBuilder for DiceMeshBuilder {
 }
 
 pub fn spawn_dice(
-  dice: In<Dice>,
+  input: In<(DiceID, Entity)>,
   mut meshes: ResMut<Assets<Mesh>>,
+  mut images: ResMut<Assets<Image>>,
   mut commands: Commands,
   mut materials: ResMut<Assets<DiceMaterial>>,
   mut dice_entity_map: ResMut<DiceEntityMap>,
+  templates: Query<&DiceTemplate>,
+  faces: Query<&Face>,
+  children: Query<&Children>,
 ) {
+  let (dice_id, template) = *input;
+  let mut face_vector = Vec::new();
+  let mut image_vector = Vec::new();
+  for &face_template in children.get(template).unwrap() {
+    let face = Face::from_other(faces.get(face_template).unwrap(), &mut images);
+    face_vector.push(face.clone());
+    image_vector.push(face.image.clone());
+  }
+
   let mesh = DiceMeshBuilder.build();
   let handle = meshes.add(mesh.clone());
 
-  let images = dice.faces().into_iter().map(|face| { face.image.clone() });
-  let entity = commands.spawn((
-    Name::new("Dice instance"),
-    Mesh3d(handle),
-    MeshMaterial3d(materials.add(DiceMaterial::new(images))),
-    RigidBody::Dynamic,
-    Collider::cuboid(1.0, 1.0, 1.0),
-    dice.clone(),
-  )).id();
+  let dice_entity = commands.spawn((
+      Name::new("Dice instance"),
+      Mesh3d(handle),
+      MeshMaterial3d(materials.add(DiceMaterial::new(image_vector))),
+      RigidBody::Dynamic,
+      Collider::cuboid(1.0, 1.0, 1.0),
+      Dice::build(templates.get(template).unwrap().clone(), dice_id),
+    ))
+    .with_children(|commands| {
+      for face in face_vector {
+        commands.spawn(face);
+      }
+    })
+    .id();
 
-  dice_entity_map.0.insert(dice.id(), entity);
+  dice_entity_map.0.insert(dice_id, dice_entity);
 }

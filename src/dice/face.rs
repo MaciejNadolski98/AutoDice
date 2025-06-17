@@ -43,6 +43,30 @@ impl Face {
 }
 
 #[derive(Component)]
+#[relationship(relationship_target = FaceSourceOf)]
+pub struct FaceSource {
+  source: Entity,
+}
+
+impl FaceSource {
+  pub fn new(source: Entity) -> Self {
+    Self {
+      source
+    }
+  }
+
+  pub fn source(&self) -> Entity {
+    self.source
+  }
+}
+
+#[derive(Component)]
+#[relationship_target(relationship = FaceSource)]
+pub struct FaceSourceOf {
+  entity: Entity,
+}
+
+#[derive(Component)]
 #[relationship(relationship_target = FaceCamera)]
 struct FaceCameraOf {
   face: Entity,
@@ -66,27 +90,8 @@ struct FaceRoot {
   root: Entity,
 }
 
-pub trait FaceCollection: Component + Clone {
-  fn faces(&self) -> Vec<Face>;
-}
-
-pub trait GridableFaceCollection: FaceCollection {
-  fn gridded_faces(&self) -> Vec<(i16, i16, Face)>;
-}
-
-pub fn spawn_dice_faces<F: FaceCollection>(
-  mut world: DeferredWorld,
-  context: HookContext,
-) {
-  let dice = world.get::<F>(context.entity).unwrap().clone();
-  world
-    .commands()
-    .entity(context.entity)
-    .with_children(|commands| {
-      for face in dice.faces() {
-        commands.spawn(face);
-      }
-    });
+pub trait Gridable: Component {
+  fn grid(&self) -> Vec<(i16, i16)>;
 }
 
 pub fn build_face_image(images: &mut Assets<Image>) -> Handle<Image> {
