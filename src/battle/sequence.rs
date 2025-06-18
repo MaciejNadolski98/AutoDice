@@ -46,7 +46,6 @@ async fn flow() -> Result<(), AccessError> {
     resolve_dices().await?;
 
     if let Some(won) = done().await? {
-      info!("Battle finished");
       if won {
         if AsyncWorld.resource::<ShopRound>().get(|round| round.0)? == 4 {
           end_game("WON!").await?;

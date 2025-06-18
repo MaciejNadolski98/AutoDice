@@ -110,7 +110,6 @@ fn new_game(
   mut images: ResMut<Assets<Image>>,
   mut game_state: ResMut<NextState<GameState>>,
 ) {
-  info!("New game");
   shop_round.0 = 1;
   commands.spawn((
     Name::new("My team"),

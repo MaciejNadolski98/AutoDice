@@ -37,7 +37,6 @@ pub fn spawn_enemy(
   enemy_team: Option<Single<Entity, With<EnemyTeam>>>,
   shop_round: Res<ShopRound>,
 ) {
-  info!("Spawn enemy");
   if let Some(entity) = enemy_team {
     commands.entity(*entity).despawn();
   }
@@ -58,7 +57,6 @@ fn spawn_shop(
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
 ) {
-  info!("Spawn shop");
   commands.spawn((
       Name::new("Shop"),
       Shop,
