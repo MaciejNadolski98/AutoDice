@@ -17,6 +17,7 @@ pub mod ui {
   use crate::constants::BASE_SCALE;
 
   pub const BUTTON_SIZE: Val = Val::Px(BASE_SCALE * 20.0);
+  pub const ROUND_NUMBER_SIZE: f32 = BASE_SCALE * 2.5;
 }
 
 pub mod dice_texture {

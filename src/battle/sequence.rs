@@ -109,7 +109,7 @@ async fn end_game(ending_text: &'static str) -> Result<(), AccessError> {
   Ok(())
 }
 
-fn clean_up_game(
+pub fn clean_up_game(
   my_team: Single<Entity, With<MyTeam>>,
   enemy_team: Single<Entity, With<EnemyTeam>>,
   dices: Query<Entity, With<Dice>>,
