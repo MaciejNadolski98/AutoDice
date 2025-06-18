@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::Challenge, constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -86,6 +86,7 @@ fn spawn_manage(
   my_team: Single<&Children, With<MyTeam>>,
   shop: Single<&Children, With<Shop>>,
   children: Query<&Children>,
+  shop_round: Res<ShopRound>,
 ) {
   commands.spawn((
     Name::new("Manage"),
@@ -108,6 +109,27 @@ fn spawn_manage(
         ..default()
       },
     )).with_children(|commands|{
+      commands.spawn((
+        Name::new("Round number"),
+        Node {
+          position_type: PositionType::Absolute,
+          top: Val::Px(0.0),
+          margin: UiRect {
+            left: Val::Auto,
+            right: Val::Auto,
+            ..default()
+          },
+          ..default()
+        },
+        Text::new(format!("Round {}/4", shop_round.0)),
+        TextFont {
+          font_size: ROUND_NUMBER_SIZE,
+          ..default()
+        },
+        TextColor(Color::BLACK),
+        ZIndex(1),
+      ));
+
       commands.spawn((
         Name::new("Dice display"),
         Node {
@@ -420,6 +442,7 @@ fn despawn_manage(
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,
+  mut commands: Commands,
 ) {
   for (interaction, button_action) in &interaction_query {
     if *interaction != Interaction::Pressed {
@@ -428,6 +451,7 @@ fn button_actions(
 
     match button_action {
       ButtonAction::BackToMenu => {
+        commands.run_system_cached(clean_up_game);
         game_state.set(GameState::Menu);
       }
       ButtonAction::Battle => {

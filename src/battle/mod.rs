@@ -8,4 +8,4 @@ mod floating_text;
 
 pub use challenge::Challenge;
 pub use floating_text::SpawnFloatingText;
-pub use sequence::StartRound;
+pub use sequence::{StartRound, clean_up_game};
