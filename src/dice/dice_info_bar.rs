@@ -128,7 +128,7 @@ fn spawn_dice_info_bars(
   for dice_entity in &dices {
     commands
       .spawn((
-        Name:: new("Dice info bar"),
+        Name::new("Dice info bar"),
         DiceInfoBar,
         DiceInfoOf {
           dice: dice_entity
@@ -161,7 +161,7 @@ fn update_dice_info_bar_positions(
 ) {
   for (dice_info_of, mut bar_transform) in dice_info_bars.iter_mut() {
     if let Ok(dice_transform) = dice_transforms.get(dice_info_of.dice) {
-      bar_transform.translation = dice_transform.translation;
+      bar_transform.translation = dice_transform.translation - Vec3::Z * dice_transform.translation.z;
     }
   }
 }

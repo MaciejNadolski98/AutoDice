@@ -57,6 +57,7 @@ fn populate_asset_store(
   mut asset_store: ResMut<AssetStore>,
 ) {
   for name in [
+    Action::Empty,
     Action::Attack,
     Action::Defend,
     Action::Regenerate,

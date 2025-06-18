@@ -1,16 +1,20 @@
 use bevy::prelude::*;
-use crate::{constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, DICE_COUNT, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
+use crate::{battle::Challenge, constants::{dice_texture::TARGET_SIZE, ui::BUTTON_SIZE, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(OnEnter(GameState::Manage), (spawn_shop, spawn_manage).chain())
-      .add_systems(OnExit(GameState::Manage), despawn_manage)
+      .init_resource::<ShopRound>()
+      .add_systems(OnEnter(GameState::Manage), (spawn_enemy, spawn_shop, spawn_manage).chain())
+      .add_systems(OnExit(GameState::Manage), (despawn_shop, despawn_manage).chain())
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
   }
 }
+
+#[derive(Resource, Default)]
+pub struct ShopRound(pub u32);
 
 #[derive(Component)]
 struct ManageScreen;
@@ -27,25 +31,22 @@ pub struct MyTeam;
 #[derive(Component)]
 pub struct EnemyTeam;
 
-pub fn spawn_teams(
+pub fn spawn_enemy(
   mut commands: Commands,
-  mut images: ResMut<Assets<Image>>
+  mut images: ResMut<Assets<Image>>,
+  enemy_team: Option<Single<Entity, With<EnemyTeam>>>,
+  shop_round: Res<ShopRound>,
 ) {
-  commands.spawn((
-    Name::new("My team"),
-    MyTeam,
-  )).with_children(|mut commands| {
-    for _ in 0..DICE_COUNT {
-      DiceTemplate::spawn(&mut images, &mut commands);
-    }
-  });
-
+  info!("Spawn enemy");
+  if let Some(entity) = enemy_team {
+    commands.entity(*entity).despawn();
+  }
   commands.spawn((
     Name::new("Enemy team"),
     EnemyTeam,
   )).with_children(|mut commands| {
-    for _ in 0..DICE_COUNT {
-      DiceTemplate::spawn(&mut images, &mut commands);
+    for builder in Challenge::new(shop_round.0).0 {
+      builder.spawn(&mut commands, &mut images);
     }
   });
 }
@@ -57,6 +58,7 @@ fn spawn_shop(
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
 ) {
+  info!("Spawn shop");
   commands.spawn((
       Name::new("Shop"),
       Shop,
@@ -70,6 +72,15 @@ fn spawn_shop(
         });
       }
     });
+}
+
+fn despawn_shop(
+  mut commands: Commands,
+  shop: Single<Entity, With<Shop>>,
+) {
+  commands
+    .entity(*shop)
+    .despawn();
 }
 
 fn spawn_manage(

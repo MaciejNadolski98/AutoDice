@@ -29,7 +29,7 @@ impl Plugin for DiceActionPlugin {
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Action {
   #[default]
-  Invalid,
+  Empty,
   Attack,
   Defend,
   Regenerate,
@@ -39,11 +39,11 @@ pub enum Action {
 impl From<Action> for &'static str {
   fn from(action: Action) -> Self {
     match action {
+      Action::Empty => "actions/empty.png",
       Action::Attack => "actions/axe.png",
       Action::Defend => "actions/shield.png",
       Action::Regenerate => "actions/heart.png",
       Action::Fire => "actions/fire.png",
-      _ => panic!(),
     }
   }
 }
@@ -64,11 +64,11 @@ impl Action {
     AsyncWorld.trigger_event(get_pips.clone()).await?;
     pips_count = get_pips.get().pips;
     match self {
+      Action::Empty => Ok(()),
       Action::Attack => attack(pips_count, dice_id).await,
       Action::Defend => double(dice_id).await,
       Action::Regenerate => regenerate(pips_count, dice_id).await,
       Action::Fire => fire(pips_count, dice_id).await,
-      Action::Invalid => Err(AccessError::Custom("Invalid action")),
     }
   }
 }
