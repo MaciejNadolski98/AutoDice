@@ -1,7 +1,7 @@
 use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages}};
 use bevy_defer::AccessError;
 
-use crate::{constants::{dice_texture::{FONT_SIZE, INNER_SIZE, OFFSET, PIPS_POSITION, SCALING_FACTOR, TARGET_SIZE}, DICE_FACES_LAYER}, dice::{Action, DiceID}, loading_screen::AssetStore};
+use crate::{constants::{dice_texture::{FONT_SIZE, INNER_SIZE, OFFSET, PIPS_POSITION, SCALING_FACTOR, TARGET_SIZE}, DICE_FACES_LAYER}, dice::{dice_template::FacePrototype, Action, DiceID}, loading_screen::AssetStore};
 
 pub struct FacePlugin;
 
@@ -31,6 +31,10 @@ impl Face {
       image: image.clone(),
     };
     face
+  }
+
+  pub fn from_prototype(prototype: FacePrototype, images: &mut Assets<Image>) -> Self {
+    Self::new(prototype.action, prototype.pips, images)
   }
 
   pub fn from_other(other: &Self, images: &mut Assets<Image>) -> Self {

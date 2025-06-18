@@ -1,5 +1,5 @@
 use bevy::{prelude::*, app::AppExit, ui::Interaction};
-use crate::{manage::plugin::spawn_teams, states::GameState};
+use crate::{dice::{DiceTemplateBuilder}, manage::plugin::{MyTeam, ShopRound}, states::GameState};
 
 pub struct MenuPlugin;
 
@@ -87,7 +87,6 @@ fn despawn_menu(
 
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
-  mut game_state: ResMut<NextState<GameState>>,
   mut app_exit_events: EventWriter<AppExit>,
   mut commands: Commands,
 ) {
@@ -98,10 +97,33 @@ fn button_actions(
 
     match button_action {
       ButtonAction::Play => {
-        commands.run_system_cached(spawn_teams);
-        game_state.set(GameState::Manage);
+        commands.run_system_cached(new_game);
       }
       ButtonAction::Quit => { app_exit_events.write(AppExit::Success); }
     }
   }
+}
+
+fn new_game(
+  mut shop_round: ResMut<ShopRound>,
+  mut commands: Commands,
+  mut images: ResMut<Assets<Image>>,
+  mut game_state: ResMut<NextState<GameState>>,
+) {
+  shop_round.0 = 1;
+  commands.spawn((
+    Name::new("My team"),
+    MyTeam,
+  )).with_children(|mut commands| {
+    for builder in [
+      DiceTemplateBuilder::berserker(1),
+      DiceTemplateBuilder::paladin(1),
+      DiceTemplateBuilder::mage(1),
+      DiceTemplateBuilder::cleric(1),
+      DiceTemplateBuilder::rogue(1),
+    ] {
+      builder.spawn(&mut commands, &mut images);
+    }
+  });
+  game_state.set(GameState::Manage);
 }
