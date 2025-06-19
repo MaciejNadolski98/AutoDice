@@ -21,8 +21,8 @@ impl Tile {
     commands.spawn(Self { grid })
       .with_children(|commands|{
         for _ in 0..faces_count {
-          let (action, pips_count) = random_face();
-          commands.spawn(Face::new(action, pips_count, &mut images));
+          let (action, pips) = random_face();
+          commands.spawn(Face::new(action, pips, &mut images));
         }
     });
   }

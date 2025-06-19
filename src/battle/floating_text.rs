@@ -29,8 +29,7 @@ impl SpawnFloatingText {
     }
   }
 
-  #[allow(unused)]
-  pub fn with_color(&mut self, color: Color) -> &mut Self {
+  pub fn with_color(mut self, color: Color) -> Self {
     self.color = color;
     self
   }
@@ -60,7 +59,7 @@ fn spawn_floating_text(
         font_size: FLOATING_TEXT_FONT_SIZE,
         ..default()
       },
-      TextColor::BLACK,
+      TextColor(event.color),
       Transform::from_translation(event.position),
       BATTLE_OVERLAY_LAYER,
       FloatingText::new(),

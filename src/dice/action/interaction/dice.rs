@@ -9,11 +9,12 @@ use crate::battle::SpawnFloatingText;
 pub async fn damage(
   dice_id: DiceID,
   damage: u32,
+  color: Color,
 ) -> Result<(), AccessError> {
   let mut died = false;
   let entity = get_dice_entity(dice_id).await?;
   let position = fetch!(entity, Transform).get(|t| t.translation)?;
-  AsyncWorld.send_event(SpawnFloatingText::new(format!("-{}", damage), position))?;
+  AsyncWorld.send_event(SpawnFloatingText::new(format!("-{}", damage), position).with_color(color))?;
   fetch!(entity, Dice).get_mut(|dice| {
     let new_hp = dice.current_hp().saturating_sub(damage);
     dice.set_current_hp(new_hp);
@@ -27,12 +28,16 @@ pub async fn damage(
   Ok(())
 }
 
-#[allow(dead_code)]
 pub async fn heal(
   dice_id: DiceID,
   heal_amount: u32,
 ) -> Result<(), AccessError> {
   let entity = get_dice_entity(dice_id).await?;
+  let position = fetch!(entity, Transform).get(|t| t.translation)?;
+  AsyncWorld.send_event(
+    SpawnFloatingText::new(format!("+{}", heal_amount), position)
+      .with_color(Color::linear_rgb(0.0, 1.0, 0.0))
+  )?;
   fetch!(entity, Dice).get_mut(|dice| {
     let new_hp = (dice.current_hp() + heal_amount).min(dice.max_hp());
     dice.set_current_hp(new_hp);

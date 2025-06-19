@@ -57,18 +57,18 @@ pub struct GetPips {
 impl Action {
   pub async fn resolve(
     self,
-    mut pips_count: u32,
+    mut pips: u32,
     dice_id: DiceID,
   ) -> Result<(), AccessError> {
-    let get_pips = GetPips::new(GetPips { dice_id, pips: pips_count });
+    let get_pips = GetPips::new(GetPips { dice_id, pips: pips });
     AsyncWorld.trigger_event(get_pips.clone()).await?;
-    pips_count = get_pips.get().pips;
+    pips = get_pips.get().pips;
     match self {
       Action::Empty => Ok(()),
-      Action::Attack => attack(pips_count, dice_id).await,
+      Action::Attack => attack(pips, dice_id).await,
       Action::Defend => double(dice_id).await,
-      Action::Regenerate => regenerate(pips_count, dice_id).await,
-      Action::Fire => fire(pips_count, dice_id).await,
+      Action::Regenerate => regenerate(pips, dice_id).await,
+      Action::Fire => fire(pips, dice_id).await,
     }
   }
 }

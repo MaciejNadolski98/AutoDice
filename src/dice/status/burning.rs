@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_defer::AccessError;
+use bevy_defer::{AccessError, AsyncWorld};
 
 use crate::{
   battle::StartRound, dice::{
@@ -22,7 +22,8 @@ impl Status for Burning {
   const STATUS_COLOR: Color = Color::linear_rgb(1.0, 0.0, 0.0);
 
   async fn resolve_status(&self, dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError> {
-    damage(dice_id, self.intensity).await?;
+    damage(dice_id, self.intensity, Color::linear_rgb(1.0, 0.0, 0.0)).await?;
+    AsyncWorld.sleep(0.5).await;
     Ok(())
   }
   

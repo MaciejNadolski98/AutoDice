@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_defer::AccessError;
+use bevy_defer::{AccessError, AsyncWorld};
 
 use crate::{
   battle::StartRound, dice::{
@@ -23,7 +23,9 @@ impl Status for Regeneration {
   const STATUS_COLOR: Color = Color::linear_rgb(0.0, 1.0, 0.0);
 
   async fn resolve_status(&self, dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError> {
-    heal(dice_id, self.heal_amount).await
+    heal(dice_id, self.heal_amount).await?;
+    AsyncWorld.sleep(0.5).await;
+    Ok(())
   }
 
   fn update(&mut self) -> bool {
