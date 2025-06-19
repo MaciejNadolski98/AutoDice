@@ -26,9 +26,9 @@ fn spawn_menu(
 ) {
   commands.spawn((
     Name::new("Main Menu"),
-    Node { 
-      width: Val::Percent(100.0), 
-      height: Val::Percent(100.0), 
+    Node {
+      width: Val::Percent(100.0),
+      height: Val::Percent(100.0),
       align_items: AlignItems::Center,
       flex_direction: FlexDirection::Column,
       justify_content: JustifyContent::SpaceAround,

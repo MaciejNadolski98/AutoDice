@@ -30,13 +30,13 @@ impl Tile {
 
 fn random_face() -> FacePrototype {
   *[
-    FacePrototype { action: Action::Attack, pips: Some(2) },
-    FacePrototype { action: Action::Attack, pips: Some(1) },
-    FacePrototype { action: Action::Defend, pips: None },
-    FacePrototype { action: Action::Fire, pips: Some(1) },
-    FacePrototype { action: Action::Fire, pips: Some(2) },
-    FacePrototype { action: Action::Regenerate, pips: Some(2) },
-    FacePrototype { action: Action::Regenerate, pips: Some(1) },
+    FacePrototype::new(Action::Attack, Some(2)),
+    FacePrototype::new(Action::Attack, Some(1)),
+    FacePrototype::new(Action::Defend, None),
+    FacePrototype::new(Action::Fire, Some(1)),
+    FacePrototype::new(Action::Fire, Some(2)),
+    FacePrototype::new(Action::Regenerate, Some(2)),
+    FacePrototype::new(Action::Regenerate, Some(1)),
   ].choose(&mut thread_rng()).unwrap()
 }
 
@@ -46,7 +46,7 @@ fn build_tile_layout() -> Vec<(i16, i16)> {
   ].choose(&mut thread_rng()).unwrap() {
     "T1" => vec![vec![(1, 1)]],
     "T2" => vec![
-      vec![(1, 1), (1, 2)], 
+      vec![(1, 1), (1, 2)],
       vec![(1, 1), (2, 1)],
     ],
     "T3I" => vec![

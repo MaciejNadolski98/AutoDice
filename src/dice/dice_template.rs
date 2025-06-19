@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::dice::{dice_template::{face_prototypes::{ATTACK_STRONG, ATTACK_WEAK, DEFEND, FIRE_STRONG, FIRE_WEAK, REGEN_STRONG, REGEN_WEAK}, face_sets::*}, face::Face, Gridable};
+use crate::dice::{background::FaceBackground, dice_template::{face_prototypes::{ATTACK_STRONG, ATTACK_STRONG_CRUEL, ATTACK_WEAK, DEFEND, FIRE_STRONG, FIRE_WEAK, REGEN_STRONG, REGEN_WEAK}, face_sets::*}, face::Face, Gridable};
 
 use super::action::Action;
 
@@ -80,8 +80,8 @@ impl DiceTemplateBuilder {
       .with_face(FaceId::Top, DEFEND);
     if level == 3 { return ret }
     ret
-      .with_face(FaceId::Left, ATTACK_STRONG.with_pips(3))
-      .with_face(FaceId::Right, ATTACK_STRONG.with_pips(3))
+      .with_face(FaceId::Left, ATTACK_STRONG_CRUEL.with_pips(3))
+      .with_face(FaceId::Right, ATTACK_STRONG_CRUEL.with_pips(3))
   }
 
   pub fn paladin(level: u32) -> Self {
@@ -97,7 +97,7 @@ impl DiceTemplateBuilder {
       .with_face(FaceId::NearBottom, ATTACK_WEAK);
     if level == 3 { return ret }
     ret
-      .with_face(FaceId::Left, ATTACK_STRONG.with_pips(4))
+      .with_face(FaceId::Left, ATTACK_STRONG_CRUEL.with_pips(3))
   }
 
   pub fn mage(level: u32) -> Self {
@@ -143,34 +143,48 @@ impl DiceTemplateBuilder {
     if level == 3 { return ret }
     ret
       .with_face(FaceId::NearBottom, ATTACK_WEAK)
-      .with_face(FaceId::Left, ATTACK_STRONG)
+      .with_face(FaceId::Left, ATTACK_STRONG_CRUEL)
   }
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, Hash, Debug)]
 pub struct FacePrototype {
   pub action: Action,
   pub pips: Option<u32>,
+  pub background: FaceBackground,
 }
 
 impl FacePrototype {
-  fn with_pips(mut self, pips: u32) -> Self {
+  pub const fn new(action: Action, pips: Option<u32>) -> Self {
+    Self { action, pips, background: FaceBackground::Empty }
+  }
+
+  const fn with_pips(mut self, pips: u32) -> Self {
     self.pips = Some(pips);
+    self
+  }
+
+  const fn with_background(mut self, background: FaceBackground) -> Self {
+    self.background = background;
     self
   }
 }
 
 pub mod face_prototypes {
-  use crate::dice::{dice_template::FacePrototype, Action};
+  use crate::dice::{background::FaceBackground, dice_template::FacePrototype, Action};
 
-  pub const EMPTY: FacePrototype = FacePrototype { action: Action::Empty, pips: None };
-  pub const ATTACK_WEAK: FacePrototype = FacePrototype { action: Action::Attack, pips: Some(1) };
-  pub const ATTACK_STRONG: FacePrototype = FacePrototype { action: Action::Attack, pips: Some(2) };
-  pub const DEFEND: FacePrototype = FacePrototype { action: Action::Defend, pips: None };
-  pub const REGEN_WEAK: FacePrototype = FacePrototype { action: Action::Regenerate, pips: Some(1) };
-  pub const REGEN_STRONG: FacePrototype = FacePrototype { action: Action::Regenerate, pips: Some(2) };
-  pub const FIRE_WEAK: FacePrototype = FacePrototype { action: Action::Fire, pips: Some(1) };
-  pub const FIRE_STRONG: FacePrototype = FacePrototype { action: Action::Fire, pips: Some(2) };
+  pub const EMPTY: FacePrototype = FacePrototype::new(Action::Empty, None);
+  pub const ATTACK_WEAK: FacePrototype = FacePrototype::new(Action::Attack, Some(1));
+  pub const ATTACK_DOUBLE: FacePrototype = FacePrototype::new(Action::Attack, Some(1))
+    .with_background(FaceBackground::Double);
+  pub const ATTACK_STRONG: FacePrototype = FacePrototype::new(Action::Attack, Some(2));
+  pub const ATTACK_STRONG_CRUEL: FacePrototype = FacePrototype::new(Action::Attack, Some(2))
+    .with_background(FaceBackground::Cruel);
+  pub const DEFEND: FacePrototype = FacePrototype::new(Action::Defend, None);
+  pub const REGEN_WEAK: FacePrototype = FacePrototype::new(Action::Regenerate, Some(1));
+  pub const REGEN_STRONG: FacePrototype = FacePrototype::new(Action::Regenerate, Some(2));
+  pub const FIRE_WEAK: FacePrototype = FacePrototype::new(Action::Fire, Some(1));
+  pub const FIRE_STRONG: FacePrototype = FacePrototype::new(Action::Fire, Some(2));
 }
 
 mod face_sets {
@@ -179,7 +193,7 @@ mod face_sets {
 
   pub const BERSERKER: [FacePrototype; 6] = [
     EMPTY,
-    ATTACK_STRONG,
+    ATTACK_STRONG_CRUEL,
     ATTACK_STRONG,
     EMPTY,
     EMPTY,
@@ -215,10 +229,10 @@ mod face_sets {
 
   pub const ROGUE: [FacePrototype; 6] = [
     EMPTY,
-    ATTACK_WEAK,
-    ATTACK_WEAK,
+    ATTACK_DOUBLE,
+    ATTACK_DOUBLE,
     EMPTY,
     EMPTY,
-    ATTACK_WEAK,
+    EMPTY,
   ];
 }
