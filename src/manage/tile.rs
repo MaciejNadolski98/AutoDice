@@ -1,7 +1,7 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::dice::{Action, Face, Gridable};
+use crate::dice::{Action, Face, FacePrototype, Gridable};
 
 #[derive(Component, Clone)]
 pub struct Tile {
@@ -21,22 +21,22 @@ impl Tile {
     commands.spawn(Self { grid })
       .with_children(|commands|{
         for _ in 0..faces_count {
-          let (action, pips) = random_face();
-          commands.spawn(Face::new(action, pips, &mut images));
+          let prototype = random_face();
+          commands.spawn(Face::from_prototype(prototype, &mut images));
         }
     });
   }
 }
 
-fn random_face() -> (Action, u32) {
+fn random_face() -> FacePrototype {
   *[
-    (Action::Attack, 2),
-    (Action::Attack, 1),
-    (Action::Defend, 0),
-    (Action::Fire, 1),
-    (Action::Fire, 2),
-    (Action::Regenerate, 2),
-    (Action::Regenerate, 1),
+    FacePrototype { action: Action::Attack, pips: Some(2) },
+    FacePrototype { action: Action::Attack, pips: Some(1) },
+    FacePrototype { action: Action::Defend, pips: None },
+    FacePrototype { action: Action::Fire, pips: Some(1) },
+    FacePrototype { action: Action::Fire, pips: Some(2) },
+    FacePrototype { action: Action::Regenerate, pips: Some(2) },
+    FacePrototype { action: Action::Regenerate, pips: Some(1) },
   ].choose(&mut thread_rng()).unwrap()
 }
 
