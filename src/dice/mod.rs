@@ -12,7 +12,7 @@ mod roll;
 mod face;
 
 pub use face::{Face, Gridable, FaceSource};
-pub use dice_template::{DiceTemplate, DiceTemplateBuilder};
+pub use dice_template::{DiceTemplate, DiceTemplateBuilder, FacePrototype};
 pub use dice_instance::{DiceID, Dice};
 pub use roll::{roll_dices, resolve_dices};
 pub use action::Action;

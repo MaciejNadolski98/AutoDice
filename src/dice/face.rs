@@ -18,12 +18,12 @@ impl Plugin for FacePlugin {
 #[component(on_add = initialize_face)]
 pub struct Face {
   pub action: Action,
-  pub pips: u32,
+  pub pips: Option<u32>,
   pub image: Handle<Image>,
 }
 
 impl Face {
-  pub fn new(action: Action, pips: u32, images: &mut Assets<Image>) -> Self {
+  pub fn new(action: Action, pips: Option<u32>, images: &mut Assets<Image>) -> Self {
     let image = build_face_image(images);
     let face = Self {
       action,
@@ -206,17 +206,19 @@ fn activate_face_cameras(
               DICE_FACES_LAYER,
             ));
 
-            commands.spawn((
-              Name::new("Pips"),
-              Text2d(format!("{}", pips)),
-              TextFont {
-                font_size: FONT_SIZE,
-                ..default()
-              },
-              TextColor::BLACK,
-              Transform::from_translation((PIPS_POSITION, 1.0).into()),
-              DICE_FACES_LAYER,
-            ));
+            if let Some(pips) = pips {
+              commands.spawn((
+                Name::new("Pips"),
+                Text2d(format!("{}", pips)),
+                TextFont {
+                  font_size: FONT_SIZE,
+                  ..default()
+                },
+                TextColor::BLACK,
+                Transform::from_translation((PIPS_POSITION, 1.0).into()),
+                DICE_FACES_LAYER,
+              ));
+            }
           });
         });
       });

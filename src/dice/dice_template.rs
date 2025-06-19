@@ -150,12 +150,12 @@ impl DiceTemplateBuilder {
 #[derive(PartialEq, Clone, Copy)]
 pub struct FacePrototype {
   pub action: Action,
-  pub pips: u32,
+  pub pips: Option<u32>,
 }
 
 impl FacePrototype {
   fn with_pips(mut self, pips: u32) -> Self {
-    self.pips = pips;
+    self.pips = Some(pips);
     self
   }
 }
@@ -163,14 +163,14 @@ impl FacePrototype {
 pub mod face_prototypes {
   use crate::dice::{dice_template::FacePrototype, Action};
 
-  pub const EMPTY: FacePrototype = FacePrototype { action: Action::Empty, pips: 0 };
-  pub const ATTACK_WEAK: FacePrototype = FacePrototype { action: Action::Attack, pips: 1 };
-  pub const ATTACK_STRONG: FacePrototype = FacePrototype { action: Action::Attack, pips: 2 };
-  pub const DEFEND: FacePrototype = FacePrototype { action: Action::Defend, pips: 0 };
-  pub const REGEN_WEAK: FacePrototype = FacePrototype { action: Action::Regenerate, pips: 1 };
-  pub const REGEN_STRONG: FacePrototype = FacePrototype { action: Action::Regenerate, pips: 2 };
-  pub const FIRE_WEAK: FacePrototype = FacePrototype { action: Action::Fire, pips: 1 };
-  pub const FIRE_STRONG: FacePrototype = FacePrototype { action: Action::Fire, pips: 2 };
+  pub const EMPTY: FacePrototype = FacePrototype { action: Action::Empty, pips: None };
+  pub const ATTACK_WEAK: FacePrototype = FacePrototype { action: Action::Attack, pips: Some(1) };
+  pub const ATTACK_STRONG: FacePrototype = FacePrototype { action: Action::Attack, pips: Some(2) };
+  pub const DEFEND: FacePrototype = FacePrototype { action: Action::Defend, pips: None };
+  pub const REGEN_WEAK: FacePrototype = FacePrototype { action: Action::Regenerate, pips: Some(1) };
+  pub const REGEN_STRONG: FacePrototype = FacePrototype { action: Action::Regenerate, pips: Some(2) };
+  pub const FIRE_WEAK: FacePrototype = FacePrototype { action: Action::Fire, pips: Some(1) };
+  pub const FIRE_STRONG: FacePrototype = FacePrototype { action: Action::Fire, pips: Some(2) };
 }
 
 mod face_sets {
