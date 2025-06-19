@@ -168,7 +168,7 @@ fn update_dice_info_bar_positions(
 
 fn update_health_bar_indicator(
   mut health_bars: Query<(&HealthIndicatorOf, &mut Sprite, &mut Transform)>,
-  dices: Query<&Dice>,
+  dices: Query<&Dice, Changed<Dice>>,
 ) {
   for (health_indicator_of, mut sprite, mut transform) in health_bars.iter_mut() {
     if let Ok(dice) = dices.get(health_indicator_of.dice) {

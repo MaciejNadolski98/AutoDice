@@ -423,7 +423,7 @@ fn apply_tile(
     let tile_face = faces.get(tile_face).unwrap().clone();
     let mut template_face = faces.get_mut(template_face).unwrap();
     template_face.action = tile_face.action;
-    template_face.pips_count = tile_face.pips_count;
+    template_face.pips = tile_face.pips;
   }
   let tile = grids.get(grid).unwrap().collection();
   commands.entity(tile).despawn();

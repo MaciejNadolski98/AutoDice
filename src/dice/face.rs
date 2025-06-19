@@ -18,16 +18,16 @@ impl Plugin for FacePlugin {
 #[component(on_add = initialize_face)]
 pub struct Face {
   pub action: Action,
-  pub pips_count: u32,
+  pub pips: u32,
   pub image: Handle<Image>,
 }
 
 impl Face {
-  pub fn new(action: Action, pips_count: u32, images: &mut Assets<Image>) -> Self {
+  pub fn new(action: Action, pips: u32, images: &mut Assets<Image>) -> Self {
     let image = build_face_image(images);
     let face = Self {
       action,
-      pips_count,
+      pips,
       image: image.clone(),
     };
     face
@@ -38,11 +38,11 @@ impl Face {
   }
 
   pub fn from_other(other: &Self, images: &mut Assets<Image>) -> Self {
-    Self::new(other.action, other.pips_count, images)
+    Self::new(other.action, other.pips, images)
   }
 
   pub async fn resolve(self, dice_id: DiceID) -> Result<(), AccessError> {
-    self.action.resolve(self.pips_count, dice_id).await
+    self.action.resolve(self.pips, dice_id).await
   }
 }
 
@@ -175,7 +175,7 @@ fn activate_face_cameras(
   for (
     FaceCamera { camera },
     FaceRoot { root },
-    Face { action, pips_count, .. }
+    Face { action, pips, .. }
   ) in faces {
     commands
       .entity(*root)
@@ -208,7 +208,7 @@ fn activate_face_cameras(
 
             commands.spawn((
               Name::new("Pips"),
-              Text2d(format!("{}", pips_count)),
+              Text2d(format!("{}", pips)),
               TextFont {
                 font_size: FONT_SIZE,
                 ..default()
