@@ -44,7 +44,7 @@ pub struct Dice {
 
 impl Dice {
   pub fn build(
-    template: DiceTemplate, 
+    template: DiceTemplate,
     dice_id: DiceID,
   ) -> Self {
     let mut dice = Dice::default();

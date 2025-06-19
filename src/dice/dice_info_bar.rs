@@ -16,7 +16,7 @@ impl Plugin for DiceInfoBarPlugin {
       .add_systems(PostUpdate, (update_dice_info_bar_positions, update_health_bar_indicator).chain().run_if(in_state(GameState::Battle)))
       .add_systems(Update, update_status_icon_positions)
       .add_systems(Update, (
-        update_status_intensity::<Burning>, 
+        update_status_intensity::<Burning>,
         update_status_intensity::<Regeneration>,
       ));
   }

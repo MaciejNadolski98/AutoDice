@@ -1,6 +1,7 @@
 pub mod plugin;
 
 mod action;
+mod background;
 mod status;
 mod animation;
 mod dice_instance;

@@ -90,8 +90,8 @@ fn spawn_manage(
 ) {
   commands.spawn((
     Name::new("Manage"),
-    Node { 
-      width: Val::Percent(100.0), 
+    Node {
+      width: Val::Percent(100.0),
       height: Val::Percent(100.0),
       flex_direction: FlexDirection::Column,
       justify_content: JustifyContent::Start,
@@ -195,9 +195,9 @@ fn spawn_manage(
 
     commands.spawn((
       Name::new("Bottom menu"),
-      Node { 
-        width: Val::Percent(100.0), 
-        height: Val::Percent(20.0), 
+      Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(20.0),
         flex_direction: FlexDirection::Row,
         justify_content: JustifyContent::SpaceBetween,
         align_items: AlignItems::Center,
@@ -369,7 +369,7 @@ fn overlap_tile_template(
   
   OverlapTileTemplateOutput {
     grid,
-    matched: valid, 
+    matched: valid,
     matches: matches.iter().map(|(face, (_, template_face_node))| (*face, *template_face_node)).collect(),
   }
 }
@@ -422,8 +422,8 @@ fn apply_tile(
 
     let tile_face = faces.get(tile_face).unwrap().clone();
     let mut template_face = faces.get_mut(template_face).unwrap();
-    template_face.action = tile_face.action;
-    template_face.pips = tile_face.pips;
+    template_face.prototype.action = tile_face.prototype.action;
+    template_face.prototype.pips = tile_face.prototype.pips;
   }
   let tile = grids.get(grid).unwrap().collection();
   commands.entity(tile).despawn();

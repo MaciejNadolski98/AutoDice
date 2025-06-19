@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncWorld};
-use crate::utils::*;
+use crate::{dice::{background::FaceBackground, FacePrototype}, utils::*};
 
 use super::DiceID;
 
@@ -54,20 +54,28 @@ pub struct GetPips {
   pub pips: u32,
 }
 
-impl Action {
-  pub async fn resolve(
-    self,
-    pips: Option<u32>,
-    dice_id: DiceID,
-  ) -> Result<(), AccessError> {
-    match self {
+#[derive(Clone, Copy)]
+pub struct ResolutionContext {
+  pub face: FacePrototype,
+  pub dice_id: DiceID,
+}
+
+pub async fn resolve(
+  context: ResolutionContext,
+) -> Result<(), AccessError> {
+  let ResolutionContext { face, dice_id } = context;
+  let FacePrototype { action, pips, background } = face;
+  let repeat = if background == FaceBackground::Double { 2 } else { 1 };
+  for _ in 0..repeat {
+    match action {
       Action::Empty => Ok(()),
-      Action::Attack => attack(get_pips(dice_id, pips.unwrap()).await?, dice_id).await,
-      Action::Defend => double(dice_id).await,
-      Action::Regenerate => regenerate(get_pips(dice_id, pips.unwrap()).await?, dice_id).await,
-      Action::Fire => fire(get_pips(dice_id, pips.unwrap()).await?, dice_id).await,
-    }
+      Action::Attack => attack(get_pips(dice_id, pips.unwrap()).await?, context).await,
+      Action::Defend => double(context).await,
+      Action::Regenerate => regenerate(get_pips(dice_id, pips.unwrap()).await?, context).await,
+      Action::Fire => fire(get_pips(dice_id, pips.unwrap()).await?, context).await,
+    }?
   }
+  Ok(())
 }
 
 async fn get_pips(

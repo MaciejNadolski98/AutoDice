@@ -34,8 +34,8 @@ impl Status for Regeneration {
   }
 
   fn combine(self, other: Self) -> Self {
-    Self { 
-      heal_amount: self.heal_amount + other.heal_amount, 
+    Self {
+      heal_amount: self.heal_amount + other.heal_amount,
       duration_left: self.duration_left.max(other.duration_left),
     }
   }

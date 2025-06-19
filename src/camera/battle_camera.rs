@@ -4,7 +4,7 @@ use bevy::render::camera::ScalingMode;
 
 use crate::constants::{BATTLE_OVERLAY_LAYER, CAMERA_SWAP_TIME};
 use crate::{
-  constants::{DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE, HEIGHT}, 
+  constants::{DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE, HEIGHT},
   states::GameState
 };
 
