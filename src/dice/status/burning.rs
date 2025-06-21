@@ -3,8 +3,7 @@ use bevy_defer::{AccessError, AsyncWorld};
 
 use crate::{
   battle::StartRound, dice::{
-    action::interaction::dice::damage,
-    DiceID
+    action::interaction::dice::damage, DiceID
   }, impl_status_component
 };
 

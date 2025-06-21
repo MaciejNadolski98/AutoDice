@@ -185,6 +185,7 @@ pub mod face_prototypes {
   pub const REGEN_STRONG: FacePrototype = FacePrototype::new(Action::Regenerate, Some(2));
   pub const FIRE_WEAK: FacePrototype = FacePrototype::new(Action::Fire, Some(1));
   pub const FIRE_STRONG: FacePrototype = FacePrototype::new(Action::Fire, Some(2));
+  pub const FIERY: FacePrototype = FacePrototype::new(Action::Fiery, None);
 }
 
 mod face_sets {

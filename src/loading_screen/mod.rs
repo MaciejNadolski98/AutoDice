@@ -62,6 +62,7 @@ fn populate_asset_store(
     Action::Defend,
     Action::Regenerate,
     Action::Fire,
+    Action::Fiery,
   ] {
     let handle = asset_server.load::<Image>(Into::<&'static str>::into(name));
     asset_store.load(name.into(), handle.into());

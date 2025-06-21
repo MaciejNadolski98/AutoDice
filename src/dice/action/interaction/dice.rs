@@ -23,7 +23,7 @@ pub async fn damage(
     }
   })?;
   if died {
-    AsyncWorld.trigger_event(DiceDied::new(DiceDied { dice_id })).await?;
+    AsyncWorld.trigger_event(DiceDied::wrap(DiceDied { dice_id })).await?;
   }
   Ok(())
 }

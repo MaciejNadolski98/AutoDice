@@ -5,7 +5,7 @@ use crate::camera::SwapBattleCamera;
 use crate::constants::{BATTLE_OVERLAY_LAYER, DICE_SIZE, HEIGHT, WIDTH};
 use crate::manage::plugin::{EnemyTeam, MyTeam, ShopRound};
 use crate::states::GameState;
-use crate::dice::{resolve_dices, roll_dices, Dice};
+use crate::dice::{move_dices_to_rows, resolve_dices, roll_dices, Dice};
 use crate::utils::*;
 
 pub struct SequencePlugin;
@@ -16,6 +16,7 @@ impl Plugin for SequencePlugin {
       .add_systems(OnEnter(GameState::Battle), |mut commands: Commands| {
         commands.spawn_task(|| flow());
       })
+      .add_event_and_listen::<StartGame>()
       .add_event_and_listen::<StartRound>()
       .add_event_and_listen::<BeforeRollDices>()
       .add_event_and_listen::<BeforeResolveDices>();
@@ -23,10 +24,14 @@ impl Plugin for SequencePlugin {
 }
 
 #[derive(Event, Clone, Copy, Debug)]
+pub struct StartGame;
+
+#[derive(Event, Clone, Copy, Debug)]
 pub struct StartRound {
   #[allow(unused)]
   round: u32,
 }
+
 
 #[derive(Event, Clone, Copy, Debug)]
 pub struct BeforeRollDices;
@@ -35,14 +40,18 @@ pub struct BeforeRollDices;
 pub struct BeforeResolveDices;
 
 async fn flow() -> Result<(), AccessError> {
+  AsyncWorld.sleep(0.1).await; // Wait for the world to be ready
+  move_dices_to_rows().await?;
+
+  AsyncWorld.trigger_event(StartGame.wrap()).await?;
   let mut current_round = 1;
   loop {
-    AsyncWorld.trigger_event(StartRound::new(StartRound { round: current_round })).await?;
+    AsyncWorld.trigger_event(StartRound { round: current_round }.wrap()).await?;
 
-    AsyncWorld.trigger_event(BeforeRollDices::new(BeforeRollDices)).await?;
+    AsyncWorld.trigger_event(BeforeRollDices.wrap()).await?;
     roll_dices().await?;
 
-    AsyncWorld.trigger_event(BeforeResolveDices::new(BeforeResolveDices)).await?;
+    AsyncWorld.trigger_event(BeforeResolveDices.wrap()).await?;
     resolve_dices().await?;
 
     if let Some(won) = done().await? {

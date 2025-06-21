@@ -1,8 +1,9 @@
-use avian3d::prelude::{Collider, RigidBody};
+use avian3d::prelude::{Collider, RigidBody, RigidBodyDisabled};
 use bevy::render::mesh::{MeshVertexAttribute, MeshVertexBufferLayouts, VertexAttributeValues, VertexFormat};
 use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::prelude::*;
 
+use crate::constants::DICE_SIZE;
 use crate::dice::dice_instance::DiceEntityMap;
 use crate::dice::{Dice, DiceID, DiceTemplate, Face};
 
@@ -140,6 +141,9 @@ pub fn spawn_dice(
       RigidBody::Dynamic,
       Collider::cuboid(1.0, 1.0, 1.0),
       Dice::build(templates.get(template).unwrap().clone(), dice_id),
+      Transform::from_translation(Vec3::new(0.0, 0.0, DICE_SIZE * 0.5))
+        .with_scale(Vec3::splat(DICE_SIZE)),
+      RigidBodyDisabled,
     ))
     .with_children(|commands| {
       for face in face_vector {

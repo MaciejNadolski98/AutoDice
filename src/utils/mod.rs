@@ -108,7 +108,7 @@ impl RegisterListener for App {
 }
 
 pub trait ArcMutex: Sized {
-  fn new(self) -> Arc<Mutex<Self>> {
+  fn wrap(self) -> Arc<Mutex<Self>> {
     Arc::new(Mutex::new(self))
   }
 }

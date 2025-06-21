@@ -34,6 +34,7 @@ pub enum Action {
   Defend,
   Regenerate,
   Fire,
+  Fiery,
 }
 
 impl From<Action> for &'static str {
@@ -44,6 +45,7 @@ impl From<Action> for &'static str {
       Action::Defend => "actions/shield.png",
       Action::Regenerate => "actions/heart.png",
       Action::Fire => "actions/fire.png",
+      Action::Fiery => "actions/potion_red.png",
     }
   }
 }
@@ -73,6 +75,7 @@ pub async fn resolve(
       Action::Defend => double(context).await,
       Action::Regenerate => regenerate(get_pips(dice_id, pips.unwrap()).await?, context).await,
       Action::Fire => fire(get_pips(dice_id, pips.unwrap()).await?, context).await,
+      Action::Fiery => Ok(()),
     }?
   }
   Ok(())
@@ -82,7 +85,7 @@ async fn get_pips(
   dice_id: DiceID,
   pips: u32
 ) -> Result<u32, AccessError> {
-  let get_pips = GetPips::new(GetPips { dice_id, pips: pips });
+  let get_pips = GetPips::wrap(GetPips { dice_id, pips: pips });
   AsyncWorld.trigger_event(get_pips.clone()).await?;
   Ok(get_pips.get().pips)
 }
