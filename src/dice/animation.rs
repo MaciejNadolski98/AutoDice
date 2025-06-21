@@ -2,6 +2,7 @@ use avian3d::math::PI;
 use avian3d::prelude::RigidBodyDisabled;
 use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
+use futures_::future::join_all;
 
 use crate::constants::{ANGULAR_SPEED, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_SPEED};
 use super::dice_instance::DiceEntityMap;
@@ -21,6 +22,15 @@ pub async fn move_dice_to_middle(
   let target_y = if dice_id.team_id == 0 { -HEIGHT / 5.0 } else { HEIGHT / 5.0 };
   let target_position = Vec3::new(0.0, target_y, DICE_SIZE / 2.0);
   move_dice(dice_id, target_position).await?;
+  Ok(())
+}
+
+pub async fn move_dices_to_rows() -> Result<(), AccessError> {
+  let mut tasks = vec![];
+  AsyncWorld.query::<&Dice>().for_each(|dice| {
+    tasks.push(move_dice_to_row(dice.id()));
+  });
+  join_all(tasks).await;
   Ok(())
 }
 

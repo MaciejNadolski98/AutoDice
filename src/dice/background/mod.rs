@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::constants::dice_texture::INNER_SIZE;
+use crate::{constants::dice_texture::INNER_SIZE};
 
 pub struct FaceBackgroundPlugin;
 

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 use rand_distr::{Distribution, Normal};
 
-use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_COUNT, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH}, dice::Face};
+use crate::{camera::SwapBattleCamera, constants::{ANGULAR_VELOCITY_EPSILON, DICE_COUNT, DICE_SIZE, FACE_NORMALS, HEIGHT, LINEAR_VELOCITY_EPSILON, WIDTH}, dice::{move_dices_to_rows, Face}};
 
 use super::{animation::{add_physics, get_dice_entity, move_dice_to_middle, move_dice_to_row, orient_dice, remove_physics}, dice_instance::Rows, Dice, DiceID};
 
@@ -48,11 +48,10 @@ fn set_dice_roll_positions_and_velocities(
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 + DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 - DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
   ];
-  let dice_positions_team_2 = dice_positions_team_1.clone().map(|vec| {
-    let mut ret = vec.clone();
-    ret.x *= -1.0;
-    ret.y *= -1.0;
-    return ret;
+  let dice_positions_team_2 = dice_positions_team_1.clone().map(|mut vec| {
+    vec.x *= -1.0;
+    vec.y *= -1.0;
+    return vec;
   });
 
   for (mut transform, mut linear_velocity, mut angular_velocity, dice) in &mut dices {
@@ -107,15 +106,6 @@ async fn resolve_dice(dice_id: DiceID) -> Result<(), AccessError> {
 
   face.resolve(dice_id).await?;
 
-  Ok(())
-}
-
-async fn move_dices_to_rows() -> Result<(), AccessError> {
-  let mut tasks = vec![];
-  AsyncWorld.query::<&Dice>().for_each(|dice| {
-    tasks.push(move_dice_to_row(dice.id()));
-  });
-  join_all(tasks).await;
   Ok(())
 }
 

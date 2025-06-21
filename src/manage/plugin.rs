@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -129,6 +129,20 @@ fn spawn_manage(
         TextColor(Color::BLACK),
         ZIndex(1),
       ));
+
+      commands.spawn((
+        Name::new("Synergies"),
+        Node {
+          position_type: PositionType::Absolute,
+          width: Val::Percent(10.0),
+          height: Val::Percent(10.0),
+          flex_direction: FlexDirection::Column,
+          justify_content: JustifyContent::Start,
+          align_items: AlignItems::Center,
+          ..default()
+        },
+        ZIndex(1),
+      )).with_children(spawn_synergy_displays);
 
       commands.spawn((
         Name::new("Dice display"),

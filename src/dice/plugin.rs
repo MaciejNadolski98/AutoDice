@@ -11,6 +11,7 @@ use super::{
   action::DiceActionPlugin,
   status::StatusPlugin,
   face::FacePlugin,
+  synergy::SynergyPlugin,
 };
 
 pub struct DicePlugin;
@@ -29,6 +30,7 @@ impl Plugin for DicePlugin {
         DiceActionPlugin,
         StatusPlugin,
         FacePlugin,
+        SynergyPlugin,
       ));
   }
 }

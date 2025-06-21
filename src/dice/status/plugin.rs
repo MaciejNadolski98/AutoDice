@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use super::{Burning, Double, Regeneration, RegisterRegistrable};
+use crate::dice::status::RegisterStatus;
+
+use super::{Burning, Double, Regeneration};
 
 pub struct StatusPlugin;
 

@@ -18,7 +18,7 @@ pub use double::Double;
 pub use plugin::StatusPlugin;
 pub use regeneration::Regeneration;
 
-pub trait Status: Component + Clone + Copy {
+pub trait Status: Component<Mutability=Mutable> + Clone + Copy {
   type TriggerEvent: Event + Clone + Copy + Debug;
 
   const STATUS_COLOR: Color;
@@ -91,34 +91,16 @@ macro_rules! impl_status_component {
   };
 }
 
-trait Registrable {
-  fn register(app: &mut App);
+pub trait RegisterStatus {
+  fn register<S: Status>(&mut self) -> &mut Self;
 }
 
-trait TriggersToEvent {
-  type EventType: Event + Clone + Copy + Debug;
-
-  fn register_listener(listener: DynAsyncFunction<Self::EventType>, app: &mut App) {
-    app.register_dyn_listener(listener);
-  }
-
-  fn get_event_listener() -> DynAsyncFunction<Self::EventType>;
-}
-
-impl<T: TriggersToEvent> Registrable for T {
-  fn register(app: &mut App) {
-    Self::register_listener(Self::get_event_listener(), app);
-  }
-}
-
-impl<S> TriggersToEvent for S
-where
-  S: Status + Component<Mutability = Mutable>,
-{
-  type EventType = <S as Status>::TriggerEvent;
-
-  fn get_event_listener() -> DynAsyncFunction<Self::EventType> {
-    Arc::new(move |event| {
+impl RegisterStatus for App {
+  fn register<S>(&mut self) -> &mut Self
+  where
+    S: Status,
+  {
+    let listener: DynAsyncFunction<S::TriggerEvent> = Arc::new(move |event| {
       Box::pin(async move {
         let mut dice_ids = Vec::new();
         AsyncWorld
@@ -142,17 +124,8 @@ where
         event.mutate(|_| new_event);
         Ok(())
       })
-    })
-  }
-}
-
-trait RegisterRegistrable {
-  fn register<R: Registrable>(&mut self) -> &mut Self;
-}
-
-impl RegisterRegistrable for App {
-  fn register<R: Registrable>(&mut self) -> &mut Self {
-    R::register(self);
+    });
+    self.register_dyn_listener(listener);
     self
   }
 }

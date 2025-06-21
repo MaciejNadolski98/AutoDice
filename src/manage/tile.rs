@@ -1,7 +1,7 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::dice::{Action, Face, FacePrototype, Gridable};
+use crate::dice::{face_prototypes::*, Face, FacePrototype, Gridable};
 
 #[derive(Component, Clone)]
 pub struct Tile {
@@ -30,13 +30,14 @@ impl Tile {
 
 fn random_face() -> FacePrototype {
   *[
-    FacePrototype::new(Action::Attack, Some(2)),
-    FacePrototype::new(Action::Attack, Some(1)),
-    FacePrototype::new(Action::Defend, None),
-    FacePrototype::new(Action::Fire, Some(1)),
-    FacePrototype::new(Action::Fire, Some(2)),
-    FacePrototype::new(Action::Regenerate, Some(2)),
-    FacePrototype::new(Action::Regenerate, Some(1)),
+    ATTACK_STRONG,
+    ATTACK_WEAK,
+    DEFEND,
+    FIRE_WEAK,
+    FIRE_STRONG,
+    REGEN_WEAK,
+    REGEN_STRONG,
+    FIERY,
   ].choose(&mut thread_rng()).unwrap()
 }
 
