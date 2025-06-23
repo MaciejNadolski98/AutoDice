@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::{dice::{synergy::{RegisterSynergy, Synergy, TeamSynergy}, Face}, manage::plugin::{EnemyTeam, MyTeam}};
+use crate::{dice::{synergy::{RegisterSynergy, Synergy, SynergyTooltip, TeamSynergy}, Face}, manage::plugin::{EnemyTeam, MyTeam}, utils::tooltip::update_tooltips};
 
 use super::Fiery;
 
@@ -13,24 +13,21 @@ impl Plugin for SynergyPlugin {
     app
       .init_resource::<TeamSynergy<Fiery>>()
       .register::<Fiery>()
-      .add_systems(Update, (update_team_synergy::<Fiery>, update_synergy_display::<Fiery>));
+      .add_systems(Update, (update_team_synergy::<Fiery>, update_synergy_display::<Fiery>, update_tooltips::<SynergyTooltip<Fiery>>));
   }
 }
 
 pub fn spawn_synergy_displays(
   commands: &mut RelatedSpawnerCommands<ChildOf>,
 ) {
-  for display in [
+  commands.spawn((
+    Name::new("Synergy display: Fiery"),
     SynergyDisplay::<Fiery>::new(0),
-  ] {
-    commands.spawn((
-      display,
-      Text::new(""),
-    ));
-  }
+  ));
 }
 
 #[derive(Component)]
+#[require(SynergyTooltip::<S>::new(), Text)]
 pub struct SynergyDisplay<S: Synergy> {
   team_id: usize,
   _phantom: PhantomData<S>,

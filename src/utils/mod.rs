@@ -3,6 +3,8 @@ use std::{fmt::Debug, future::Future, pin::Pin, sync::{Arc, Mutex}};
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
 
+pub mod tooltip;
+
 pub type DynAsyncFunction<E> =
   Arc<dyn Fn(Arc<Mutex<E>>) -> Pin<Box<dyn Future<Output = Result<(), AccessError>>>> + Send + Sync>;
 
