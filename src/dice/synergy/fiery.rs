@@ -26,6 +26,14 @@ impl Synergy for Fiery {
     "Fiery"
   }
 
+  fn description() -> &'static str {
+    "Applies Burning to all opponents at the start of battle
+    1 -> 1 Burning
+    3 -> 2 Burning
+    5 -> 3 Burning
+    "
+  }
+
   async fn resolve(&self, _event: Self::TriggerEvent) -> Result<(), AccessError> {
     let mut dices = Vec::new();
 
