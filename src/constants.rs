@@ -78,6 +78,7 @@ pub const SHOP_ITEMS_COUNT: usize = 4;
 
 pub const DICE_FACES_LAYER: RenderLayers = RenderLayers::layer(1);
 pub const BATTLE_OVERLAY_LAYER: RenderLayers = RenderLayers::layer(2);
+pub const TOOLTIP_LAYER: RenderLayers = RenderLayers::layer(3);
 
 pub const RESOLUTION_WIDTH: f32 = 1280.0;
 pub const RESOLUTION_HEIGHT: f32 = 720.0;

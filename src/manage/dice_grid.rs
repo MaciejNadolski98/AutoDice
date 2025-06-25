@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile, utils::tooltip::RelatedTooltip};
+use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile, utils::tooltip::Tooltip};
 
 pub struct DiceGridPlugin;
 
@@ -98,7 +98,7 @@ pub fn update_grid<Faces: Gridable>(
           },
           FaceSource::new(face),
           ImageNode::from(image.clone()),
-          related!(RelatedTooltip[(
+          related!(Tooltip[(
             Name::new("Face tooltip"),
             Text::new(prototype.description()),
           )]),

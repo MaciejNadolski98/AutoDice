@@ -20,6 +20,10 @@ impl Status for Burning {
   type TriggerEvent = StartRound;
   const STATUS_COLOR: Color = Color::linear_rgb(1.0, 0.0, 0.0);
 
+  fn description() -> &'static str {
+    "Deals damage at the start of a turn and decreases intensity"
+  }
+
   async fn resolve_status(&self, dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError> {
     damage(dice_id, self.intensity, Color::linear_rgb(1.0, 0.0, 0.0)).await?;
     AsyncWorld.sleep(0.5).await;

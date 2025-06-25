@@ -14,6 +14,10 @@ impl Status for Double {
   type TriggerEvent = GetPips;
   const STATUS_COLOR: Color = Color::linear_rgb(0.0, 0.0, 1.0);
 
+  fn description() -> &'static str {
+    "Double the pips on next actions"
+  }
+
   fn trigger_condition(&self, dice: &Dice, event: GetPips) -> bool {
     event.dice_id == dice.id()
   }

@@ -21,6 +21,10 @@ impl Status for Regeneration {
   type TriggerEvent = StartRound;
   const STATUS_COLOR: Color = Color::linear_rgb(0.0, 1.0, 0.0);
 
+  fn description() -> &'static str {
+    "Regenerates health at the start of turn a 3 times"
+  }
+
   async fn resolve_status(&self, dice_id: DiceID, _event: Self::TriggerEvent) -> Result<(), AccessError> {
     heal(dice_id, self.heal_amount).await?;
     AsyncWorld.sleep(0.5).await;
