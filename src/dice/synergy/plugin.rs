@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::{dice::{synergy::{RegisterSynergy, Synergy, TeamSynergy}, Face}, manage::plugin::{EnemyTeam, MyTeam}, utils::tooltip::RelatedTooltip};
+use crate::{dice::{synergy::{RegisterSynergy, Synergy, TeamSynergy}, Face}, manage::plugin::{EnemyTeam, MyTeam}, utils::tooltip::Tooltip};
 
 use super::Fiery;
 
@@ -23,7 +23,7 @@ pub fn spawn_synergy_displays(
   commands.spawn((
     Name::new("Synergy display: Fiery"),
     SynergyDisplay::<Fiery>::new(0),
-    related!(RelatedTooltip[(
+    related!(Tooltip[(
       Name::new("Synergy Tooltip"),
       Text::new(Fiery::description()),
     )]),

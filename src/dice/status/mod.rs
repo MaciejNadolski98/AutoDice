@@ -23,6 +23,8 @@ pub trait Status: Component<Mutability=Mutable> + Clone + Copy {
 
   const STATUS_COLOR: Color;
 
+  fn description() -> &'static str;
+
   fn trigger_condition(&self, _dice: &Dice, _event: Self::TriggerEvent) -> bool {
     true
   }
@@ -46,6 +48,7 @@ macro_rules! impl_status_component {
     use bevy::{ecs::component::{ComponentHook, Mutable, StorageType}};
     use crate::dice::dice_info_bar::{StatusBar, StatusIconOf, StatusIcon, StatusIntensityOf};
     use crate::constants::{BATTLE_OVERLAY_LAYER, dice_info_bar::{STATUS_ICON_SIZE, STATUS_TEXT_SIZE}};
+    use crate::utils::tooltip::Tooltip;
 
     impl Component for $t {
       const STORAGE_TYPE: StorageType = StorageType::Table;
@@ -71,7 +74,12 @@ macro_rules! impl_status_component {
                 },
                 TextColor::BLACK,
                 StatusIntensityOf::<Self>::new(context.entity),
+                Pickable::IGNORE,
                 BATTLE_OVERLAY_LAYER,
+              )]),
+              related!(Tooltip[(
+                Name::new("Status Tooltip"),
+                Text::new(Self::description()),
               )]),
             ));
         })

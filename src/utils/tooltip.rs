@@ -1,6 +1,6 @@
-use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, window::PrimaryWindow};
+use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, render::view::RenderLayers, window::PrimaryWindow};
 
-use crate::constants::{HEIGHT, WIDTH};
+use crate::constants::{RESOLUTION_HEIGHT, RESOLUTION_WIDTH, TOOLTIP_LAYER};
 
 pub struct TooltipPlugin;
 
@@ -27,7 +27,7 @@ pub fn toggle_tooltips(
 }
 
 #[derive(Component)]
-#[relationship(relationship_target = RelatedTooltip)]
+#[relationship(relationship_target = Tooltip)]
 #[require(
   BackgroundColor(Color::WHITE),
   Outline {
@@ -38,6 +38,7 @@ pub fn toggle_tooltips(
   TextColor(Color::BLACK),
   Visibility::Hidden,
   Pickable::IGNORE,
+  RenderLayers = TOOLTIP_LAYER,
 )]
 pub struct TooltipOf {
   #[relationship]
@@ -47,7 +48,8 @@ pub struct TooltipOf {
 #[derive(Component)]
 #[relationship_target(relationship = TooltipOf, linked_spawn)]
 #[component(on_add = add_hover_observer)]
-pub struct RelatedTooltip {
+#[require(Pickable::default())]
+pub struct Tooltip {
   #[relationship]
   tooltip: Entity,
 }
@@ -65,26 +67,27 @@ fn add_hover_observer(
 
 fn over_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Move>>, Query<&RelatedTooltip>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>, Res<TooltipsEnabled>) {
+) -> impl FnMut(Trigger<Pointer<Move>>, Query<&Tooltip>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>, Res<TooltipsEnabled>) {
   move |
     hover: Trigger<Pointer<Move>>,
-    related_tooltip: Query<&RelatedTooltip>,
+    related_tooltip: Query<&Tooltip>,
     mut query: Query<(&mut Visibility, &mut Node, &ComputedNode)>,
     q_window: Query<&Window, With<PrimaryWindow>>,
     enabled: Res<TooltipsEnabled>,
   | {
     if hover.target != entity || !enabled.0 { return; }
     let window = q_window.single().unwrap();
-    let &RelatedTooltip { tooltip, ..} = related_tooltip.get(hover.target).unwrap();
+    let &Tooltip { tooltip, ..} = related_tooltip.get(hover.target).unwrap();
     let Some(cursor_position) = window.cursor_position() else { return; };
     let (mut visibility, mut node, computed_node) = query.get_mut(tooltip).unwrap();
     *visibility = Visibility::Visible;
-    if cursor_position.x < WIDTH / 2.0 {
+    info!("Cursor position: {:#?}", cursor_position);
+    if cursor_position.x < RESOLUTION_WIDTH / 2.0 {
       node.left = Val::Px(cursor_position.x);
     } else {
       node.left = Val::Px(cursor_position.x - computed_node.size.x * computed_node.inverse_scale_factor());
     }
-    if cursor_position.y < HEIGHT / 2.0 {
+    if cursor_position.y < RESOLUTION_HEIGHT / 2.0 {
       node.top = Val::Px(cursor_position.y);
     } else {
       node.top = Val::Px(cursor_position.y - computed_node.size.y * computed_node.inverse_scale_factor());
@@ -94,14 +97,14 @@ fn over_tooltip(
 
 fn out_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Out>>, Query<&RelatedTooltip>, Query<&mut Visibility>) {
+) -> impl FnMut(Trigger<Pointer<Out>>, Query<&Tooltip>, Query<&mut Visibility>) {
   move |
     hover: Trigger<Pointer<Out>>,
-    related_tooltip: Query<&RelatedTooltip>,
+    related_tooltip: Query<&Tooltip>,
     mut nodes: Query<&mut Visibility>,
   | {
     if hover.target != entity { return; }
-    let &RelatedTooltip { tooltip, ..} = related_tooltip.get(hover.target).unwrap();
+    let &Tooltip { tooltip, ..} = related_tooltip.get(hover.target).unwrap();
     let mut visibility = nodes.get_mut(tooltip).unwrap();
     *visibility = Visibility::Hidden;
   }
