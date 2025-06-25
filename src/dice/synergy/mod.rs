@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
 use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncWorld};
@@ -10,7 +10,7 @@ mod plugin;
 pub use fiery::Fiery;
 pub use plugin::{SynergyPlugin, spawn_synergy_displays};
 
-use crate::{dice::FacePrototype, utils::{tooltip::Tooltip, ArcMutexMutable, DynAsyncFunction, RegisterListener}};
+use crate::{dice::FacePrototype, utils::{ArcMutexMutable, DynAsyncFunction, RegisterListener}};
 
 pub trait Synergy: Clone + Copy + Send + Sync + 'static {
   type TriggerEvent: Event + Clone + Copy + Debug;
@@ -94,49 +94,4 @@ impl RegisterSynergy for App {
     self.register_dyn_listener(listener);
     self
   }
-}
-
-#[derive(Component)]
-#[require(Pickable::default())]
-struct SynergyTooltip<S: Synergy> {
-  _marker: PhantomData<S>,
-}
-
-impl<S: Synergy> SynergyTooltip<S> {
-  pub fn new() -> Self {
-    Self {
-      _marker: PhantomData,
-    }
-  }
-}
-
-impl<S: Synergy> Tooltip for SynergyTooltip<S> {
-  type UpdateData = ();
-  type UpdateTrigger = ();
-
-  fn check_update(
-    &self,
-    _tooltip: Entity,
-    _query: &Query<Self::UpdateData, Self::UpdateTrigger>,
-  ) -> bool {
-    false
-  }
-
-  fn update(
-    &self,
-    _tooltip: Entity,
-    _query: &Query<Self::UpdateData, Self::UpdateTrigger>,
-  ) -> impl Bundle {(
-    Name::new("Synergy Tooltip"),
-    BackgroundColor(Color::WHITE),
-    Outline {
-      width: Val::Px(1.0),
-      color: Color::BLACK,
-      ..default()
-    },
-    Text::new(S::description()),
-    TextColor(Color::BLACK),
-    Visibility::Hidden,
-    Pickable::IGNORE,
-  )}
 }

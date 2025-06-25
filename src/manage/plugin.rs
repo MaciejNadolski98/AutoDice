@@ -188,15 +188,18 @@ fn spawn_manage(
               Pickable::IGNORE,
             ))
             .with_children(|mut commands| {
-              DiceGrid::spawn(&mut commands, tile)
-                .observe(drag_tile)
+              let grid_tile = DiceGrid::spawn(&mut commands, tile).id();
+
+              commands.commands()
+                .entity(grid_tile)
+                .observe(drag_tile(grid_tile))
                 .observe(
-                  on_drag
+                  on_drag(grid_tile)
                     .pipe(overlap_tile_template)
                     .pipe(mark_faces)
                 )
                 .observe(
-                  on_release
+                  on_release(grid_tile)
                     .pipe(overlap_tile_template)
                     .pipe(apply_tile)
                 );
@@ -285,15 +288,14 @@ fn spawn_manage(
   });
 }
 
-fn drag_tile(
+fn drag_tile(tile: Entity) -> impl Fn(Trigger<Pointer<Drag>>, Query<(&mut Node, &ChildOf)>, Query<&ComputedNode>) { move |
   drag: Trigger<Pointer<Drag>>,
   mut tiles: Query<(&mut Node, &ChildOf)>,
   computed_nodes: Query<&ComputedNode>,
-) {
+| {
   fn size(node: &ComputedNode) -> Vec2 {
     node.size * node.inverse_scale_factor
   }
-  let tile = drag.target();
   let delta = drag.delta;
 
   let (mut node, &ChildOf(parent)) = tiles.get_mut(tile).unwrap();
@@ -311,19 +313,19 @@ fn drag_tile(
       node.top = Val::Px(y + delta.y);
     },
   }
-}
+}}
 
-fn on_drag(
-  trigger: Trigger<Pointer<Drag>>,
-) -> Entity {
-  trigger.target
-}
+fn on_drag(tile: Entity) -> impl Fn(Trigger<Pointer<Drag>>) -> Entity {move |
+  _trigger: Trigger<Pointer<Drag>>,
+| {
+  tile
+}}
 
-fn on_release(
-  trigger: Trigger<Pointer<Released>>,
-) -> Entity {
-  trigger.target
-}
+fn on_release(tile: Entity) -> impl Fn(Trigger<Pointer<Released>>) -> Entity {move |
+  _trigger: Trigger<Pointer<Released>>,
+| {
+  tile
+}}
 
 struct OverlapTileTemplateOutput {
   grid: Entity,

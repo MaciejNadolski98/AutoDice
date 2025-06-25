@@ -37,6 +37,19 @@ pub enum Action {
   Fiery,
 }
 
+impl Action {
+  pub fn description(&self) -> &'static str {
+    match self {
+      Action::Empty => "Empty face",
+      Action::Attack => "Deal damage to opponent",
+      Action::Defend => "Double the next roll",
+      Action::Regenerate => "Apply Regeneration status to ally",
+      Action::Fire => "Apply Burning status to opponent",
+      Action::Fiery => "Contribute to Fiery synergy",
+    }
+  }
+}
+
 impl From<Action> for &'static str {
   fn from(action: Action) -> Self {
     match action {

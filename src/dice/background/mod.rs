@@ -17,6 +17,16 @@ pub enum FaceBackground {
   Double,
 }
 
+impl FaceBackground {
+  pub fn description(&self) -> Option<String> {
+    match self {
+      Self::Empty => None,
+      Self::Cruel => Some("Targets the lowest-health dice".into()),
+      Self::Double => Some("Triggers two times".into()),
+    }
+  }
+}
+
 impl From<FaceBackground> for Sprite {
   fn from(background: FaceBackground) -> Self {
     match background {
