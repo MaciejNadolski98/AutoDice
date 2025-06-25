@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 
-use crate::states::GameState;
+use crate::utils::tooltip::toggle_tooltips;
 
 pub struct DebugControlPlugin;
 
 impl Plugin for DebugControlPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Update, debug_control.run_if(in_state(GameState::Battle)));
+      .add_systems(Update, debug_control);
   }
 }
 
@@ -15,6 +15,7 @@ impl Plugin for DebugControlPlugin {
 fn debug_control(
   keys: Res<ButtonInput<KeyCode>>,
   mut time: ResMut<Time<Virtual>>,
+  mut commands: Commands,
 ) {
   if keys.just_pressed(KeyCode::Space) {
     if time.is_paused() {
@@ -41,5 +42,9 @@ fn debug_control(
   if let Some(speedup) = key {
     let scale = 2.0f32.powf(speedup - 1.0);
     time.set_relative_speed(scale);
+  }
+
+  if keys.just_pressed(KeyCode::KeyT) {
+    commands.run_system_cached(toggle_tooltips);
   }
 }
