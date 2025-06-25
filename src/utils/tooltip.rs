@@ -5,8 +5,25 @@ use crate::constants::{HEIGHT, WIDTH};
 pub struct TooltipPlugin;
 
 impl Plugin for TooltipPlugin {
-  fn build(&self, _app: &mut App) {
+  fn build(&self, app: &mut App) {
+    app
+      .init_resource::<TooltipsEnabled>();
   }
+}
+
+#[derive(Resource, Default)]
+pub struct TooltipsEnabled(bool);
+
+pub fn toggle_tooltips(
+  mut tooltips: ResMut<TooltipsEnabled>,
+  query: Query<&mut Visibility, With<TooltipOf>>,
+) {
+  if tooltips.0 {
+    for mut visibility in query {
+      *visibility = Visibility::Hidden;
+    }
+  }
+  tooltips.0 = !tooltips.0;
 }
 
 #[derive(Component)]
@@ -48,14 +65,15 @@ fn add_hover_observer(
 
 fn over_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Move>>, Query<&RelatedTooltip>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>) {
+) -> impl FnMut(Trigger<Pointer<Move>>, Query<&RelatedTooltip>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>, Res<TooltipsEnabled>) {
   move |
     hover: Trigger<Pointer<Move>>,
     related_tooltip: Query<&RelatedTooltip>,
     mut query: Query<(&mut Visibility, &mut Node, &ComputedNode)>,
     q_window: Query<&Window, With<PrimaryWindow>>,
+    enabled: Res<TooltipsEnabled>,
   | {
-    if hover.target != entity { return; }
+    if hover.target != entity || !enabled.0 { return; }
     let window = q_window.single().unwrap();
     let &RelatedTooltip { tooltip, ..} = related_tooltip.get(hover.target).unwrap();
     let Some(cursor_position) = window.cursor_position() else { return; };

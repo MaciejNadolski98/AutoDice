@@ -22,6 +22,7 @@ use crate::dice::plugin::DicePlugin;
 use crate::menu::plugin::MenuPlugin;
 use crate::manage::plugin::ManagePlugin;
 use crate::loading_screen::LoadingScreenPlugin;
+use crate::utils::tooltip::TooltipPlugin;
 use crate::states::GameState;
 
 fn main() {
@@ -41,7 +42,7 @@ fn main() {
       .set(ImagePlugin::default_nearest())
     )
     .init_state::<GameState>()
-    .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin, LoadingScreenPlugin))
+    .add_plugins((MenuPlugin, ManagePlugin, BattlePlugin, CameraPlugin, DicePlugin, LoadingScreenPlugin, TooltipPlugin))
     .add_plugins(EguiPlugin { enable_multipass_for_primary_context: true });
   
   if cfg!(debug_assertions) {
