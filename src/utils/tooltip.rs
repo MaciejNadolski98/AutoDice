@@ -1,6 +1,4 @@
-use std::marker::PhantomData;
-
-use bevy::{ecs::{component::HookContext, query::{QueryData, QueryFilter}, world::DeferredWorld}, prelude::*, window::PrimaryWindow};
+use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, window::PrimaryWindow};
 
 use crate::constants::{HEIGHT, WIDTH};
 
@@ -11,78 +9,49 @@ impl Plugin for TooltipPlugin {
   }
 }
 
-pub trait Tooltip: Component {
-  type UpdateData: QueryData;
-  type UpdateTrigger: QueryFilter;
-
-  fn check_update(
-    &self,
-    tooltip: Entity,
-    query: &Query<Self::UpdateData, Self::UpdateTrigger>,
-  ) -> bool;
-
-  fn update(
-    &self,
-    tooltip: Entity,
-    query: &Query<Self::UpdateData, Self::UpdateTrigger>,
-  ) -> impl Bundle;
-}
-
 #[derive(Component)]
-#[relationship(relationship_target = RelatedTooltip<T>)]
-#[require(Pickable::default())]
-pub struct TooltipOf<T: Tooltip> {
+#[relationship(relationship_target = RelatedTooltip)]
+#[require(
+  BackgroundColor(Color::WHITE),
+  Outline {
+    width: Val::Px(1.0),
+    color: Color::BLACK,
+    ..default()
+  },
+  TextColor(Color::BLACK),
+  Visibility::Hidden,
+  Pickable::IGNORE,
+)]
+pub struct TooltipOf {
   #[relationship]
   entity: Entity,
-  _marker: PhantomData<T>,
 }
 
 #[derive(Component)]
-#[relationship_target(relationship = TooltipOf<T>, linked_spawn)]
-#[component(on_add = add_hover_observer::<T>)]
-pub struct RelatedTooltip<T: Tooltip> {
+#[relationship_target(relationship = TooltipOf, linked_spawn)]
+#[component(on_add = add_hover_observer)]
+pub struct RelatedTooltip {
   #[relationship]
   tooltip: Entity,
-  _marker: PhantomData<T>,
 }
 
-pub fn update_tooltips<T: Tooltip>(
-  mut commands: Commands,
-  tooltips: Query<(Entity, &T)>,
-  related_tooltips: Query<&RelatedTooltip<T>>,
-  query: Query<T::UpdateData, T::UpdateTrigger>,
-) {
-  for (entity, tooltip) in tooltips {
-    if related_tooltips.get(entity).is_ok() && !tooltip.check_update(entity, &query) {
-      continue;
-    }
-
-    commands
-      .entity(entity)
-      .despawn_related::<RelatedTooltip<T>>()
-      .with_related::<TooltipOf<T>>(
-        tooltip.update(entity, &query)
-      );
-  }
-}
-
-fn add_hover_observer<T: Tooltip>(
+fn add_hover_observer(
   mut world: DeferredWorld,
   context: HookContext,
 ) {
   world
     .commands()
     .entity(context.entity)
-    .observe(over_tooltip::<T>(context.entity))
-    .observe(out_tooltip::<T>(context.entity));
+    .observe(over_tooltip(context.entity))
+    .observe(out_tooltip(context.entity));
 }
 
-fn over_tooltip<T: Tooltip>(
+fn over_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Move>>, Query<&RelatedTooltip<T>>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>) {
+) -> impl FnMut(Trigger<Pointer<Move>>, Query<&RelatedTooltip>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>) {
   move |
     hover: Trigger<Pointer<Move>>,
-    related_tooltip: Query<&RelatedTooltip<T>>,
+    related_tooltip: Query<&RelatedTooltip>,
     mut query: Query<(&mut Visibility, &mut Node, &ComputedNode)>,
     q_window: Query<&Window, With<PrimaryWindow>>,
   | {
@@ -105,12 +74,12 @@ fn over_tooltip<T: Tooltip>(
   }
 }
 
-fn out_tooltip<T: Tooltip>(
+fn out_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Out>>, Query<&RelatedTooltip<T>>, Query<&mut Visibility>) {
+) -> impl FnMut(Trigger<Pointer<Out>>, Query<&RelatedTooltip>, Query<&mut Visibility>) {
   move |
     hover: Trigger<Pointer<Out>>,
-    related_tooltip: Query<&RelatedTooltip<T>>,
+    related_tooltip: Query<&RelatedTooltip>,
     mut nodes: Query<&mut Visibility>,
   | {
     if hover.target != entity { return; }

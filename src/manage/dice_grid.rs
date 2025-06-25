@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile};
+use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile, utils::tooltip::RelatedTooltip};
 
 pub struct DiceGridPlugin;
 
@@ -86,7 +86,7 @@ pub fn update_grid<Faces: Gridable>(
     .despawn_related::<Children>()
     .with_children(|commands | {
       for (x, y, face) in grid {
-        let Face { image, .. } = faces.get(face).unwrap();
+        let Face { prototype, image } = faces.get(face).unwrap();
         commands.spawn((
           Name::new("Face"),
           Node {
@@ -98,7 +98,10 @@ pub fn update_grid<Faces: Gridable>(
           },
           FaceSource::new(face),
           ImageNode::from(image.clone()),
-          Pickable::IGNORE,
+          related!(RelatedTooltip[(
+            Name::new("Face tooltip"),
+            Text::new(prototype.description()),
+          )]),
         ));
       }
     });

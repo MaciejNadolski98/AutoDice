@@ -168,6 +168,15 @@ impl FacePrototype {
     self.background = background;
     self
   }
+
+  pub fn description(&self) -> String {
+    let mut ret: String = self.action.description().into();
+    if let Some(background_description) = self.background.description() {
+      ret += "\n";
+      ret.push_str(&background_description);
+    }
+    ret
+  }
 }
 
 pub mod face_prototypes {

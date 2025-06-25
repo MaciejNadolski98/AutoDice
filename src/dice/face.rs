@@ -211,3 +211,6 @@ fn activate_face_cameras(
     cameras.get_mut(*camera).unwrap().is_active = true;
   }
 }
+
+#[derive(Default, Component)]
+struct FaceTooltip;
