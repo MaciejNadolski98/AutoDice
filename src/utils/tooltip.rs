@@ -81,7 +81,6 @@ fn over_tooltip(
     let Some(cursor_position) = window.cursor_position() else { return; };
     let (mut visibility, mut node, computed_node) = query.get_mut(tooltip).unwrap();
     *visibility = Visibility::Visible;
-    info!("Cursor position: {:#?}", cursor_position);
     if cursor_position.x < RESOLUTION_WIDTH / 2.0 {
       node.left = Val::Px(cursor_position.x);
     } else {

@@ -1,11 +1,12 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf}, tile::Tile}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf, DiceGridPlugin}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_plugins(DiceGridPlugin)
       .init_resource::<ShopRound>()
       .add_systems(OnEnter(GameState::Manage), (spawn_enemy, spawn_shop, spawn_manage).chain())
       .add_systems(OnExit(GameState::Manage), (despawn_shop, despawn_manage).chain())
