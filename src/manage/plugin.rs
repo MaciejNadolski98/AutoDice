@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, GRID_FACE_SIZE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf, DiceGridPlugin}, tile::Tile}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf, DiceGridPlugin}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -342,6 +342,7 @@ fn overlap_tile_template(
   grids: Query<&DiceGrid, With<DiceTemplate>>,
   my_team: Single<&Children, With<MyTeam>>,
   overlap_indicators: Query<Entity, With<OverlapIndicator>>,
+  computed: Query<&ComputedNode>,
 ) -> OverlapTileTemplateOutput {
   let grid = *grid;
   // Cleanup
@@ -357,7 +358,8 @@ fn overlap_tile_template(
       let template_grid = grids.get(template).unwrap().grid();
       for &template_face_node in children.get(template_grid).unwrap() {
         let template_face_position = transforms.get(template_face_node).unwrap().translation();
-        if face_position.distance(template_face_position) < GRID_FACE_SIZE {
+        let tile_size = computed.get(template_face_node).unwrap().size.x;
+        if face_position.distance(template_face_position) < tile_size / 2.0 {
           matches.push((face_node, (template, template_face_node)));
         }
       }
