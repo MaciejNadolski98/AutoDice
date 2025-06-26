@@ -7,7 +7,11 @@ pub struct DiceGridPlugin;
 impl Plugin for DiceGridPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Update, (update_grids::<Tile>, update_grids::<DiceTemplate>, update_grids::<Dice>));
+      .add_systems(Update, (
+        register_changes::<Tile>, update_grids::<Tile>,
+        register_changes::<DiceTemplate>, update_grids::<DiceTemplate>,
+        register_changes::<Dice>, update_grids::<Dice>,
+      ));
   }
 }
 
@@ -35,6 +39,9 @@ pub struct DiceGrid {
   grid: Entity,
 }
 
+#[derive(Component)]
+struct UpdateGrid;
+
 impl DiceGrid {
   pub fn grid(&self) -> Entity {
     self.grid
@@ -49,62 +56,67 @@ impl DiceGrid {
           display: Display::Grid,
           ..default()
         },
+        UpdateGrid,
       ))
   }
 }
 
-fn update_grids<Faces: Gridable>(
+fn register_changes<Faces: Gridable>(
   changed_face: Query<&ChildOf, Changed<Face>>,
-  collection: Query<(), (With<Faces>, With<DiceGrid>)>,
+  collection: Query<&DiceGrid, With<Faces>>,
   mut commands: Commands,
 ) {
   for ChildOf(collection_entity) in changed_face {
-    if collection.get(*collection_entity).is_ok() {
-      commands.run_system_cached_with(update_grid::<Faces>, *collection_entity);
+    if let Ok(DiceGrid { grid }) = collection.get(*collection_entity) {
+      commands
+        .entity(*grid)
+        .insert(UpdateGrid);
     }
   }
 }
 
-pub fn update_grid<Faces: Gridable>(
-  input: In<Entity>,
+fn update_grids<Faces: Gridable>(
   mut commands: Commands,
-  collections: Query<(&Faces, &DiceGrid)>,
+  grids: Query<(Entity, &DiceGridOf), With<UpdateGrid>>,
+  collections: Query<&Faces>,
   faces: Query<&Face>,
   children: Query<&Children>,
 ) {
-  let collection_entity = *input;
-  let (collection, DiceGrid { grid: grid_entity }) = collections.get(collection_entity).unwrap();
-  let grid = collection
-    .grid()
-    .into_iter()
-    .zip(children.get(collection_entity).unwrap())
-    .map(|((x, y), face_entity)| (
-      GridPlacement::start_span(x as i16, 1),
-      GridPlacement::start_span(y as i16, 1),
-      *face_entity,
-    ));
-  commands
-    .entity(*grid_entity)
-    .despawn_related::<Children>()
-    .with_children(|commands | {
-      for (x, y, face) in grid {
-        let Face { prototype, image } = faces.get(face).unwrap();
-        commands.spawn((
-          Name::new("Face"),
-          Node {
-            grid_column: x,
-            grid_row: y,
-            width: Val::Px(GRID_FACE_SIZE),
-            height: Val::Px(GRID_FACE_SIZE),
-            ..default()
-          },
-          FaceSource::new(face),
-          ImageNode::from(image.clone()),
-          related!(Tooltip[(
-            Name::new("Face tooltip"),
-            Text::new(prototype.description()),
-          )]),
-        ));
-      }
-    });
+  for (grid_entity, DiceGridOf { collection: collection_entity }) in grids {
+    let Ok(collection) = collections.get(*collection_entity) else { continue };
+    let grid = collection
+      .grid()
+      .into_iter()
+      .zip(children.get(*collection_entity).unwrap())
+      .map(|((x, y), face_entity)| (
+        GridPlacement::start_span(x as i16, 1),
+        GridPlacement::start_span(y as i16, 1),
+        *face_entity,
+      ));
+    commands
+      .entity(grid_entity)
+      .despawn_related::<Children>()
+      .with_children(|commands | {
+        for (x, y, face) in grid {
+          let Face { prototype, image } = faces.get(face).unwrap();
+          commands.spawn((
+            Name::new("Face"),
+            Node {
+              grid_column: x,
+              grid_row: y,
+              width: Val::Px(GRID_FACE_SIZE),
+              height: Val::Px(GRID_FACE_SIZE),
+              ..default()
+            },
+            FaceSource::new(face),
+            ImageNode::from(image.clone()),
+            related!(Tooltip[(
+              Name::new("Face tooltip"),
+              Text::new(prototype.description()),
+            )]),
+          ));
+        }
+      })
+      .remove::<UpdateGrid>();
+  }
 }
