@@ -55,11 +55,14 @@ impl DiceGrid {
 }
 
 fn update_grids<Faces: Gridable>(
-  collections: Query<Entity, (With<Faces>, Changed<Children>)>,
+  changed_face: Query<&ChildOf, Changed<Face>>,
+  collection: Query<(), (With<Faces>, With<DiceGrid>)>,
   mut commands: Commands,
 ) {
-  for collection in collections {
-    commands.run_system_cached_with(update_grid::<Faces>, collection);
+  for ChildOf(collection_entity) in changed_face {
+    if collection.get(*collection_entity).is_ok() {
+      commands.run_system_cached_with(update_grid::<Faces>, *collection_entity);
+    }
   }
 }
 
