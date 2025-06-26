@@ -6,6 +6,8 @@ use bevy::prelude::*;
 use crate::constants::DICE_SIZE;
 use crate::dice::dice_instance::DiceEntityMap;
 use crate::dice::{Dice, DiceID, DiceTemplate, Face};
+use crate::manage::DiceGrid;
+use crate::utils::tooltip::TooltipOf;
 
 pub struct DiceRenderPlugin;
 
@@ -147,10 +149,15 @@ pub fn spawn_dice(
     ))
     .with_children(|commands| {
       for face in face_vector {
-        commands.spawn(face);
+        commands.spawn((face, Pickable::IGNORE));
       }
     })
     .id();
+  commands
+    .entity(dice_entity)
+    .with_related_entities::<TooltipOf>(|commands| {
+      DiceGrid::spawn(commands, dice_entity);
+    });
 
   dice_entity_map.0.insert(dice_id, dice_entity);
 }

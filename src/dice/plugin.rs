@@ -19,6 +19,7 @@ pub struct DicePlugin;
 impl Plugin for DicePlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_plugins(MeshPickingPlugin)
       .add_plugins((
         DiceEventsPlugin,
         AnimationPlugin,

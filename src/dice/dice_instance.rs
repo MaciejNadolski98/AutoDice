@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
 use crate::dice::events::SpawnDices;
+use crate::dice::Gridable;
 use crate::manage::plugin::{EnemyTeam, MyTeam};
 use crate::states::GameState;
 use crate::utils::*;
@@ -40,6 +41,12 @@ pub struct Dice {
   max_hp: u32,
   current_hp: u32,
   row_position: usize,
+}
+
+impl Gridable for Dice {
+  fn grid(&self) -> Vec<(i16, i16)> {
+    vec![(2, 1), (1, 2), (3, 2), (2, 2), (2, 3), (2, 4)]
+  }
 }
 
 impl Dice {
