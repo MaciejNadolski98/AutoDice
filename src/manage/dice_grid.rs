@@ -1,13 +1,13 @@
-use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
+use bevy::{ecs::relationship::{RelatedSpawnerCommands, Relationship}, prelude::*};
 
-use crate::{constants::GRID_FACE_SIZE, dice::{DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile, utils::tooltip::Tooltip};
+use crate::{constants::GRID_FACE_SIZE, dice::{Dice, DiceTemplate, Face, FaceSource, Gridable}, manage::tile::Tile, utils::tooltip::Tooltip};
 
 pub struct DiceGridPlugin;
 
 impl Plugin for DiceGridPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Update, (update_grids::<Tile>, update_grids::<DiceTemplate>));
+      .add_systems(Update, (update_grids::<Tile>, update_grids::<DiceTemplate>, update_grids::<Dice>));
   }
 }
 
@@ -40,7 +40,7 @@ impl DiceGrid {
     self.grid
   }
 
-  pub fn spawn<'a>(commands: &'a mut RelatedSpawnerCommands<ChildOf>, gridable: Entity) -> EntityCommands<'a> {
+  pub fn spawn<'a, R: Relationship>(commands: &'a mut RelatedSpawnerCommands<R>, gridable: Entity) -> EntityCommands<'a> {
     commands
       .spawn((
         Name::new("Dice grid"),
@@ -49,7 +49,6 @@ impl DiceGrid {
           display: Display::Grid,
           ..default()
         },
-        Pickable::default(),
       ))
   }
 }

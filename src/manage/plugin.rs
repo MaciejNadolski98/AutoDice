@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{update_grid, DiceGrid, DiceGridOf, DiceGridPlugin}, tile::Tile}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::Tile}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -161,8 +161,6 @@ fn spawn_manage(
       )).with_children(|mut commands| {
         for &template in *my_team {
           DiceGrid::spawn(&mut commands, template);
-
-          commands.commands().run_system_cached_with(update_grid::<DiceTemplate>, template);
         }
       });
       commands.spawn((
@@ -205,8 +203,6 @@ fn spawn_manage(
                     .pipe(apply_tile)
                 );
             });
-
-          commands.commands().run_system_cached_with(update_grid::<Tile>, tile);
         }
       });
     });
