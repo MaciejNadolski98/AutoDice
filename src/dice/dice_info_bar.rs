@@ -137,14 +137,8 @@ fn spawn_dice_info_bars(
       .with_children(|commands| {
         commands.spawn((Name::new("Health bar"), Transform::from_translation(HEALTH_BAR_POSITION), Visibility::default())).with_children(|commands|{
           commands.spawn((
-            Name::new("Colored bar"),
-            Sprite::from_color(Color::srgb(0.5, 0.5, 0.5), Vec2::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)),
-            BATTLE_OVERLAY_LAYER,
-          ));
-
-          commands.spawn((
             Name::new("Gray background"),
-            Sprite::from_color(Color::srgb(0.0, 1.0, 0.0), Vec2::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)),
+            Sprite::from_color(Color::srgb(0.1, 0.1, 0.1), Vec2::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)),
             BATTLE_OVERLAY_LAYER,
             HealthIndicatorOf { dice: dice_entity },
           ));
@@ -167,18 +161,29 @@ fn update_dice_info_bar_positions(
 }
 
 fn update_health_bar_indicator(
-  mut health_bars: Query<(&HealthIndicatorOf, &mut Sprite, &mut Transform)>,
-  dices: Query<&Dice, Changed<Dice>>,
+  dices: Query<(&Dice, &HealthIndicator), Changed<Dice>>,
+  mut commands: Commands,
 ) {
-  for (health_indicator_of, mut sprite, mut transform) in health_bars.iter_mut() {
-    if let Ok(dice) = dices.get(health_indicator_of.dice) {
-      let width = (dice.current_hp() as f32 / dice.max_hp() as f32) * HEALTH_BAR_WIDTH;
-      sprite.custom_size = Some(Vec2::new(width, HEALTH_BAR_HEIGHT));
-      transform.translation.x = -(HEALTH_BAR_WIDTH - width) / 2.0;
-
-      let percentage = dice.current_hp() as f32 / dice.max_hp() as f32;
-      sprite.color = health_color(percentage);
-    }
+  for (dice, &HealthIndicator { indicator }) in dices {
+    commands
+      .entity(indicator)
+      .despawn_related::<Children>()
+      .with_children(|commands| {
+        let segment_width = (HEALTH_BAR_WIDTH - HEALTH_BAR_MARGIN) / (dice.max_hp() as f32) - HEALTH_BAR_MARGIN;
+        let segment_height = HEALTH_BAR_HEIGHT - 2.0 * HEALTH_BAR_MARGIN;
+        for i in 0..dice.current_hp() {
+          let segment_x = (-HEALTH_BAR_WIDTH + segment_width + HEALTH_BAR_MARGIN) / 2.0 + (i as f32) * (segment_width + HEALTH_BAR_MARGIN);
+          commands.spawn((
+            Name::new("Health segment"),
+            Sprite::from_color(
+              health_color(dice.current_hp() as f32 / dice.max_hp() as f32),
+              Vec2::new(segment_width, segment_height),
+            ),
+            Transform::from_translation(segment_x * Vec3::X),
+            BATTLE_OVERLAY_LAYER,
+          ));
+        }
+      });
   }
 }
 
