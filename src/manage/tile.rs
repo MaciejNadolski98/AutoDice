@@ -8,6 +8,16 @@ pub struct Tile {
   grid: Vec<(i16, i16)>,
 }
 
+pub trait Buyable {
+  fn price(&self) -> u32;
+}
+
+impl Buyable for Tile {
+  fn price(&self) -> u32 {
+    2
+  }
+}
+
 impl Gridable for Tile {
   fn grid(&self) -> Vec<(i16, i16)> {
     self.grid.clone()
@@ -22,7 +32,7 @@ impl Tile {
       .with_children(|commands|{
         for _ in 0..faces_count {
           let prototype = random_face();
-          commands.spawn(Face::from_prototype(prototype, &mut images));
+          Face::from_prototype(prototype, &mut images).spawn(commands);
         }
     });
   }

@@ -1,4 +1,4 @@
-use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages}};
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*, render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages}};
 use bevy_defer::AccessError;
 
 use crate::{constants::{dice_texture::{FONT_SIZE, OFFSET, PIPS_POSITION, SCALING_FACTOR, TARGET_SIZE}, DICE_FACES_LAYER}, dice::{action::{resolve, ResolutionContext}, dice_template::FacePrototype, DiceID}, loading_screen::AssetStore};
@@ -15,13 +15,17 @@ impl Plugin for FacePlugin {
 }
 
 #[derive(Component, Default, Clone, Debug, PartialEq, Eq, Hash)]
-#[component(on_add = initialize_face)]
 pub struct Face {
   pub prototype: FacePrototype,
   pub image: Handle<Image>,
 }
 
 impl Face {
+  pub fn spawn(self, commands: &mut RelatedSpawnerCommands<ChildOf>) {
+    let entity = commands.spawn(self).id();
+    commands.commands().run_system_cached_with(initialize_face, entity);
+  }
+
   pub fn from_prototype(prototype: FacePrototype, images: &mut Assets<Image>) -> Self {
     Self { prototype, image: build_face_image(images) }
   }
@@ -115,18 +119,17 @@ pub fn build_face_image(images: &mut Assets<Image>) -> Handle<Image> {
 struct FaceCounter(u32);
 
 fn initialize_face(
-  mut world: DeferredWorld,
-  context: HookContext,
+  face_entity: In<Entity>,
+  faces: Query<&Face>,
+  mut face_counter: ResMut<FaceCounter>,
+  mut commands: Commands,
 ) {
-  let entity = context.entity;
-  let face = world.get::<Face>(entity).unwrap().clone();
-  let mut face_counter = world.resource_mut::<FaceCounter>();
+  let face = faces.get(*face_entity).unwrap();
   let position = Vec3::X * TARGET_SIZE * (**face_counter as f32);
   face_counter.0 += 1;
 
-  world
-    .commands()
-    .entity(entity)
+  commands
+    .entity(*face_entity)
     .with_related::<FaceRootOf>((
         Name::new("Dice face root"),
         Visibility::Visible,

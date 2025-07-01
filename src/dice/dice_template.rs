@@ -48,7 +48,7 @@ impl DiceTemplateBuilder {
       .spawn(template)
       .with_children(|commands| {
         self.faces.clone().unwrap().map(|face|{
-          commands.spawn(Face::from_prototype(face, &mut images));
+          Face::from_prototype(face, &mut images).spawn(commands);
         });
       });
   }

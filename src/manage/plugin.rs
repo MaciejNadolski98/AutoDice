@@ -1,21 +1,26 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, ROUND_NUMBER_SIZE}, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::Tile}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
 
 pub struct ManagePlugin;
 
 impl Plugin for ManagePlugin {
   fn build(&self, app: &mut App) {
     app
+      .init_resource::<Coins>()
       .add_plugins(DiceGridPlugin)
       .init_resource::<ShopRound>()
       .add_systems(OnEnter(GameState::Manage), (spawn_enemy, spawn_shop, spawn_manage).chain())
       .add_systems(OnExit(GameState::Manage), (despawn_shop, despawn_manage).chain())
-      .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)));
+      .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)))
+      .add_systems(Update, (update_coins, refresh_shop, update_shop_spots).run_if(in_state(GameState::Manage)));
   }
 }
 
-#[derive(Resource, Default)]
-pub struct ShopRound(pub u32);
+#[derive(Resource, Default, Deref, DerefMut)]
+pub struct Coins(u32);
+
+#[derive(Resource, Default, Deref, DerefMut)]
+pub struct ShopRound(u32);
 
 #[derive(Component)]
 struct ManageScreen;
@@ -24,6 +29,18 @@ struct ManageScreen;
 enum ButtonAction {
     Battle,
     BackToMenu,
+}
+
+#[derive(Component)]
+struct CoinsDisplay;
+
+fn update_coins(
+  display: Single<&mut Text, With<CoinsDisplay>>,
+  coins: Res<Coins>,
+) {
+  if !coins.is_changed() { return; }
+
+  *display.into_inner() = Text::new(format!("Coins: {}", **coins));
 }
 
 #[derive(Component)]
@@ -54,6 +71,14 @@ pub fn spawn_enemy(
 #[derive(Component)]
 pub struct Shop;
 
+#[derive(Component)]
+#[relationship(relationship_target = ShopSpotOf)]
+pub struct ShopSpot(Entity);
+
+#[derive(Component)]
+#[relationship_target(relationship = ShopSpot)]
+pub struct ShopSpotOf(Entity);
+
 fn spawn_shop(
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
@@ -64,13 +89,70 @@ fn spawn_shop(
     ))
     .with_children(|commands| {
       for _ in 0..SHOP_ITEMS_COUNT {
-        commands.spawn(
-          Name::new("Shop spot"),
-        ).with_children(|mut commands| {
-          Tile::spawn(&mut images, &mut commands);
-        });
+        commands
+          .spawn((
+            Name::new("Shop spot"),
+          ))
+          .with_children(|mut commands| {
+            Tile::spawn(&mut images, &mut commands);
+          });
       }
     });
+}
+
+fn update_shop_spots(
+  mut commands: Commands,
+  shop_spots: Query<(&Children, &ShopSpotOf), Changed<Children>>,
+) {
+  for (children, ShopSpotOf(spot)) in shop_spots {
+    if children.len() == 0 { continue };
+    assert!(children.len() == 1);
+    let child = children[0];
+
+    commands
+      .entity(*spot)
+      .with_children(|mut commands| {
+        let grid_tile = DiceGrid::spawn(&mut commands, child).id();
+
+        commands.commands()
+          .entity(grid_tile)
+          .observe(drag_tile(grid_tile))
+          .observe(
+            on_drag(grid_tile)
+              .pipe(overlap_tile_template)
+              .pipe(mark_faces)
+          )
+          .observe(
+            on_release(grid_tile)
+              .pipe(overlap_tile_template)
+              .pipe(apply_tile)
+          );
+      });
+  }
+}
+
+#[derive(Component)]
+struct RefreshButton;
+
+fn refresh_shop(
+  mut commands: Commands,
+  shop_spots: Query<Entity, With<ShopSpotOf>>,
+  mut images: ResMut<Assets<Image>>,
+  button: Option<Single<&Interaction, (With<RefreshButton>, Changed<Interaction>)>>,
+  mut coins: ResMut<Coins>,
+) {
+  if button.is_none() || **button.unwrap() != Interaction::Pressed || **coins < REFRESH_PRICE {
+    return;
+  }
+  **coins -= REFRESH_PRICE;
+  for spot in shop_spots {
+    commands
+      .entity(spot)
+      .despawn_related::<Children>()
+      .with_children(|mut commands| {
+        Tile::spawn(&mut images, &mut commands);
+      });
+  }
 }
 
 fn despawn_shop(
@@ -86,8 +168,8 @@ fn spawn_manage(
   mut commands: Commands,
   my_team: Single<&Children, With<MyTeam>>,
   shop: Single<&Children, With<Shop>>,
-  children: Query<&Children>,
   shop_round: Res<ShopRound>,
+  asset_store: Res<AssetStore>,
 ) {
   commands.spawn((
     Name::new("Manage"),
@@ -132,6 +214,24 @@ fn spawn_manage(
       ));
 
       commands.spawn((
+        Name::new("Coins display"),
+        Node {
+          position_type: PositionType::Absolute,
+          bottom: Val::Px(0.0),
+          right: Val::Px(0.0),
+          ..default()
+        },
+        Text::new(""),
+        TextFont {
+          font_size: COINS_NUMBER_SIZE,
+          ..default()
+        },
+        TextColor(Color::BLACK),
+        ZIndex(1),
+        CoinsDisplay,
+      ));
+
+      commands.spawn((
         Name::new("Synergies"),
         Node {
           position_type: PositionType::Absolute,
@@ -172,8 +272,23 @@ fn spawn_manage(
         },
         BackgroundColor(Color::srgb(0.8, 0.6, 0.4)),
       )).with_children(|commands| {
+        commands.spawn((
+          Name::new("Refresh button"),
+          Button,
+          RefreshButton,
+          Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            width: REFRESH_BUTTON_SIZE,
+            height: REFRESH_BUTTON_SIZE,
+            ..default()
+          },
+          ImageNode::new(asset_store.get("ui/refresh.png")),
+        ));
+
+
         for &shop_spot in *shop {
-          let &tile = children.get(shop_spot).unwrap().first().unwrap();
           commands
             .spawn((
               Name::new("Shop spot"),
@@ -184,25 +299,9 @@ fn spawn_manage(
                 justify_content: JustifyContent::Center,
                 ..default()
               },
+              ShopSpot(shop_spot),
               Pickable::IGNORE,
-            ))
-            .with_children(|mut commands| {
-              let grid_tile = DiceGrid::spawn(&mut commands, tile).id();
-
-              commands.commands()
-                .entity(grid_tile)
-                .observe(drag_tile(grid_tile))
-                .observe(
-                  on_drag(grid_tile)
-                    .pipe(overlap_tile_template)
-                    .pipe(mark_faces)
-                )
-                .observe(
-                  on_release(grid_tile)
-                    .pipe(overlap_tile_template)
-                    .pipe(apply_tile)
-                );
-            });
+            ));
         }
       });
     });
@@ -420,16 +519,21 @@ fn apply_tile(
   face_sources: Query<&FaceSource>,
   mut faces: Query<&mut Face>,
   grids: Query<&DiceGridOf>,
+  mut coins: ResMut<Coins>,
+  tiles: Query<&Tile>,
   mut commands: Commands,
 ) {
   let In(OverlapTileTemplateOutput { grid, matched, matches }) = input;
-  if !matched {
+  let tile = grids.get(grid).unwrap().collection();
+  let price = tiles.get(tile).unwrap().price();
+  if !matched || **coins < price {
     let mut node = nodes.get_mut(grid).unwrap();
     node.position_type = PositionType::Relative;
     node.left = Val::Auto;
     node.top = Val::Auto;
     return;
   }
+  **coins -= price;
 
   for (tile_node, template_node) in matches {
     let tile_face = face_sources.get(tile_node).unwrap().source();
@@ -440,7 +544,6 @@ fn apply_tile(
     template_face.prototype.action = tile_face.prototype.action;
     template_face.prototype.pips = tile_face.prototype.pips;
   }
-  let tile = grids.get(grid).unwrap().collection();
   commands.entity(tile).despawn();
 }
 
