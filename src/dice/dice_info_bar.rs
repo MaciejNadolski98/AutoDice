@@ -179,7 +179,7 @@ fn update_health_bar_indicator(
               health_color(dice.current_hp() as f32 / dice.max_hp() as f32),
               Vec2::new(segment_width, segment_height),
             ),
-            Transform::from_translation(segment_x * Vec3::X),
+            Transform::from_translation(segment_x * Vec3::X + Vec3::Z),
             BATTLE_OVERLAY_LAYER,
           ));
         }
