@@ -16,7 +16,6 @@ impl Plugin for FloatingTextPlugin {
 pub struct SpawnFloatingText {
   pub text: String,
   pub position: Vec3,
-  #[allow(unused)]
   pub color: Color,
 }
 

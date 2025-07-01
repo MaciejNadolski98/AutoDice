@@ -3,7 +3,7 @@ use bevy_defer::{AccessError, AsyncAccess, AsyncCommandsExtension, AsyncWorld};
 
 use crate::camera::SwapBattleCamera;
 use crate::constants::{BATTLE_OVERLAY_LAYER, DICE_SIZE, HEIGHT, WIDTH};
-use crate::manage::plugin::{EnemyTeam, MyTeam, ShopRound};
+use crate::manage::plugin::{Coins, EnemyTeam, MyTeam, ShopRound};
 use crate::states::GameState;
 use crate::dice::{move_dices_to_rows, resolve_dices, roll_dices, Dice};
 use crate::utils::*;
@@ -56,10 +56,11 @@ async fn flow() -> Result<(), AccessError> {
 
     if let Some(won) = done().await? {
       if won {
-        if AsyncWorld.resource::<ShopRound>().get(|round| round.0)? == 4 {
+        if AsyncWorld.resource::<ShopRound>().get(|round| **round)? == 4 {
           end_game("WON!").await?;
         } else {
-          AsyncWorld.resource::<ShopRound>().get_mut(|round| round.0 += 1)?;
+          AsyncWorld.resource::<ShopRound>().get_mut(|round| **round += 1)?;
+          AsyncWorld.resource::<Coins>().get_mut(|coins| **coins += 5)?;
           AsyncWorld.set_state(GameState::Manage)?;
         }
       } else {

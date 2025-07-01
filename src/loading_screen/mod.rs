@@ -56,7 +56,7 @@ fn populate_asset_store(
   asset_server: Res<AssetServer>,
   mut asset_store: ResMut<AssetStore>,
 ) {
-  for name in [
+  for action in [
     Action::Empty,
     Action::Attack,
     Action::Defend,
@@ -64,9 +64,17 @@ fn populate_asset_store(
     Action::Fire,
     Action::Fiery,
   ] {
-    let handle = asset_server.load::<Image>(Into::<&'static str>::into(name));
-    asset_store.load(name.into(), handle.into());
+    let handle = asset_server.load::<Image>(Into::<&'static str>::into(action));
+    asset_store.load(action.into(), handle.into());
   }
+
+  for name in [
+    "ui/refresh.png",
+  ] {
+    let handle = asset_server.load::<Image>(name);
+    asset_store.load(name, handle.into());
+  }
+
   {
     let name = "autodicetable.gltf";
     let handle = asset_server.load::<Scene>(GltfAssetLabel::Scene(0).from_asset(name));

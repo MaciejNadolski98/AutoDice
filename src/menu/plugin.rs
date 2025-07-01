@@ -1,5 +1,5 @@
 use bevy::{prelude::*, app::AppExit, ui::Interaction};
-use crate::{dice::{DiceTemplateBuilder}, manage::plugin::{MyTeam, ShopRound}, states::GameState};
+use crate::{dice::DiceTemplateBuilder, manage::plugin::{Coins, MyTeam, ShopRound}, states::GameState};
 
 pub struct MenuPlugin;
 
@@ -106,11 +106,13 @@ fn button_actions(
 
 fn new_game(
   mut shop_round: ResMut<ShopRound>,
+  mut coins: ResMut<Coins>,
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
   mut game_state: ResMut<NextState<GameState>>,
 ) {
-  shop_round.0 = 1;
+  **coins = 5;
+  **shop_round = 1;
   commands.spawn((
     Name::new("My team"),
     MyTeam,

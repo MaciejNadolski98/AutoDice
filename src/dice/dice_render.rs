@@ -149,7 +149,7 @@ pub fn spawn_dice(
     ))
     .with_children(|commands| {
       for face in face_vector {
-        commands.spawn((face, Pickable::IGNORE));
+        face.spawn(commands);
       }
     })
     .id();
