@@ -9,7 +9,6 @@ use crate::utils::*;
 
 use super::animation::get_dice_entity;
 use super::dice_render::spawn_dice;
-use super::dice_template::DiceTemplate;
 use super::events::DiceDied;
 use super::roll::get_face_id;
 
@@ -38,9 +37,22 @@ pub struct DiceID {
 #[derive(Component, Default, Clone)]
 pub struct Dice {
   id: DiceID,
-  max_hp: u32,
-  current_hp: u32,
   row_position: usize,
+}
+
+#[derive(Component, Clone)]
+pub struct Health {
+  pub max: u32,
+  pub current: u32,
+}
+
+impl Health {
+  pub fn new(hp: u32) -> Self {
+    Self {
+      max: hp,
+      current: hp,
+    }
+  }
 }
 
 impl Gridable for Dice {
@@ -50,14 +62,11 @@ impl Gridable for Dice {
 }
 
 impl Dice {
-  pub fn build(
-    template: DiceTemplate,
+  pub fn new(
     dice_id: DiceID,
   ) -> Self {
     let mut dice = Dice::default();
     dice.set_id(dice_id);
-    dice.set_max_hp(template.hp);
-    dice.set_current_hp(template.hp);
     dice.set_row_position(dice_id.dice_id);
     dice
   }
@@ -66,28 +75,12 @@ impl Dice {
     self.id
   }
 
-  pub fn max_hp(&self) -> u32 {
-    self.max_hp
-  }
-
-  pub fn current_hp(&self) -> u32 {
-    self.current_hp
-  }
-
   pub fn row_position(&self) -> usize {
     self.row_position
   }
 
   pub fn set_id(&mut self, id: DiceID) {
     self.id = id;
-  }
-
-  pub fn set_max_hp(&mut self, max_hp: u32) {
-    self.max_hp = max_hp;
-  }
-  
-  pub fn set_current_hp(&mut self, current_hp: u32) {
-    self.current_hp = current_hp;
   }
 
   pub fn set_row_position(&mut self, row_position: usize) {

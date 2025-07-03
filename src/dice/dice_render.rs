@@ -4,8 +4,8 @@ use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::prelude::*;
 
 use crate::constants::DICE_SIZE;
-use crate::dice::dice_instance::DiceEntityMap;
-use crate::dice::{Dice, DiceID, DiceTemplate, Face};
+use crate::dice::dice_instance::{DiceEntityMap, Health};
+use crate::dice::{Dice, DiceID, Face};
 use crate::manage::DiceGrid;
 use crate::utils::tooltip::TooltipOf;
 
@@ -120,14 +120,14 @@ pub fn spawn_dice(
   mut commands: Commands,
   mut materials: ResMut<Assets<DiceMaterial>>,
   mut dice_entity_map: ResMut<DiceEntityMap>,
-  templates: Query<&DiceTemplate>,
+  healths: Query<&Health>,
   faces: Query<&Face>,
   children: Query<&Children>,
 ) {
-  let (dice_id, template) = *input;
+  let (dice_id, template_entity) = *input;
   let mut face_vector = Vec::new();
   let mut image_vector = Vec::new();
-  for &face_template in children.get(template).unwrap() {
+  for &face_template in children.get(template_entity).unwrap() {
     let face = Face::from_other(faces.get(face_template).unwrap(), &mut images);
     face_vector.push(face.clone());
     image_vector.push(face.image.clone());
@@ -135,6 +135,7 @@ pub fn spawn_dice(
 
   let mesh = DiceMeshBuilder.build();
   let handle = meshes.add(mesh.clone());
+  let health = healths.get(template_entity).unwrap();
 
   let dice_entity = commands.spawn((
       Name::new("Dice instance"),
@@ -142,7 +143,8 @@ pub fn spawn_dice(
       MeshMaterial3d(materials.add(DiceMaterial::new(image_vector))),
       RigidBody::Dynamic,
       Collider::cuboid(1.0, 1.0, 1.0),
-      Dice::build(templates.get(template).unwrap().clone(), dice_id),
+      Dice::new(dice_id),
+      health.clone(),
       Transform::from_translation(Vec3::new(0.0, 0.0, DICE_SIZE * 0.5))
         .with_scale(Vec3::splat(DICE_SIZE)),
       RigidBodyDisabled,

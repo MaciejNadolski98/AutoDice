@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use bevy_defer::{fetch, AccessError, AsyncAccess, AsyncWorld};
 
+use crate::dice::dice_instance::Health;
 use crate::dice::status::Status;
-use crate::dice::{animation::get_dice_entity, events::DiceDied, Dice, DiceID};
+use crate::dice::{animation::get_dice_entity, events::DiceDied, DiceID};
 use crate::utils::*;
 use crate::battle::SpawnFloatingText;
 
@@ -15,9 +16,9 @@ pub async fn damage(
   let entity = get_dice_entity(dice_id).await?;
   let position = fetch!(entity, Transform).get(|t| t.translation)?;
   AsyncWorld.send_event(SpawnFloatingText::new(format!("-{}", damage), position).with_color(color))?;
-  fetch!(entity, Dice).get_mut(|dice| {
-    let new_hp = dice.current_hp().saturating_sub(damage);
-    dice.set_current_hp(new_hp);
+  fetch!(entity, Health).get_mut(|Health { current, .. }| {
+    let new_hp = current.saturating_sub(damage);
+    *current = new_hp;
     if new_hp == 0 {
       died = true;
     }
@@ -38,9 +39,9 @@ pub async fn heal(
     SpawnFloatingText::new(format!("+{}", heal_amount), position)
       .with_color(Color::linear_rgb(0.0, 1.0, 0.0))
   )?;
-  fetch!(entity, Dice).get_mut(|dice| {
-    let new_hp = (dice.current_hp() + heal_amount).min(dice.max_hp());
-    dice.set_current_hp(new_hp);
+  fetch!(entity, Health).get_mut(|Health { max, current}| {
+    let new_hp = (*current + heal_amount).min(*max);
+    *current = new_hp;
   })?;
   Ok(())
 }
