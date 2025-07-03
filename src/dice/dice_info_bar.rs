@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use super::events::SpawnDices;
 use super::dice_instance::Dice;
 
-use crate::{constants::{dice_info_bar::*, BATTLE_OVERLAY_LAYER}, dice::status::{Burning, Regeneration, Status}, states::GameState};
+use crate::{constants::{dice_info_bar::*, BATTLE_OVERLAY_LAYER}, dice::{dice_instance::Health, status::{Burning, Regeneration, Status}}, states::GameState};
 
 pub struct DiceInfoBarPlugin;
 
@@ -161,22 +161,22 @@ fn update_dice_info_bar_positions(
 }
 
 fn update_health_bar_indicator(
-  dices: Query<(&Dice, &HealthIndicator), Changed<Dice>>,
+  dices: Query<(&Health, &HealthIndicator), Changed<Health>>,
   mut commands: Commands,
 ) {
-  for (dice, &HealthIndicator { indicator }) in dices {
+  for (health, &HealthIndicator { indicator }) in dices {
     commands
       .entity(indicator)
       .despawn_related::<Children>()
       .with_children(|commands| {
-        let segment_width = (HEALTH_BAR_WIDTH - HEALTH_BAR_MARGIN) / (dice.max_hp() as f32) - HEALTH_BAR_MARGIN;
+        let segment_width = (HEALTH_BAR_WIDTH - HEALTH_BAR_MARGIN) / (health.max as f32) - HEALTH_BAR_MARGIN;
         let segment_height = HEALTH_BAR_HEIGHT - 2.0 * HEALTH_BAR_MARGIN;
-        for i in 0..dice.current_hp() {
+        for i in 0..health.current {
           let segment_x = (-HEALTH_BAR_WIDTH + segment_width + HEALTH_BAR_MARGIN) / 2.0 + (i as f32) * (segment_width + HEALTH_BAR_MARGIN);
           commands.spawn((
             Name::new("Health segment"),
             Sprite::from_color(
-              health_color(dice.current_hp() as f32 / dice.max_hp() as f32),
+              health_color(health.current as f32 / health.max as f32),
               Vec2::new(segment_width, segment_height),
             ),
             Transform::from_translation(segment_x * Vec3::X + Vec3::Z),

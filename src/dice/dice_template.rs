@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::dice::{background::FaceBackground, dice_template::{face_prototypes::{ATTACK_STRONG, ATTACK_STRONG_CRUEL, ATTACK_WEAK, DEFEND, FIRE_STRONG, FIRE_WEAK, REGEN_STRONG, REGEN_WEAK}, face_sets::*}, face::Face, Gridable};
+use crate::dice::{background::FaceBackground, dice_instance::Health, dice_template::{face_prototypes::{ATTACK_STRONG, ATTACK_STRONG_CRUEL, ATTACK_WEAK, DEFEND, FIRE_STRONG, FIRE_WEAK, REGEN_STRONG, REGEN_WEAK}, face_sets::*}, face::Face, Gridable};
 
 use super::action::Action;
 
@@ -12,9 +12,7 @@ impl Plugin for DiceTemplatePlugin {
 }
 
 #[derive(Component, Clone)]
-pub struct DiceTemplate {
-  pub hp: u32,
-}
+pub struct DiceTemplate;
 
 impl Gridable for DiceTemplate {
   fn grid(&self) -> Vec<(i16, i16)> {
@@ -43,9 +41,12 @@ impl DiceTemplateBuilder {
     assert!(self.hp != None);
     assert!(self.faces != None);
 
-    let template = DiceTemplate { hp: self.hp.unwrap() };
     commands
-      .spawn(template)
+      .spawn((
+        Name::new("Dice template"),
+        DiceTemplate,
+        Health::new(self.hp.unwrap()),
+      ))
       .with_children(|commands| {
         self.faces.clone().unwrap().map(|face|{
           Face::from_prototype(face, &mut images).spawn(commands);
