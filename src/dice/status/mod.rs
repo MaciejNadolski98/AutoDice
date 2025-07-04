@@ -47,7 +47,7 @@ macro_rules! impl_status_component {
   ($t:ty) => {
     use bevy::{ecs::component::{ComponentHook, Mutable, StorageType}};
     use crate::dice::dice_info_bar::{StatusBar, StatusIconOf, StatusIcon, StatusIntensityOf};
-    use crate::constants::{BATTLE_OVERLAY_LAYER, dice_info_bar::{STATUS_ICON_SIZE, STATUS_TEXT_SIZE}};
+    use crate::constants::dice_info_bar::{STATUS_ICON_SIZE, STATUS_TEXT_SIZE, STATUS_MARGIN};
     use crate::utils::tooltip::Tooltip;
 
     impl Component for $t {
@@ -64,10 +64,17 @@ macro_rules! impl_status_component {
             .with_child((
               Name::new("Status Icon"),
               StatusIconOf::<Self>::new(context.entity),
-              Sprite::from_color(<$t>::STATUS_COLOR, STATUS_ICON_SIZE),
-              BATTLE_OVERLAY_LAYER,
+              Node {
+                width: Val::Px(STATUS_ICON_SIZE.x),
+                height: Val::Px(STATUS_ICON_SIZE.y),
+                margin: UiRect::all(Val::Px(STATUS_MARGIN)),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+              },
+              BackgroundColor(<$t>::STATUS_COLOR),
               related!(Children[(
-                Text2d::new(""),
+                Text::new(""),
                 TextFont {
                   font_size: STATUS_TEXT_SIZE,
                   ..default()
@@ -75,7 +82,6 @@ macro_rules! impl_status_component {
                 TextColor::BLACK,
                 StatusIntensityOf::<Self>::new(context.entity),
                 Pickable::IGNORE,
-                BATTLE_OVERLAY_LAYER,
               )]),
               related!(Tooltip[(
                 Name::new("Status Tooltip"),
