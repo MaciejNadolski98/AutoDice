@@ -44,22 +44,20 @@ pub mod dice_texture {
 }
 
 pub mod dice_info_bar {
-  use bevy::math::{Vec2, Vec3};
+  use bevy::math::Vec2;
 
   use crate::constants::DICE_SIZE;
 
-  pub const STATUS_MARGIN: f32 = 0.05 * DICE_SIZE;
-  pub const BAR_DISPLACEMENT: f32 = -0.8 * DICE_SIZE;
+  pub const STATUS_MARGIN: f32 = 0.02 * DICE_SIZE;
+  pub const BAR_DISPLACEMENT: f32 = 0.6 * DICE_SIZE;
 
-  pub const STATUS_BAR_POSITION: Vec3 = Vec3::new(0.0, BAR_DISPLACEMENT, 0.0);
-  pub const STATUS_ICON_SIZE: Vec2 = Vec2::splat(0.25 * DICE_SIZE);
-  pub const STATUS_TEXT_SIZE: f32 = 0.25 * DICE_SIZE;
+  pub const STATUS_ICON_SIZE: Vec2 = Vec2::splat(0.125 * DICE_SIZE);
+  pub const STATUS_TEXT_SIZE: f32 = 0.125 * DICE_SIZE;
 
-  pub const HEALTH_BAR_POSITION: Vec3 = Vec3::new(0.0, BAR_DISPLACEMENT - STATUS_ICON_SIZE.y - STATUS_MARGIN, 0.0);
-  pub const HEALTH_BAR_WIDTH: f32 = 1.0 * DICE_SIZE;
-  pub const HEALTH_BAR_HEIGHT: f32 = 0.25 * DICE_SIZE;
+  pub const HEALTH_BAR_WIDTH: f32 = 0.5 * DICE_SIZE;
+  pub const HEALTH_BAR_HEIGHT: f32 = 0.125 * DICE_SIZE;
 
-  pub const HEALTH_BAR_MARGIN: f32 = 0.02 * DICE_SIZE;
+  pub const HEALTH_BAR_MARGIN: f32 = 0.01 * DICE_SIZE;
 }
 
 pub mod loading_screen {

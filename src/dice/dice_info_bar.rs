@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use super::events::SpawnDices;
 use super::dice_instance::Dice;
 
-use crate::{constants::{dice_info_bar::*, BATTLE_OVERLAY_LAYER}, dice::{dice_instance::Health, status::{Burning, Regeneration, Status}}, states::GameState};
+use crate::{camera::BattleCamera, constants::dice_info_bar::*, dice::{dice_instance::Health, status::{Burning, Regeneration, Status}}, states::GameState};
 
 pub struct DiceInfoBarPlugin;
 
@@ -14,7 +14,6 @@ impl Plugin for DiceInfoBarPlugin {
     app
       .add_systems(Update, spawn_dice_info_bars.run_if(on_event::<SpawnDices>))
       .add_systems(PostUpdate, (update_dice_info_bar_positions, update_health_bar_indicator).chain().run_if(in_state(GameState::Battle)))
-      .add_systems(Update, update_status_icon_positions)
       .add_systems(Update, (
         update_status_intensity::<Burning>,
         update_status_intensity::<Regeneration>,
@@ -23,7 +22,6 @@ impl Plugin for DiceInfoBarPlugin {
 }
 
 #[derive(Component)]
-#[require(Transform, Visibility)]
 pub struct DiceInfoBar;
 
 #[derive(Component)]
@@ -129,101 +127,130 @@ fn spawn_dice_info_bars(
     commands
       .spawn((
         Name::new("Dice info bar"),
+        Node {
+          position_type: PositionType::Absolute,
+          flex_direction: FlexDirection::Column,
+          ..default()
+        },
         DiceInfoBar,
         DiceInfoOf {
           dice: dice_entity
         },
       ))
       .with_children(|commands| {
-        commands.spawn((Name::new("Health bar"), Transform::from_translation(HEALTH_BAR_POSITION), Visibility::default())).with_children(|commands|{
+        commands.spawn((
+          Name::new("Health bar"),
+          Node {
+            width: Val::Px(HEALTH_BAR_WIDTH),
+            height: Val::Px(HEALTH_BAR_HEIGHT),
+            ..default()
+          },
+          Visibility::default()
+        )).with_children(|commands|{
           commands.spawn((
             Name::new("Gray background"),
-            Sprite::from_color(Color::srgb(0.1, 0.1, 0.1), Vec2::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)),
-            BATTLE_OVERLAY_LAYER,
+            Node {
+              width: Val::Percent(100.0),
+              height: Val::Percent(100.0),
+              justify_content: JustifyContent::Stretch,
+              ..default()
+            },
+            BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
             HealthIndicatorOf { dice: dice_entity },
           ));
         });
 
-        commands.spawn((Name::new("Status bar"), StatusBarOf { dice: dice_entity }, Transform::from_translation(STATUS_BAR_POSITION), Visibility::default()));
+        commands.spawn((
+          Name::new("Status bar"),
+          StatusBarOf { dice: dice_entity },
+          Node {
+            width: Val::Percent(100.0),
+            ..default()
+          },
+          Visibility::default()
+        ));
       });
   }
 }
 
 fn update_dice_info_bar_positions(
-  mut dice_info_bars: Query<(&DiceInfoOf, &mut Transform), With<DiceInfoBar>>,
+  mut dice_info_bars: Query<(&DiceInfoOf, &mut Node, &ComputedNode), With<DiceInfoBar>>,
   dice_transforms: Query<&Transform, (With<Dice>, Without<DiceInfoBar>)>,
+  camera: Single<(&Camera, &GlobalTransform), With<BattleCamera>>,
 ) {
-  for (dice_info_of, mut bar_transform) in dice_info_bars.iter_mut() {
-    if let Ok(dice_transform) = dice_transforms.get(dice_info_of.dice) {
-      bar_transform.translation = dice_transform.translation - Vec3::Z * dice_transform.translation.z;
-    }
+  let (camera, camera_transform) = *camera;
+  for (dice_info_of, mut bar_node, ComputedNode { size, inverse_scale_factor, .. }) in dice_info_bars.iter_mut() {
+    let Ok(dice_transform) = dice_transforms.get(dice_info_of.dice) else { continue };
+    let Ok(viewport_position) = camera.world_to_viewport(camera_transform, dice_transform.translation) else { continue };
+    bar_node.left = Val::Px(viewport_position.x - (size.x / 2.0) * inverse_scale_factor);
+    bar_node.top = Val::Px(viewport_position.y + BAR_DISPLACEMENT * inverse_scale_factor);
   }
 }
 
 fn update_health_bar_indicator(
   dices: Query<(&Health, &HealthIndicator), Changed<Health>>,
+  children: Query<&Children>,
   mut commands: Commands,
 ) {
   for (health, &HealthIndicator { indicator }) in dices {
-    commands
-      .entity(indicator)
-      .despawn_related::<Children>()
-      .with_children(|commands| {
-        let segment_width = (HEALTH_BAR_WIDTH - HEALTH_BAR_MARGIN) / (health.max as f32) - HEALTH_BAR_MARGIN;
-        let segment_height = HEALTH_BAR_HEIGHT - 2.0 * HEALTH_BAR_MARGIN;
-        for i in 0..health.current {
-          let segment_x = (-HEALTH_BAR_WIDTH + segment_width + HEALTH_BAR_MARGIN) / 2.0 + (i as f32) * (segment_width + HEALTH_BAR_MARGIN);
+    let visible = |index: usize| {
+      if (index as u32) < health.current {
+        Visibility::Visible
+      } else {
+        Visibility::Hidden
+      }
+    };
+
+    let children = children.get(indicator).map(|x| x.into_iter()).unwrap_or_default().collect::<Vec<_>>();
+    for (index, &&child) in children.iter().enumerate() {
+      commands.entity(child).insert((visible(index), health_color(health.current as f32 / health.max as f32)));
+    }
+
+    if (children.len() as u32) < health.max {
+      commands.entity(indicator).with_children(|commands| {
+        for index in children.len()..(health.max as usize) {
           commands.spawn((
             Name::new("Health segment"),
-            Sprite::from_color(
-              health_color(health.current as f32 / health.max as f32),
-              Vec2::new(segment_width, segment_height),
-            ),
-            Transform::from_translation(segment_x * Vec3::X + Vec3::Z),
-            BATTLE_OVERLAY_LAYER,
+            Node {
+              height: Val::Percent(100.0),
+              flex_grow: 1.0,
+              margin: UiRect::all(Val::Px(HEALTH_BAR_MARGIN)),
+              ..default()
+            },
+            visible(index),
+            BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
           ));
         }
       });
+    } else {
+      for index in (health.max as usize)..children.len() {
+        commands.entity(*children[index]).despawn();
+      }
+    }
   }
 }
 
-fn health_color(percentage: f32) -> Color {
-  if percentage > 0.5 {
-    let t = (percentage - 0.5) * 2.0;
-    Color::srgb(1.0 - t, 1.0, 0.0)
-  } else {
-    let t = percentage * 2.0;
-    Color::srgb(1.0, t, 0.0)
-  }
+fn health_color(percentage: f32) -> BackgroundColor {
+  BackgroundColor(
+    if percentage > 0.5 {
+      let t = (percentage - 0.5) * 2.0;
+      Color::srgb(1.0 - t, 1.0, 0.0)
+    } else {
+      let t = percentage * 2.0;
+      Color::srgb(1.0, t, 0.0)
+    }
+  )
 }
 
 fn update_status_intensity<S: Status>(
   statuses: Query<(&S, &StatusIntensity<S>), Changed<S>>,
-  mut texts: Query<&mut Text2d>,
+  mut texts: Query<&mut Text>,
 ) {
   for (status, intensity) in statuses {
     if let Ok(mut text) = texts.get_mut(intensity.text) {
       if let Some(intensity) = status.intensity() {
         text.0 = format!("{}", intensity);
       }
-    }
-  }
-}
-
-fn update_status_icon_positions(
-  status_bar: Query<&Children, (Changed<Children>, With<StatusBarOf>)>,
-  mut transforms: Query<&mut Transform>,
-) {
-  for children in status_bar {
-    let children_count = children.len();
-    // Calculate the starting x so that icons are centered in the status bar
-    let total_width = (children_count as f32) * STATUS_ICON_SIZE.x + ((children_count as f32 - 1.0) * STATUS_MARGIN);
-    let starting_x = -total_width / 2.0 + STATUS_ICON_SIZE.x / 2.0;
-
-    for (i, child) in children.iter().enumerate() {
-      let mut transform = transforms.get_mut(child).unwrap();
-      let x = starting_x + i as f32 * (STATUS_ICON_SIZE.x + STATUS_MARGIN);
-      transform.translation = Vec3::new(x, 0.0, 0.0);
     }
   }
 }
