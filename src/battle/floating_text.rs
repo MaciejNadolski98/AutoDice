@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::constants::{BATTLE_OVERLAY_LAYER, FLOATING_TEXT_DURATION, FLOATING_TEXT_FONT_SIZE, FLOATING_TEXT_SPEED};
+use crate::{camera::BattleCamera, constants::{FLOATING_TEXT_DURATION, FLOATING_TEXT_FONT_SIZE, FLOATING_TEXT_SPEED}};
 
 pub struct FloatingTextPlugin;
 
@@ -36,12 +36,14 @@ impl SpawnFloatingText {
 
 #[derive(Component)]
 struct FloatingText {
-  pub timer: Timer,
+  position: Vec2,
+  timer: Timer,
 }
 
 impl FloatingText {
-  pub fn new() -> Self {
+  pub fn new(position: Vec2) -> Self {
     Self {
+      position,
       timer: Timer::from_seconds(FLOATING_TEXT_DURATION, TimerMode::Once),
     }
   }
@@ -53,15 +55,17 @@ fn spawn_floating_text(
 ) {
   for event in event_reader.read() {
     commands.spawn((
-      Text2d(event.text.clone()),
+      Name::new("Floating text"),
+      Node {
+        ..default()
+      },
+      Text(event.text.clone()),
       TextFont {
         font_size: FLOATING_TEXT_FONT_SIZE,
         ..default()
       },
       TextColor(event.color),
-      Transform::from_translation(event.position),
-      BATTLE_OVERLAY_LAYER,
-      FloatingText::new(),
+      FloatingText::new(event.position.truncate()),
     ));
   }
 }
@@ -69,14 +73,18 @@ fn spawn_floating_text(
 fn floating_text_system(
   mut commands: Commands,
   time: Res<Time>,
-  mut query: Query<(Entity, &mut Transform, &mut TextColor, &mut FloatingText)>,
+  mut query: Query<(Entity, &mut Node, &ComputedNode, &mut TextColor, &mut FloatingText)>,
+  camera: Single<(&Camera, &GlobalTransform), With<BattleCamera>>,
 ) {
-  for (entity, mut transform, mut color, mut floating_text) in query.iter_mut() {
-    let delta = time.delta_secs();
-    transform.translation.y += delta * FLOATING_TEXT_SPEED;
+  let (camera, camera_transform) = *camera;
+  for (entity, mut node, &ComputedNode { size, inverse_scale_factor, .. }, mut color, mut floating_text) in query.iter_mut() {
     floating_text.timer.tick(time.delta());
+    let Ok(viewport_position) = camera.world_to_viewport(camera_transform, floating_text.position.extend(0.0)) else { continue };
+    let elapsed = floating_text.timer.elapsed().as_secs_f32();
+    node.top = Val::Px(viewport_position.y - elapsed * inverse_scale_factor * FLOATING_TEXT_SPEED);
+    node.left = Val::Px(viewport_position.x - size.y * inverse_scale_factor);
     let mut rgba = color.0.to_linear();
-    rgba.alpha -= delta / FLOATING_TEXT_DURATION;
+    rgba.alpha = 1.0 - elapsed / FLOATING_TEXT_DURATION;
     *color = Color::LinearRgba(rgba).into();
 
     if floating_text.timer.finished() {
