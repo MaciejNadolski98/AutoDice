@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 use bevy::animation::{animated_field, AnimationTarget, AnimationTargetId, RepeatAnimation};
-use bevy::render::camera::ScalingMode;
 
-use crate::constants::{BATTLE_OVERLAY_LAYER, CAMERA_SWAP_TIME};
+use crate::constants::CAMERA_SWAP_TIME;
 use crate::{
   constants::{DEFAULT_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE, HEIGHT},
   states::GameState
@@ -23,8 +22,8 @@ impl Plugin for BattleCameraPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_event::<SwapBattleCamera>()
-      .add_systems(OnEnter(GameState::Battle), (spawn_battle_camera, spawn_battle_overlay_camera))
-      .add_systems(OnExit(GameState::Battle), (despawn_battle_camera, despawn_battle_overlay_camera))
+      .add_systems(OnEnter(GameState::Battle), spawn_battle_camera)
+      .add_systems(OnExit(GameState::Battle), despawn_battle_camera)
       .add_systems(Update, update_camera_state.run_if(in_state(GameState::Battle)))
       .add_systems(Update, swap_camera.run_if(on_event::<SwapBattleCamera>))
       .init_resource::<LocalResources>();
@@ -142,32 +141,4 @@ fn spawn_battle_camera(
       id: target_id,
       player: camera_entity,
     });
-}
-
-fn spawn_battle_overlay_camera(
-  mut commands: Commands,
-) {
-  commands.spawn((
-    Name::new("Battle overlay camera"),
-    Camera2d,
-    Camera {
-      order: 1,
-      ..default()
-    },
-    Transform::from_translation(Vec3::new(0.0, 0.0, 100.0)).looking_at(Vec3::ZERO, Vec3::Y),
-    BATTLE_OVERLAY_LAYER,
-    Projection::from(OrthographicProjection {
-      scaling_mode: ScalingMode::FixedVertical { viewport_height: HEIGHT },
-      ..OrthographicProjection::default_2d()
-    }),
-    BattleOverlayCamera,
-  ));
-}
-
-fn despawn_battle_overlay_camera(
-  mut commands: Commands,
-  camera_: Query<Entity, With<BattleOverlayCamera>>,
-) {
-  let camera = camera_.single().unwrap();
-  commands.entity(camera).despawn();
 }

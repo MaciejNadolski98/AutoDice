@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_defer::{AccessError, AsyncAccess, AsyncCommandsExtension, AsyncWorld};
 
 use crate::camera::SwapBattleCamera;
-use crate::constants::{BATTLE_OVERLAY_LAYER, DICE_SIZE, HEIGHT, WIDTH};
+use crate::constants::DICE_SIZE;
 use crate::manage::plugin::{Coins, EnemyTeam, MyTeam, ShopRound};
 use crate::states::GameState;
 use crate::dice::{move_dices_to_rows, resolve_dices, roll_dices, Dice};
@@ -92,28 +92,31 @@ async fn done() -> Result<Option<bool>, AccessError> {
 
 async fn end_game(ending_text: &'static str) -> Result<(), AccessError> {
   let end_screen = AsyncWorld.spawn_bundle((
-    Sprite::from_color(Color::BLACK, Vec2::new(WIDTH, HEIGHT)),
-    Transform::from_translation(2.0 * Vec3::Z),
-    BATTLE_OVERLAY_LAYER,
+    Node {
+      width: Val::Percent(100.0),
+      height: Val::Percent(100.0),
+      justify_content: JustifyContent::Center,
+      align_items: AlignItems::Center,
+      ..default()
+    },
+    BackgroundColor(Color::BLACK),
   )).id();
 
-  let text = AsyncWorld.spawn_bundle((
-    Text2d::new(ending_text),
+  AsyncWorld.spawn_bundle((
+    ChildOf(end_screen),
+    Text::new(ending_text),
     TextFont {
       font_size: DICE_SIZE,
       ..default()
     },
-    Transform::from_translation(3.0 * Vec3::Z),
     TextColor(Color::WHITE),
-    BATTLE_OVERLAY_LAYER,
-  )).id();
+  ));
 
   AsyncWorld.run_system_cached(clean_up_game)?;
 
   AsyncWorld.sleep(3.0).await;
 
   AsyncWorld.entity(end_screen).despawn();
-  AsyncWorld.entity(text).despawn();
 
   AsyncWorld.set_state(GameState::Menu)?;
   Ok(())
