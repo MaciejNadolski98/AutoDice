@@ -68,9 +68,8 @@ fn populate_asset_store(
     asset_store.load(action.into(), handle.into());
   }
 
-  for name in [
-    "ui/refresh.png",
-  ] {
+  {
+    let name = "ui/refresh.png";
     let handle = asset_server.load::<Image>(name);
     asset_store.load(name, handle.into());
   }

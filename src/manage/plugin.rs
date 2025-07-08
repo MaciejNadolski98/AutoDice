@@ -61,9 +61,9 @@ pub fn spawn_enemy(
   commands.spawn((
     Name::new("Enemy team"),
     EnemyTeam,
-  )).with_children(|mut commands| {
+  )).with_children(|commands| {
     for builder in Challenge::new(shop_round.0).0 {
-      builder.spawn(&mut commands, &mut images);
+      builder.spawn(commands, &mut images);
     }
   });
 }
@@ -93,8 +93,8 @@ fn spawn_shop(
           .spawn((
             Name::new("Shop spot"),
           ))
-          .with_children(|mut commands| {
-            Tile::spawn(&mut images, &mut commands);
+          .with_children(|commands| {
+            Tile::spawn(&mut images, commands);
           });
       }
     });
@@ -105,14 +105,14 @@ fn update_shop_spots(
   shop_spots: Query<(&Children, &ShopSpotOf), Changed<Children>>,
 ) {
   for (children, ShopSpotOf(spot)) in shop_spots {
-    if children.len() == 0 { continue };
+    if children.is_empty() { continue };
     assert!(children.len() == 1);
     let child = children[0];
 
     commands
       .entity(*spot)
-      .with_children(|mut commands| {
-        let grid_tile = DiceGrid::spawn(&mut commands, child).id();
+      .with_children(|commands| {
+        let grid_tile = DiceGrid::spawn(commands, child).id();
 
         commands.commands()
           .entity(grid_tile)
@@ -149,8 +149,8 @@ fn refresh_shop(
     commands
       .entity(spot)
       .despawn_related::<Children>()
-      .with_children(|mut commands| {
-        Tile::spawn(&mut images, &mut commands);
+      .with_children(|commands| {
+        Tile::spawn(&mut images, commands);
       });
   }
 }
@@ -258,9 +258,9 @@ fn spawn_manage(
           ..default()
         },
         BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
-      )).with_children(|mut commands| {
+      )).with_children(|commands| {
         for &template in *my_team {
-          DiceGrid::spawn(&mut commands, template);
+          DiceGrid::spawn(commands, template);
         }
       });
       commands.spawn((
@@ -460,7 +460,7 @@ fn overlap_tile_template(
       }
     }
   }
-  if matches.len() == 0 {
+  if matches.is_empty() {
     return OverlapTileTemplateOutput { grid, matched: false, matches: Vec::new() };
   }
 

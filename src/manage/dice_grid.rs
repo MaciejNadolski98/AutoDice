@@ -89,8 +89,8 @@ fn update_grids<Faces: Gridable>(
       .into_iter()
       .zip(children.get(*collection_entity).unwrap())
       .map(|((x, y), face_entity)| (
-        GridPlacement::start_span(x as i16, 1),
-        GridPlacement::start_span(y as i16, 1),
+        GridPlacement::start_span(x, 1),
+        GridPlacement::start_span(y, 1),
         *face_entity,
       ));
     commands

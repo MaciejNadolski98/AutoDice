@@ -64,7 +64,7 @@ where S: Ord + Eq + Copy {
       let (filter_data, score_data, dice) = data;
       if filter(filter_data) {
         let current_score = score(score_data);
-        if best_score == None || current_score > best_score.unwrap() {
+        if best_score.is_none() || current_score > best_score.unwrap() {
           best_score = Some(current_score);
           best_dices.clear();
           best_dices.push(dice.id());
@@ -88,7 +88,7 @@ where S: Ord + Eq + Copy {
     .query::<&Dice>()
     .for_each(|dice| {
       let current_score = score(dice);
-      if best_score == None || current_score > best_score.unwrap() {
+      if best_score.is_none() || current_score > best_score.unwrap() {
         best_score = Some(current_score);
         best_dices.clear();
         best_dices.push(dice.id());

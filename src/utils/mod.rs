@@ -131,7 +131,7 @@ impl<E: Event + Clone + Copy> ArcMutexMutable<E> for Arc<Mutex<E>> {
     F: FnOnce(E) -> E
   {
     let mut current = self.lock().unwrap();
-    *current = function(current.clone());
+    *current = function(*current);
   }
 
   fn get(&self) -> E {

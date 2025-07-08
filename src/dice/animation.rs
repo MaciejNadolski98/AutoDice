@@ -48,8 +48,8 @@ pub async fn move_dice_to_row(
 
 fn compute_target_x(row_position: usize) -> f32 {
   let row_start = -DICE_SIZE * 4.0;
-  let position = row_start + (DICE_SIZE * 2.0 * row_position as f32);
-  position
+  
+  row_start + (DICE_SIZE * 2.0 * row_position as f32)
 }
 
 pub async fn move_dice(
@@ -89,7 +89,7 @@ pub async fn orient_dice(
     let (mut axis, mut angle) = rhs_angular_difference.to_axis_angle();
     if angle > PI {
       // Normalize angle to be within [0, PI]
-      angle = angle - 2.0 * PI;
+      angle -= 2.0 * PI;
       axis = -axis; // Reverse the axis if we normalize the angle
     }
     if angle.abs() < angular_displacement {

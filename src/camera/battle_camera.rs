@@ -44,7 +44,7 @@ fn despawn_battle_camera(
 }
 
 fn compute_fov(distance: f32, square_size: f32) -> f32 {
-  return 2.0 * ((square_size/(2.0*distance)).atan());
+  2.0 * ((square_size/(2.0*distance)).atan())
 }
 
 #[derive(Component, Reflect, Copy, Clone)]

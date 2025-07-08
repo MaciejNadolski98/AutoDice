@@ -98,7 +98,7 @@ async fn get_pips(
   dice_id: DiceID,
   pips: u32
 ) -> Result<u32, AccessError> {
-  let get_pips = GetPips::wrap(GetPips { dice_id, pips: pips });
+  let get_pips = GetPips::wrap(GetPips { dice_id, pips });
   AsyncWorld.trigger_event(get_pips.clone()).await?;
   Ok(get_pips.get().pips)
 }
