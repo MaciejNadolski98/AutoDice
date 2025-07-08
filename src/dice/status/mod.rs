@@ -48,7 +48,7 @@ macro_rules! impl_status_component {
     use bevy::{ecs::component::{ComponentHook, Mutable, StorageType}};
     use $crate::dice::dice_info_bar::{StatusBar, StatusIconOf, StatusIcon, StatusIntensityOf};
     use $crate::constants::dice_info_bar::{STATUS_ICON_SIZE, STATUS_TEXT_SIZE, STATUS_MARGIN};
-    use crate::utils::tooltip::Tooltip;
+    use $crate::utils::tooltip::Tooltip;
 
     impl Component for $t {
       const STORAGE_TYPE: StorageType = StorageType::Table;
