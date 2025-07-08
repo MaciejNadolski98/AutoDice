@@ -57,6 +57,7 @@ fn spawn_floating_text(
     commands.spawn((
       Name::new("Floating text"),
       Node {
+        display: Display::None,
         ..default()
       },
       Text(event.text.clone()),
@@ -81,8 +82,9 @@ fn floating_text_system(
     floating_text.timer.tick(time.delta());
     let Ok(viewport_position) = camera.world_to_viewport(camera_transform, floating_text.position.extend(0.0)) else { continue };
     let elapsed = floating_text.timer.elapsed().as_secs_f32();
+    node.display = Display::Flex;
     node.top = Val::Px(viewport_position.y - elapsed * inverse_scale_factor * FLOATING_TEXT_SPEED);
-    node.left = Val::Px(viewport_position.x - size.y * inverse_scale_factor);
+    node.left = Val::Px(viewport_position.x - 0.5 * size.y * inverse_scale_factor);
     let mut rgba = color.0.to_linear();
     rgba.alpha = 1.0 - elapsed / FLOATING_TEXT_DURATION;
     *color = Color::LinearRgba(rgba).into();
