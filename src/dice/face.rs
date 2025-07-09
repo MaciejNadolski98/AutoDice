@@ -198,7 +198,7 @@ fn activate_face_cameras(
             if let Some(pips) = pips {
               commands.spawn((
                 Name::new("Pips"),
-                Text2d(format!("{}", pips)),
+                Text2d(format!("{pips}")),
                 TextFont {
                   font_size: FONT_SIZE,
                   ..default()

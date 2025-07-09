@@ -249,7 +249,7 @@ fn update_status_intensity<S: Status>(
   for (status, intensity) in statuses {
     if let Ok(mut text) = texts.get_mut(intensity.text) {
       if let Some(intensity) = status.intensity() {
-        text.0 = format!("{}", intensity);
+        text.0 = format!("{intensity}");
       }
     }
   }
