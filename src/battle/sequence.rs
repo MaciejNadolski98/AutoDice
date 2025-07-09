@@ -14,7 +14,7 @@ impl Plugin for SequencePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(OnEnter(GameState::Battle), |mut commands: Commands| {
-        commands.spawn_task(|| flow());
+        commands.spawn_task(flow);
       })
       .add_event_and_listen::<StartGame>()
       .add_event_and_listen::<StartRound>()

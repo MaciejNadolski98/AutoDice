@@ -85,6 +85,7 @@ fn despawn_menu(
   commands.entity(menu.single().unwrap()).despawn();
 }
 
+#[allow(clippy::type_complexity)]
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut app_exit_events: EventWriter<AppExit>,
@@ -116,7 +117,7 @@ fn new_game(
   commands.spawn((
     Name::new("My team"),
     MyTeam,
-  )).with_children(|mut commands| {
+  )).with_children(|commands| {
     for builder in [
       DiceTemplateBuilder::berserker(1),
       DiceTemplateBuilder::paladin(1),
@@ -124,7 +125,7 @@ fn new_game(
       DiceTemplateBuilder::cleric(1),
       DiceTemplateBuilder::rogue(1),
     ] {
-      builder.spawn(&mut commands, &mut images);
+      builder.spawn(commands, &mut images);
     }
   });
   game_state.set(GameState::Manage);

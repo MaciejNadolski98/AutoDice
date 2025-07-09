@@ -67,8 +67,8 @@ fn add_hover_observer(
 
 fn over_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Move>>, Query<&Tooltip>, Query<(&mut Visibility, &mut Node, &ComputedNode)>, Query<&Window, With<PrimaryWindow>>, Res<TooltipsEnabled>) {
-  move |
+) -> impl IntoSystem<Trigger<'static, Pointer<Move>>, (), ()> {
+  let closure = move |
     hover: Trigger<Pointer<Move>>,
     related_tooltip: Query<&Tooltip>,
     mut query: Query<(&mut Visibility, &mut Node, &ComputedNode)>,
@@ -91,13 +91,15 @@ fn over_tooltip(
     } else {
       node.top = Val::Px(cursor_position.y - computed_node.size.y * computed_node.inverse_scale_factor());
     }
-  }
+  };
+
+  IntoSystem::into_system(closure)
 }
 
 fn out_tooltip(
   entity: Entity,
-) -> impl FnMut(Trigger<Pointer<Out>>, Query<&Tooltip>, Query<&mut Visibility>) {
-  move |
+) -> impl IntoSystem<Trigger<'static, Pointer<Out>>, (), ()> {
+  let closure = move |
     hover: Trigger<Pointer<Out>>,
     related_tooltip: Query<&Tooltip>,
     mut nodes: Query<&mut Visibility>,
@@ -106,5 +108,7 @@ fn out_tooltip(
     let &Tooltip { tooltip, ..} = related_tooltip.get(hover.target).unwrap();
     let mut visibility = nodes.get_mut(tooltip).unwrap();
     *visibility = Visibility::Hidden;
-  }
+  };
+
+  IntoSystem::into_system(closure)
 }

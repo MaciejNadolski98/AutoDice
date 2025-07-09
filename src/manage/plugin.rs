@@ -61,9 +61,9 @@ pub fn spawn_enemy(
   commands.spawn((
     Name::new("Enemy team"),
     EnemyTeam,
-  )).with_children(|mut commands| {
+  )).with_children(|commands| {
     for builder in Challenge::new(shop_round.0).0 {
-      builder.spawn(&mut commands, &mut images);
+      builder.spawn(commands, &mut images);
     }
   });
 }
@@ -93,8 +93,8 @@ fn spawn_shop(
           .spawn((
             Name::new("Shop spot"),
           ))
-          .with_children(|mut commands| {
-            Tile::spawn(&mut images, &mut commands);
+          .with_children(|commands| {
+            Tile::spawn(&mut images, commands);
           });
       }
     });
@@ -105,14 +105,14 @@ fn update_shop_spots(
   shop_spots: Query<(&Children, &ShopSpotOf), Changed<Children>>,
 ) {
   for (children, ShopSpotOf(spot)) in shop_spots {
-    if children.len() == 0 { continue };
+    if children.is_empty() { continue };
     assert!(children.len() == 1);
     let child = children[0];
 
     commands
       .entity(*spot)
-      .with_children(|mut commands| {
-        let grid_tile = DiceGrid::spawn(&mut commands, child).id();
+      .with_children(|commands| {
+        let grid_tile = DiceGrid::spawn(commands, child).id();
 
         commands.commands()
           .entity(grid_tile)
@@ -134,6 +134,7 @@ fn update_shop_spots(
 #[derive(Component)]
 struct RefreshButton;
 
+#[allow(clippy::type_complexity)]
 fn refresh_shop(
   mut commands: Commands,
   shop_spots: Query<Entity, With<ShopSpotOf>>,
@@ -149,8 +150,8 @@ fn refresh_shop(
     commands
       .entity(spot)
       .despawn_related::<Children>()
-      .with_children(|mut commands| {
-        Tile::spawn(&mut images, &mut commands);
+      .with_children(|commands| {
+        Tile::spawn(&mut images, commands);
       });
   }
 }
@@ -258,9 +259,9 @@ fn spawn_manage(
           ..default()
         },
         BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
-      )).with_children(|mut commands| {
+      )).with_children(|commands| {
         for &template in *my_team {
-          DiceGrid::spawn(&mut commands, template);
+          DiceGrid::spawn(commands, template);
         }
       });
       commands.spawn((
@@ -384,32 +385,36 @@ fn spawn_manage(
   });
 }
 
-fn drag_tile(tile: Entity) -> impl Fn(Trigger<Pointer<Drag>>, Query<(&mut Node, &ChildOf)>, Query<&ComputedNode>) { move |
-  drag: Trigger<Pointer<Drag>>,
-  mut tiles: Query<(&mut Node, &ChildOf)>,
-  computed_nodes: Query<&ComputedNode>,
-| {
-  fn size(node: &ComputedNode) -> Vec2 {
-    node.size * node.inverse_scale_factor
-  }
-  let delta = drag.delta;
+fn drag_tile(tile: Entity) -> impl IntoSystem<Trigger<'static, Pointer<Drag>>, (), ()> { 
+  let closure = move |
+    drag: Trigger<Pointer<Drag>>,
+    mut tiles: Query<(&mut Node, &ChildOf)>,
+    computed_nodes: Query<&ComputedNode>,
+  | {
+    fn size(node: &ComputedNode) -> Vec2 {
+      node.size * node.inverse_scale_factor
+    }
+    let delta = drag.delta;
 
-  let (mut node, &ChildOf(parent)) = tiles.get_mut(tile).unwrap();
-  let parent_size = size(computed_nodes.get(parent).unwrap());
-  let size = size(computed_nodes.get(tile).unwrap());
-  node.position_type = PositionType::Absolute;
-  match (node.left, node.top) {
-    (Val::Px(x), Val::Px(y)) => {
-      node.left = Val::Px(x + delta.x);
-      node.top = Val::Px(y + delta.y);
-    },
-    (_, _) => {
-      let Vec2 { x, y } = parent_size / 2.0 - size / 2.0;
-      node.left = Val::Px(x + delta.x);
-      node.top = Val::Px(y + delta.y);
-    },
-  }
-}}
+    let (mut node, &ChildOf(parent)) = tiles.get_mut(tile).unwrap();
+    let parent_size = size(computed_nodes.get(parent).unwrap());
+    let size = size(computed_nodes.get(tile).unwrap());
+    node.position_type = PositionType::Absolute;
+    match (node.left, node.top) {
+      (Val::Px(x), Val::Px(y)) => {
+        node.left = Val::Px(x + delta.x);
+        node.top = Val::Px(y + delta.y);
+      },
+      (_, _) => {
+        let Vec2 { x, y } = parent_size / 2.0 - size / 2.0;
+        node.left = Val::Px(x + delta.x);
+        node.top = Val::Px(y + delta.y);
+      },
+    }
+  };
+
+  IntoSystem::into_system(closure)
+}
 
 fn on_drag(tile: Entity) -> impl Fn(Trigger<Pointer<Drag>>) -> Entity {move |
   _trigger: Trigger<Pointer<Drag>>,
@@ -429,6 +434,7 @@ struct OverlapTileTemplateOutput {
   matches: Vec<(Entity, Entity)>,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn overlap_tile_template(
   grid: In<Entity>,
   mut commands: Commands,
@@ -460,7 +466,7 @@ fn overlap_tile_template(
       }
     }
   }
-  if matches.len() == 0 {
+  if matches.is_empty() {
     return OverlapTileTemplateOutput { grid, matched: false, matches: Vec::new() };
   }
 
@@ -513,6 +519,7 @@ fn mark_faces(
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn apply_tile(
   input: In<OverlapTileTemplateOutput>,
   mut nodes: Query<&mut Node>,
@@ -557,6 +564,7 @@ fn despawn_manage(
   commands.entity(screen.single().unwrap()).despawn();
 }
 
+#[allow(clippy::type_complexity)]
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,

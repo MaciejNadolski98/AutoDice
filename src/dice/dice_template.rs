@@ -37,9 +37,9 @@ pub struct DiceTemplateBuilder {
 }
 
 impl DiceTemplateBuilder {
-  pub fn spawn(self, commands: &mut RelatedSpawnerCommands<ChildOf>, mut images: &mut Assets<Image>) {
-    assert!(self.hp != None);
-    assert!(self.faces != None);
+  pub fn spawn(self, commands: &mut RelatedSpawnerCommands<ChildOf>, images: &mut Assets<Image>) {
+    assert!(self.hp.is_some());
+    assert!(self.faces.is_some());
 
     commands
       .spawn((
@@ -48,8 +48,8 @@ impl DiceTemplateBuilder {
         Health::new(self.hp.unwrap()),
       ))
       .with_children(|commands| {
-        self.faces.clone().unwrap().map(|face|{
-          Face::from_prototype(face, &mut images).spawn(commands);
+        self.faces.unwrap().map(|face|{
+          Face::from_prototype(face, images).spawn(commands);
         });
       });
   }
@@ -70,7 +70,7 @@ impl DiceTemplateBuilder {
   }
 
   pub fn berserker(level: u32) -> Self {
-    assert!(1 <= level && level <= 4);
+    assert!((1..=4).contains(&level));
     let mut ret = Self::default()
       .with_hp(5 + level)
       .with_face_set(BERSERKER);
@@ -86,7 +86,7 @@ impl DiceTemplateBuilder {
   }
 
   pub fn paladin(level: u32) -> Self {
-    assert!(1 <= level && level <= 4);
+    assert!((1..=4).contains(&level));
     let mut ret = Self::default()
       .with_hp(4 + 2 * level)
       .with_face_set(PALADIN);
@@ -102,7 +102,7 @@ impl DiceTemplateBuilder {
   }
 
   pub fn mage(level: u32) -> Self {
-    assert!(1 <= level && level <= 4);
+    assert!((1..=4).contains(&level));
     let mut ret = Self::default()
       .with_hp(2 + level)
       .with_face_set(MAGE);
@@ -118,7 +118,7 @@ impl DiceTemplateBuilder {
   }
 
   pub fn cleric(level: u32) -> Self {
-    assert!(1 <= level && level <= 4);
+    assert!((1..=4).contains(&level));
     let mut ret = Self::default()
       .with_hp(3 + 2 * level)
       .with_face_set(CLERIC);
@@ -133,7 +133,7 @@ impl DiceTemplateBuilder {
   }
 
   pub fn rogue(level: u32) -> Self {
-    assert!(1 <= level && level <= 4);
+    assert!((1..=4).contains(&level));
     let mut ret = Self::default()
       .with_hp(3 + level)
       .with_face_set(ROGUE);

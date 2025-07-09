@@ -15,7 +15,7 @@ pub async fn damage(
   let mut died = false;
   let entity = get_dice_entity(dice_id).await?;
   let position = fetch!(entity, Transform).get(|t| t.translation)?;
-  AsyncWorld.send_event(SpawnFloatingText::new(format!("-{}", damage), position).with_color(color))?;
+  AsyncWorld.send_event(SpawnFloatingText::new(format!("-{damage}"), position).with_color(color))?;
   fetch!(entity, Health).get_mut(|Health { current, .. }| {
     let new_hp = current.saturating_sub(damage);
     *current = new_hp;
@@ -36,7 +36,7 @@ pub async fn heal(
   let entity = get_dice_entity(dice_id).await?;
   let position = fetch!(entity, Transform).get(|t| t.translation)?;
   AsyncWorld.send_event(
-    SpawnFloatingText::new(format!("+{}", heal_amount), position)
+    SpawnFloatingText::new(format!("+{heal_amount}"), position)
       .with_color(Color::linear_rgb(0.0, 1.0, 0.0))
   )?;
   fetch!(entity, Health).get_mut(|Health { max, current}| {

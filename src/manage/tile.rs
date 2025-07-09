@@ -25,14 +25,14 @@ impl Gridable for Tile {
 }
 
 impl Tile {
-  pub fn spawn(mut images: &mut Assets<Image>, commands: &mut RelatedSpawnerCommands<ChildOf>) {
+  pub fn spawn(images: &mut Assets<Image>, commands: &mut RelatedSpawnerCommands<ChildOf>) {
     let grid = build_tile_layout();
     let faces_count = grid.len();
     commands.spawn(Self { grid })
       .with_children(|commands|{
         for _ in 0..faces_count {
           let prototype = random_face();
-          Face::from_prototype(prototype, &mut images).spawn(commands);
+          Face::from_prototype(prototype, images).spawn(commands);
         }
     });
   }

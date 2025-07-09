@@ -48,22 +48,22 @@ fn set_dice_roll_positions_and_velocities(
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 + DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
     Vec3::new((-WIDTH + DICE_SIZE * 1.5) / 2.0, -HEIGHT / 4.0 - DICE_SIZE * 1.5, DICE_SIZE * 1.5,),
   ];
-  let dice_positions_team_2 = dice_positions_team_1.clone().map(|mut vec| {
+  let dice_positions_team_2 = dice_positions_team_1.map(|mut vec| {
     vec.x *= -1.0;
     vec.y *= -1.0;
-    return vec;
+    vec
   });
 
   for (mut transform, mut linear_velocity, mut angular_velocity, dice) in &mut dices {
     if dice.id().team_id == 0 {
-      *transform = Transform::from_translation(dice_positions_team_1[dice.id().dice_id as usize]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE));
+      *transform = Transform::from_translation(dice_positions_team_1[dice.id().dice_id]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE));
       *linear_velocity = LinearVelocity::from(Vec3::new(
         random(30.0 * DICE_SIZE, 10.0 * DICE_SIZE),
         random(0.0, 5.0 * DICE_SIZE),
         random(10.0 * DICE_SIZE, 10.0 * DICE_SIZE),
       ));
     } else {
-      *transform = Transform::from_translation(dice_positions_team_2[dice.id().dice_id as usize]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE));
+      *transform = Transform::from_translation(dice_positions_team_2[dice.id().dice_id]).with_scale(Vec3::new(DICE_SIZE, DICE_SIZE, DICE_SIZE));
       *linear_velocity = LinearVelocity::from(Vec3::new(
         random(-30.0 * DICE_SIZE, 10.0 * DICE_SIZE),
         random(0.0, 5.0 * DICE_SIZE),
@@ -135,7 +135,7 @@ async fn dices_stopped() -> Result<bool, AccessError> {
       stopped = false;
     }
   });
-  return Ok(stopped);
+  Ok(stopped)
 }
 
 fn compute_row_positions(
@@ -151,8 +151,8 @@ fn compute_row_positions(
       team2.push((transform.translation.x, entity));
     }
   }
-  team1.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
-  team2.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
+  team1.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
+  team2.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
 
   *rows = Rows::default();
   for (_, entity) in team1 {
@@ -170,17 +170,17 @@ fn compute_row_positions(
 pub fn get_face_id(rotation: Quat) -> usize {
   let mut face_id = 0;
   let mut max_dot = -1.0;
-  for i in 0..6 {
-    let dot = rotation.mul_vec3(FACE_NORMALS[i]).dot(Vec3::new(0.0, 0.0, 1.0));
+  for (i, &normal) in FACE_NORMALS.iter().enumerate() {
+    let dot = rotation.mul_vec3(normal).dot(Vec3::new(0.0, 0.0, 1.0));
     if dot > max_dot {
       max_dot = dot;
       face_id = i;
     }
   }
-  return face_id;
+  face_id
 }
 
 fn random(mean: f32, std_dev: f32) -> f32 {
   let normal = Normal::<f32>::new(mean, std_dev).unwrap();
-  return normal.sample(&mut rand::thread_rng());
+  normal.sample(&mut rand::thread_rng())
 }

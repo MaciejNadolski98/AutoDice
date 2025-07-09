@@ -223,8 +223,8 @@ fn update_health_bar_indicator(
         }
       });
     } else {
-      for index in (health.max as usize)..children.len() {
-        commands.entity(*children[index]).despawn();
+      for &&child in children.iter().skip(health.max as usize) {
+        commands.entity(child).despawn();
       }
     }
   }
@@ -249,7 +249,7 @@ fn update_status_intensity<S: Status>(
   for (status, intensity) in statuses {
     if let Ok(mut text) = texts.get_mut(intensity.text) {
       if let Some(intensity) = status.intensity() {
-        text.0 = format!("{}", intensity);
+        text.0 = format!("{intensity}");
       }
     }
   }

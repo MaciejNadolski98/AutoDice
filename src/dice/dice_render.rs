@@ -22,10 +22,10 @@ impl Plugin for DiceRenderPlugin {
 fn permute_vertex_id(face_id: usize, vertex_id: usize) -> usize {
   match face_id {
     0 => (7 - vertex_id) % 4,
-    1 => (vertex_id + 0) % 4,
+    1 => vertex_id % 4,
     2 => (6 - vertex_id) % 4,
     3 => (vertex_id + 3) % 4,
-    4 => (vertex_id + 0) % 4,
+    4 => vertex_id % 4,
     5 => (5 - vertex_id) % 4,
     _ => panic!("Invalid face_id value"),
   }
@@ -91,11 +91,9 @@ impl MeshBuilder for DiceMeshBuilder {
       .build()
       .with_inserted_attribute(ATTRIBUTE_FACE_INDEX,
         (0..6)
-          .map(|face_index| {
+          .flat_map(|face_index| {
             vec![face_index, face_index, face_index, face_index]
           })
-          .into_iter()
-          .flatten()
           .collect::<Vec<u32>>()
       );
     let VertexAttributeValues::Float32x2(uvs) = mesh.attribute_mut(Mesh::ATTRIBUTE_UV_0).unwrap() else { panic!() };
@@ -113,6 +111,7 @@ impl MeshBuilder for DiceMeshBuilder {
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_dice(
   input: In<(DiceID, Entity)>,
   mut meshes: ResMut<Assets<Mesh>>,
