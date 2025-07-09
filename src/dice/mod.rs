@@ -20,3 +20,4 @@ pub use roll::{roll_dices, resolve_dices};
 pub use action::Action;
 pub use synergy::spawn_synergy_displays;
 pub use animation::move_dices_to_rows;
+pub use dice_info_bar::HealthBar;

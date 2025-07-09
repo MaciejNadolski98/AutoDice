@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
 use super::events::SpawnDices;
 use super::dice_instance::Dice;
@@ -13,7 +13,8 @@ impl Plugin for DiceInfoBarPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Update, spawn_dice_info_bars.run_if(on_event::<SpawnDices>))
-      .add_systems(PostUpdate, (update_dice_info_bar_positions, update_health_bar_indicator).chain().run_if(in_state(GameState::Battle)))
+      .add_systems(PostUpdate, update_dice_info_bar_positions.run_if(in_state(GameState::Battle)))
+      .add_systems(Update, update_health_bar_indicator)
       .add_systems(Update, (
         update_status_intensity::<Burning>,
         update_status_intensity::<Regeneration>,
@@ -119,6 +120,34 @@ pub struct HealthIndicator {
   indicator: Entity,
 }
 
+pub struct HealthBar;
+
+impl HealthBar {
+  pub fn spawn(commands: &mut RelatedSpawnerCommands<ChildOf>, health_entity: Entity) {
+    commands.spawn((
+      Name::new("Health bar"),
+      Node {
+        width: Val::Px(HEALTH_BAR_WIDTH),
+        height: Val::Px(HEALTH_BAR_HEIGHT),
+        ..default()
+      },
+      Visibility::default()
+    )).with_children(|commands|{
+      commands.spawn((
+        Name::new("Gray background"),
+        Node {
+          width: Val::Percent(100.0),
+          height: Val::Percent(100.0),
+          justify_content: JustifyContent::Stretch,
+          ..default()
+        },
+        BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
+        HealthIndicatorOf { dice: health_entity },
+      ));
+    });
+  }
+}
+
 fn spawn_dice_info_bars(
   mut commands: Commands,
   dices: Query<Entity, With<Dice>>,
@@ -138,27 +167,7 @@ fn spawn_dice_info_bars(
         },
       ))
       .with_children(|commands| {
-        commands.spawn((
-          Name::new("Health bar"),
-          Node {
-            width: Val::Px(HEALTH_BAR_WIDTH),
-            height: Val::Px(HEALTH_BAR_HEIGHT),
-            ..default()
-          },
-          Visibility::default()
-        )).with_children(|commands|{
-          commands.spawn((
-            Name::new("Gray background"),
-            Node {
-              width: Val::Percent(100.0),
-              height: Val::Percent(100.0),
-              justify_content: JustifyContent::Stretch,
-              ..default()
-            },
-            BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
-            HealthIndicatorOf { dice: dice_entity },
-          ));
-        });
+        HealthBar::spawn(commands, dice_entity);
 
         commands.spawn((
           Name::new("Status bar"),

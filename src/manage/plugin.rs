@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, DICE_SIZE, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource, HealthBar}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -261,7 +261,23 @@ fn spawn_manage(
         BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
       )).with_children(|commands| {
         for &template in *my_team {
-          DiceGrid::spawn(commands, template);
+          commands.spawn((
+            Name::new("Dice template spot"),
+            Node::default(),
+          )).with_children(|commands| {
+            DiceGrid::spawn(commands, template);
+            commands.spawn((
+              Name::new("Health bar container"),
+              Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(-0.2 * DICE_SIZE),
+                margin: UiRect { left: Val::Auto, right: Val::Auto, ..default() },
+                ..default()
+              },
+            )).with_children(|commands| {
+              HealthBar::spawn(commands, template);
+            });
+          });
         }
       });
       commands.spawn((
