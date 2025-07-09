@@ -170,8 +170,8 @@ fn compute_row_positions(
 pub fn get_face_id(rotation: Quat) -> usize {
   let mut face_id = 0;
   let mut max_dot = -1.0;
-  for i in 0..6 {
-    let dot = rotation.mul_vec3(FACE_NORMALS[i]).dot(Vec3::new(0.0, 0.0, 1.0));
+  for (i, &normal) in FACE_NORMALS.iter().enumerate() {
+    let dot = rotation.mul_vec3(normal).dot(Vec3::new(0.0, 0.0, 1.0));
     if dot > max_dot {
       max_dot = dot;
       face_id = i;

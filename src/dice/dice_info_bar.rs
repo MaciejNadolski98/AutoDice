@@ -223,8 +223,8 @@ fn update_health_bar_indicator(
         }
       });
     } else {
-      for index in (health.max as usize)..children.len() {
-        commands.entity(*children[index]).despawn();
+      for &&child in children.iter().skip(health.max as usize) {
+        commands.entity(child).despawn();
       }
     }
   }

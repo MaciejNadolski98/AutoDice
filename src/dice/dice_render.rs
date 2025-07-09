@@ -111,6 +111,7 @@ impl MeshBuilder for DiceMeshBuilder {
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_dice(
   input: In<(DiceID, Entity)>,
   mut meshes: ResMut<Assets<Mesh>>,

@@ -134,6 +134,7 @@ fn update_shop_spots(
 #[derive(Component)]
 struct RefreshButton;
 
+#[allow(clippy::type_complexity)]
 fn refresh_shop(
   mut commands: Commands,
   shop_spots: Query<Entity, With<ShopSpotOf>>,
@@ -384,32 +385,36 @@ fn spawn_manage(
   });
 }
 
-fn drag_tile(tile: Entity) -> impl Fn(Trigger<Pointer<Drag>>, Query<(&mut Node, &ChildOf)>, Query<&ComputedNode>) { move |
-  drag: Trigger<Pointer<Drag>>,
-  mut tiles: Query<(&mut Node, &ChildOf)>,
-  computed_nodes: Query<&ComputedNode>,
-| {
-  fn size(node: &ComputedNode) -> Vec2 {
-    node.size * node.inverse_scale_factor
-  }
-  let delta = drag.delta;
+fn drag_tile(tile: Entity) -> impl IntoSystem<Trigger<'static, Pointer<Drag>>, (), ()> { 
+  let closure = move |
+    drag: Trigger<Pointer<Drag>>,
+    mut tiles: Query<(&mut Node, &ChildOf)>,
+    computed_nodes: Query<&ComputedNode>,
+  | {
+    fn size(node: &ComputedNode) -> Vec2 {
+      node.size * node.inverse_scale_factor
+    }
+    let delta = drag.delta;
 
-  let (mut node, &ChildOf(parent)) = tiles.get_mut(tile).unwrap();
-  let parent_size = size(computed_nodes.get(parent).unwrap());
-  let size = size(computed_nodes.get(tile).unwrap());
-  node.position_type = PositionType::Absolute;
-  match (node.left, node.top) {
-    (Val::Px(x), Val::Px(y)) => {
-      node.left = Val::Px(x + delta.x);
-      node.top = Val::Px(y + delta.y);
-    },
-    (_, _) => {
-      let Vec2 { x, y } = parent_size / 2.0 - size / 2.0;
-      node.left = Val::Px(x + delta.x);
-      node.top = Val::Px(y + delta.y);
-    },
-  }
-}}
+    let (mut node, &ChildOf(parent)) = tiles.get_mut(tile).unwrap();
+    let parent_size = size(computed_nodes.get(parent).unwrap());
+    let size = size(computed_nodes.get(tile).unwrap());
+    node.position_type = PositionType::Absolute;
+    match (node.left, node.top) {
+      (Val::Px(x), Val::Px(y)) => {
+        node.left = Val::Px(x + delta.x);
+        node.top = Val::Px(y + delta.y);
+      },
+      (_, _) => {
+        let Vec2 { x, y } = parent_size / 2.0 - size / 2.0;
+        node.left = Val::Px(x + delta.x);
+        node.top = Val::Px(y + delta.y);
+      },
+    }
+  };
+
+  IntoSystem::into_system(closure)
+}
 
 fn on_drag(tile: Entity) -> impl Fn(Trigger<Pointer<Drag>>) -> Entity {move |
   _trigger: Trigger<Pointer<Drag>>,
@@ -429,6 +434,7 @@ struct OverlapTileTemplateOutput {
   matches: Vec<(Entity, Entity)>,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn overlap_tile_template(
   grid: In<Entity>,
   mut commands: Commands,
@@ -513,6 +519,7 @@ fn mark_faces(
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn apply_tile(
   input: In<OverlapTileTemplateOutput>,
   mut nodes: Query<&mut Node>,
@@ -557,6 +564,7 @@ fn despawn_manage(
   commands.entity(screen.single().unwrap()).despawn();
 }
 
+#[allow(clippy::type_complexity)]
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut game_state: ResMut<NextState<GameState>>,

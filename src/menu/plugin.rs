@@ -85,6 +85,7 @@ fn despawn_menu(
   commands.entity(menu.single().unwrap()).despawn();
 }
 
+#[allow(clippy::type_complexity)]
 fn button_actions(
   interaction_query: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
   mut app_exit_events: EventWriter<AppExit>,
