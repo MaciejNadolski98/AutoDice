@@ -15,7 +15,7 @@ mod synergy;
 
 pub use face::{Face, Gridable, FaceSource};
 pub use dice_template::{DiceTemplate, DiceTemplateBuilder, FacePrototype, face_prototypes};
-pub use dice_instance::{DiceID, Dice};
+pub use dice_instance::{DiceID, Dice, Health};
 pub use roll::{roll_dices, resolve_dices};
 pub use action::Action;
 pub use synergy::spawn_synergy_displays;

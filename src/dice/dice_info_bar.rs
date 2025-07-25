@@ -123,7 +123,7 @@ pub struct HealthIndicator {
 pub struct HealthBar;
 
 impl HealthBar {
-  pub fn spawn(commands: &mut RelatedSpawnerCommands<ChildOf>, health_entity: Entity) {
+  pub fn spawn(commands: &mut RelatedSpawnerCommands<ChildOf>, health_entity: Entity, health: Health) {
     commands.spawn((
       Name::new("Health bar"),
       Node {
@@ -133,7 +133,7 @@ impl HealthBar {
       },
       Visibility::default()
     )).with_children(|commands|{
-      commands.spawn((
+      let indicator = commands.spawn((
         Name::new("Gray background"),
         Node {
           width: Val::Percent(100.0),
@@ -143,16 +143,17 @@ impl HealthBar {
         },
         BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         HealthIndicatorOf { dice: health_entity },
-      ));
+      )).id();
+      build_health_indicator(indicator, health, Vec::new(), &mut commands.commands());
     });
   }
 }
 
 fn spawn_dice_info_bars(
   mut commands: Commands,
-  dices: Query<Entity, With<Dice>>,
+  dices: Query<(Entity, &Health), With<Dice>>,
 ) {
-  for dice_entity in &dices {
+  for (dice_entity, &health) in &dices {
     commands
       .spawn((
         Name::new("Dice info bar"),
@@ -167,7 +168,7 @@ fn spawn_dice_info_bars(
         },
       ))
       .with_children(|commands| {
-        HealthBar::spawn(commands, dice_entity);
+        HealthBar::spawn(commands, dice_entity, health);
 
         commands.spawn((
           Name::new("Status bar"),
@@ -202,39 +203,44 @@ fn update_health_bar_indicator(
   mut commands: Commands,
 ) {
   for (health, &HealthIndicator { indicator }) in dices {
-    let visible = |index: usize| {
-      if (index as u32) < health.current {
-        Visibility::Visible
-      } else {
-        Visibility::Hidden
-      }
-    };
-
     let children = children.get(indicator).map(|x| x.into_iter()).unwrap_or_default().collect::<Vec<_>>();
-    for (index, &&child) in children.iter().enumerate() {
-      commands.entity(child).insert((visible(index), health_color(health.current as f32 / health.max as f32)));
-    }
+    
+    build_health_indicator(indicator, *health, children, &mut commands);
+  }
+}
 
-    if (children.len() as u32) < health.max {
-      commands.entity(indicator).with_children(|commands| {
-        for index in children.len()..(health.max as usize) {
-          commands.spawn((
-            Name::new("Health segment"),
-            Node {
-              height: Val::Percent(100.0),
-              flex_grow: 1.0,
-              margin: UiRect::all(Val::Px(HEALTH_BAR_MARGIN)),
-              ..default()
-            },
-            visible(index),
-            BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
-          ));
-        }
-      });
+fn build_health_indicator(indicator: Entity, health: Health, children: Vec<&Entity>, commands: &mut Commands) {
+  let visible = |index: usize| {
+    if (index as u32) < health.current {
+      Visibility::Visible
     } else {
-      for &&child in children.iter().skip(health.max as usize) {
-        commands.entity(child).despawn();
+      Visibility::Hidden
+    }
+  };
+
+  for (index, &&child) in children.iter().enumerate() {
+    commands.entity(child).insert((visible(index), health_color(health.current as f32 / health.max as f32)));
+  }
+
+  if (children.len() as u32) < health.max {
+    commands.entity(indicator).with_children(|commands| {
+      for index in children.len()..(health.max as usize) {
+        commands.spawn((
+          Name::new("Health segment"),
+          Node {
+            height: Val::Percent(100.0),
+            flex_grow: 1.0,
+            margin: UiRect::all(Val::Px(HEALTH_BAR_MARGIN)),
+            ..default()
+          },
+          visible(index),
+          BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
+        ));
       }
+    });
+  } else {
+    for &&child in children.iter().skip(health.max as usize) {
+      commands.entity(child).despawn();
     }
   }
 }
