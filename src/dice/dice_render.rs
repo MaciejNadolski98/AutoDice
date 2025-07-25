@@ -143,7 +143,7 @@ pub fn spawn_dice(
       RigidBody::Dynamic,
       Collider::cuboid(1.0, 1.0, 1.0),
       Dice::new(dice_id),
-      health.clone(),
+      *health,
       Transform::from_translation(Vec3::new(0.0, 0.0, DICE_SIZE * 0.5))
         .with_scale(Vec3::splat(DICE_SIZE)),
       RigidBodyDisabled,

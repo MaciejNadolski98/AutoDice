@@ -24,7 +24,7 @@ impl Plugin for BattleCameraPlugin {
       .add_event::<SwapBattleCamera>()
       .add_systems(OnEnter(GameState::Battle), spawn_battle_camera)
       .add_systems(OnExit(GameState::Battle), despawn_battle_camera)
-      .add_systems(Update, update_camera_state.run_if(in_state(GameState::Battle)))
+      .add_systems(PostUpdate, update_camera_state.run_if(in_state(GameState::Battle)))
       .add_systems(Update, swap_camera.run_if(on_event::<SwapBattleCamera>))
       .init_resource::<LocalResources>();
   }

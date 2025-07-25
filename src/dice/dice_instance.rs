@@ -40,7 +40,7 @@ pub struct Dice {
   row_position: usize,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Copy)]
 pub struct Health {
   pub max: u32,
   pub current: u32,

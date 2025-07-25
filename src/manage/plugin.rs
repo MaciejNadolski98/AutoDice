@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, DICE_SIZE, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource, HealthBar}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, DICE_SIZE, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource, Health, HealthBar}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -171,6 +171,7 @@ fn spawn_manage(
   shop: Single<&Children, With<Shop>>,
   shop_round: Res<ShopRound>,
   asset_store: Res<AssetStore>,
+  health: Query<&Health>,
 ) {
   commands.spawn((
     Name::new("Manage"),
@@ -275,7 +276,7 @@ fn spawn_manage(
                 ..default()
               },
             )).with_children(|commands| {
-              HealthBar::spawn(commands, template);
+              HealthBar::spawn(commands, template, *health.get(template).unwrap());
             });
           });
         }
