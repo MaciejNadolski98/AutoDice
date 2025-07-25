@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, DICE_SIZE, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource, Health, HealthBar}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
+use crate::{battle::{clean_up_game, Challenge}, constants::{dice_texture::TARGET_SIZE, ui::{BUTTON_SIZE, COINS_NUMBER_SIZE, PRICE_TAG_HEIGHT, PRICE_TAG_TEXT_SIZE, PRICE_TAG_WIDTH, REFRESH_BUTTON_SIZE, ROUND_NUMBER_SIZE}, DICE_SIZE, REFRESH_PRICE, SHOP_ITEMS_COUNT}, dice::{spawn_synergy_displays, DiceTemplate, Face, FaceSource, Health, HealthBar}, loading_screen::AssetStore, manage::{dice_grid::{DiceGrid, DiceGridOf, DiceGridPlugin}, tile::{Buyable, Tile}}, states::GameState};
 
 pub struct ManagePlugin;
 
@@ -12,7 +12,7 @@ impl Plugin for ManagePlugin {
       .add_systems(OnEnter(GameState::Manage), (spawn_enemy, spawn_shop, spawn_manage).chain())
       .add_systems(OnExit(GameState::Manage), (despawn_shop, despawn_manage).chain())
       .add_systems(Update, button_actions.run_if(in_state(GameState::Manage)))
-      .add_systems(Update, (update_coins, refresh_shop, update_shop_spots).run_if(in_state(GameState::Manage)));
+      .add_systems(Update, (update_coins, refresh_shop, update_shop_spots, update_price_tags).run_if(in_state(GameState::Manage)));
   }
 }
 
@@ -128,6 +128,28 @@ fn update_shop_spots(
               .pipe(apply_tile)
           );
       });
+  }
+}
+
+#[derive(Component)]
+struct PriceTag;
+
+#[allow(clippy::type_complexity)]
+fn update_price_tags(
+  buyables: Query<
+    (&DiceGrid, &Buyable),
+    Or<(Changed<Buyable>, Changed<DiceGrid>)>
+  >,
+  child_ofs: Query<&ChildOf>,
+  children: Query<&Children>,
+  mut price_tags: Query<&mut Text, With<PriceTag>>,
+) {
+  for (grid_relationship, &Buyable { price }) in buyables {
+    let grid = grid_relationship.grid();
+    let &ChildOf(spot) = child_ofs.get(grid).unwrap();
+    let price_tag = (**children.get(spot).unwrap())[0];
+    let mut text = price_tags.get_mut(price_tag).unwrap();
+    text.0 = format!("{price}");
   }
 }
 
@@ -319,7 +341,38 @@ fn spawn_manage(
               },
               ShopSpot(shop_spot),
               Pickable::IGNORE,
-            ));
+            ))
+            .with_children(|commands| {
+              commands.spawn((
+                Name::new("Price tag"),
+                PriceTag,
+                Text::new("0"),
+                TextFont {
+                  font_size: PRICE_TAG_TEXT_SIZE,
+                  ..default()
+                },
+                TextLayout {
+                  justify: JustifyText::Center,
+                  ..default()
+                },
+                TextColor(Color::BLACK),
+                Node {
+                  position_type: PositionType::Absolute,
+                  width: Val::Px(PRICE_TAG_WIDTH),
+                  height: Val::Px(PRICE_TAG_HEIGHT),
+                  right: Val::Percent(30.0),
+                  bottom: Val::Percent(10.0),
+                  ..default()
+                },
+                BackgroundColor(Color::WHITE),
+                Outline {
+                  width: Val::Px(1.0),
+                  color: Color::BLACK,
+                  ..default()
+                },
+                ZIndex(1),
+              ));
+            });
         }
       });
     });
@@ -544,12 +597,12 @@ fn apply_tile(
   mut faces: Query<&mut Face>,
   grids: Query<&DiceGridOf>,
   mut coins: ResMut<Coins>,
-  tiles: Query<&Tile>,
+  buyable: Query<&Buyable>,
   mut commands: Commands,
 ) {
   let In(OverlapTileTemplateOutput { grid, matched, matches }) = input;
   let tile = grids.get(grid).unwrap().collection();
-  let price = tiles.get(tile).unwrap().price();
+  let price = buyable.get(tile).unwrap().price;
   if !matched || **coins < price {
     let mut node = nodes.get_mut(grid).unwrap();
     node.position_type = PositionType::Relative;
