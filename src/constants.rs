@@ -22,6 +22,10 @@ pub mod ui {
   pub const REFRESH_BUTTON_SIZE: Val = Val::Px(BASE_SCALE * 5.0);
   pub const ROUND_NUMBER_SIZE: f32 = BASE_SCALE * 2.5;
   pub const COINS_NUMBER_SIZE: f32 = BASE_SCALE * 2.5;
+
+  pub const PRICE_TAG_WIDTH: f32 = BASE_SCALE * 4.5;
+  pub const PRICE_TAG_HEIGHT: f32 = BASE_SCALE * 2.5;
+  pub const PRICE_TAG_TEXT_SIZE: f32 = BASE_SCALE * 2.0;
 }
 
 pub mod dice_texture {

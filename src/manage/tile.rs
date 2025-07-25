@@ -8,14 +8,9 @@ pub struct Tile {
   grid: Vec<(i16, i16)>,
 }
 
-pub trait Buyable {
-  fn price(&self) -> u32;
-}
-
-impl Buyable for Tile {
-  fn price(&self) -> u32 {
-    2
-  }
+#[derive(Component, Clone, Copy)]
+pub struct Buyable {
+  pub price: u32,
 }
 
 impl Gridable for Tile {
@@ -28,7 +23,7 @@ impl Tile {
   pub fn spawn(images: &mut Assets<Image>, commands: &mut RelatedSpawnerCommands<ChildOf>) {
     let grid = build_tile_layout();
     let faces_count = grid.len();
-    commands.spawn(Self { grid })
+    commands.spawn((Self { grid }, Buyable { price: 2 }))
       .with_children(|commands|{
         for _ in 0..faces_count {
           let prototype = random_face();
